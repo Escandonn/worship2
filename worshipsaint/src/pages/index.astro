@@ -1,0 +1,22 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar/Navbar';
+import Hero from '../sections/Hero';
+import Tienda from '../sections/Tienda';
+import EquipoFutbol from '../sections/EquipoFutbol';
+import Servicios from '../sections/Servicios';
+import SobreNosotros from '../sections/SobreNosotros';
+import Agradecimientos from '../sections/Agradecimientos';
+---
+
+<Layout>
+	<Navbar client:load />
+	<main>
+		<Hero client:load />
+		<Tienda client:visible />
+		<EquipoFutbol client:visible />
+		<Servicios client:visible />
+		<SobreNosotros client:visible />
+		<Agradecimientos client:visible />
+	</main>
+</Layout>
