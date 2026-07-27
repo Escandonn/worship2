@@ -21,12 +21,13 @@ const VARIANTS: Record<NonNullable<SectionProps['variant']>, CSSProperties> = {
 };
 
 /**
- * Contenedor base de sección con animación IntersectionObserver.
- * Las secciones aparecen con Fade Up + Blur + TranslateY + Opacity al hacer scroll.
+ * Contenedor base de sección optimizado para Presentation Delay e INP.
+ * Sin filtros de blur en contenedores de pantalla completa.
  */
 const Section: FC<SectionProps> = ({ id, title, subtitle, children, variant = 'default' }) => {
   const sectionRef = useRef<HTMLElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [animationFinished, setAnimationFinished] = useState(false);
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -36,7 +37,9 @@ const Section: FC<SectionProps> = ({ id, title, subtitle, children, variant = 'd
       ([entry]) => {
         if (entry.isIntersecting) {
           setIsVisible(true);
-          observer.unobserve(entry.target); // Se anima una sola vez
+          observer.unobserve(entry.target);
+          // Liberar GPU compositing memory tras finalizar animación (850ms)
+          setTimeout(() => setAnimationFinished(true), 850);
         }
       },
       { threshold: 0.12 }
@@ -59,12 +62,14 @@ const Section: FC<SectionProps> = ({ id, title, subtitle, children, variant = 'd
         padding: 'clamp(5rem, 10vh, 8rem) clamp(1.25rem, 5vw, 4rem)',
         scrollMarginTop: '72px',
         opacity: isVisible ? 1 : 0,
-        transform: isVisible ? 'translateY(0)' : 'translateY(36px)',
-        filter: isVisible ? 'blur(0px)' : 'blur(10px)',
-        transition: 'opacity 800ms cubic-bezier(0.16, 1, 0.3, 1), transform 800ms cubic-bezier(0.16, 1, 0.3, 1), filter 800ms cubic-bezier(0.16, 1, 0.3, 1)',
-        willChange: 'opacity, transform, filter',
+        transform: isVisible ? 'translateY(0)' : 'translateY(28px)',
+        transition: 'opacity 750ms cubic-bezier(0.16, 1, 0.3, 1), transform 750ms cubic-bezier(0.16, 1, 0.3, 1)',
+        willChange: animationFinished ? 'auto' : 'opacity, transform',
+        contain: 'layout style paint',
+        contentVisibility: id === 'hero' ? 'visible' : 'auto',
+        containIntrinsicSize: '100vh',
         ...VARIANTS[variant]
-      }}
+      } as CSSProperties}
     >
       <div style={{ maxWidth: '1100px', width: '100%', textAlign: 'center' }}>
         <h2

@@ -6,7 +6,7 @@ import type { FC, ReactNode, CSSProperties } from 'react';
 /* ------------------------------------------------------------------ */
 const PARTICLE_COLORS = ['#C8A96A', '#B8954E', '#D6C3A5', '#ECE5DA', '#A8843C'];
 const LINK_COLOR = 'rgba(200,169,106,0.55)';
-const CONNECT_DISTANCE = 150;
+const CONNECT_DISTANCE = 140;
 
 interface Particle {
   x: number;
@@ -85,7 +85,6 @@ const MagneticButton: FC<MagneticButtonProps> = memo(({ href, variant, children,
         boxShadow: isPrimary ? 'var(--ws-shadow-btn)' : 'var(--ws-shadow-card)',
         transform: 'translateY(0) scale(1)',
         transition: 'transform 250ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 250ms ease',
-        willChange: 'transform',
         ...style
       }}
     >
@@ -97,7 +96,7 @@ const MagneticButton: FC<MagneticButtonProps> = memo(({ href, variant, children,
 MagneticButton.displayName = 'MagneticButton';
 
 /* ------------------------------------------------------------------ */
-/*  Componente: Indicador de Scroll Elegante (Zero React Re-render)    */
+/*  Componente: Indicador de Scroll Elegante                            */
 /* ------------------------------------------------------------------ */
 interface ScrollIndicatorProps {
   buttonRef: React.RefObject<HTMLButtonElement | null>;
@@ -124,8 +123,7 @@ const ScrollIndicator: FC<ScrollIndicatorProps> = memo(({ buttonRef, onClick }) 
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '0.4rem',
-        willChange: 'opacity, transform'
+        gap: '0.4rem'
       }}
     >
       <span
@@ -169,7 +167,7 @@ const ScrollIndicator: FC<ScrollIndicatorProps> = memo(({ buttonRef, onClick }) 
 ScrollIndicator.displayName = 'ScrollIndicator';
 
 /* ------------------------------------------------------------------ */
-/*  Componente Hero Principal (Renders = EXACTAMENTE 1)                 */
+/*  Componente Hero Principal (Optimizado para INP y Presentation Delay)*/
 /* ------------------------------------------------------------------ */
 const Hero: FC = () => {
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -191,7 +189,6 @@ const Hero: FC = () => {
 
   // 1. Animaciones de entrada escalonadas y Typewriter (Fuera del ciclo React)
   useEffect(() => {
-    // A. Revelado inicial escalonado directo en el DOM
     const tBadge = requestAnimationFrame(() => {
       if (badgeRef.current) {
         badgeRef.current.style.opacity = '1';
@@ -213,7 +210,6 @@ const Hero: FC = () => {
       }
     }, 650);
 
-    // B. Animación Typewriter por manipulación directa del DOM (0 Renders de React)
     let phraseIndex = 0;
     let charIndex = 0;
     let deleting = false;
@@ -232,7 +228,6 @@ const Hero: FC = () => {
         finalContainerRef.current.style.display = 'inline';
       }
 
-      // Revelado Palabra por Palabra sin alteración de Layout (Zero Reflow)
       let wordIdx = 0;
       const WORD_SPEED_MS = 90;
 
@@ -246,7 +241,6 @@ const Hero: FC = () => {
         if (wordIdx >= FINAL_TITLE_WORDS.length) {
           clearInterval(wordInterval);
 
-          // Mostrar botones e indicador de scroll
           if (buttonsRef.current) {
             buttonsRef.current.style.opacity = '1';
             buttonsRef.current.style.transform = 'scale(1) translateY(0)';
@@ -260,6 +254,10 @@ const Hero: FC = () => {
           setTimeout(() => {
             if (cursorRef.current) {
               cursorRef.current.style.opacity = '0';
+            }
+            // Liberar will-change del contenedor principal
+            if (heroContentRef.current) {
+              heroContentRef.current.style.willChange = 'auto';
             }
           }, 800);
         }
@@ -301,7 +299,6 @@ const Hero: FC = () => {
 
     typeTimer = setTimeout(tickRotating, 100);
 
-    // Fallback de seguridad para asegurar visibilidad de botones
     const fallbackTimer = setTimeout(() => {
       if (buttonsRef.current) {
         buttonsRef.current.style.opacity = '1';
@@ -322,11 +319,15 @@ const Hero: FC = () => {
     };
   }, []);
 
-  // 2. Parpadeo del cursor sin React setState
+  // 2. Parpadeo del cursor (Se limpia al desvanecerse)
   useEffect(() => {
     let blinkState = true;
     const interval = setInterval(() => {
-      if (cursorRef.current && cursorRef.current.style.opacity !== '0') {
+      if (cursorRef.current) {
+        if (cursorRef.current.style.opacity === '0') {
+          clearInterval(interval);
+          return;
+        }
         blinkState = !blinkState;
         cursorRef.current.style.opacity = blinkState ? '1' : '0';
       }
@@ -334,7 +335,7 @@ const Hero: FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // 3. Listener de Scroll pasivo directo al DOM
+  // 3. Listener de Scroll pasivo rAF
   useEffect(() => {
     let ticking = false;
 
@@ -342,7 +343,7 @@ const Hero: FC = () => {
       if (!ticking) {
         requestAnimationFrame(() => {
           const y = window.scrollY;
-          if (heroContentRef.current) {
+          if (heroContentRef.current && y <= 700) {
             const op = Math.max(0, 1 - y / 550);
             const tr = y * 0.25;
             heroContentRef.current.style.opacity = String(op);
@@ -358,7 +359,7 @@ const Hero: FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // 4. Canvas de Partículas 60 FPS aislado (0 React Renders)
+  // 4. Canvas de Partículas Aislado + Pause/Resume automático por IntersectionObserver (Presentation Delay Fix)
   useEffect(() => {
     const canvas = canvasRef.current;
     const section = sectionRef.current;
@@ -374,7 +375,8 @@ const Hero: FC = () => {
     let height = 0;
     let rafId = 0;
     let last = performance.now();
-    let running = true;
+    let running = false;
+    let isIntersecting = true;
 
     const resize = () => {
       const rect = section.getBoundingClientRect();
@@ -385,8 +387,8 @@ const Hero: FC = () => {
       let densityFactor = 1;
       if (vw < 768) densityFactor = 0.3;
       else if (vw < 1024) densityFactor = 0.6;
-      const baseCount = 140;
-      const count = Math.max(35, Math.round(baseCount * densityFactor));
+      const baseCount = 120; // Optimizado para rasterización ligera
+      const count = Math.max(30, Math.round(baseCount * densityFactor));
 
       if (newW !== width || newH !== height || particles.length !== count) {
         width = newW;
@@ -401,8 +403,8 @@ const Hero: FC = () => {
           y: Math.random() * height,
           vx: (Math.random() - 0.5) * 0.25,
           vy: (Math.random() - 0.5) * 0.25,
-          radius: Math.random() * 2.8 + 0.8,
-          baseAlpha: Math.random() * 0.45 + 0.35,
+          radius: Math.random() * 2.6 + 0.8,
+          baseAlpha: Math.random() * 0.4 + 0.3,
           alpha: 0,
           color: PARTICLE_COLORS[Math.floor(Math.random() * PARTICLE_COLORS.length)],
           phase: Math.random() * Math.PI * 2
@@ -413,7 +415,7 @@ const Hero: FC = () => {
     resize();
 
     const render = (now: number) => {
-      if (!running) return;
+      if (!running || !isIntersecting) return;
       const dt = Math.min((now - last) / 16.67, 3);
       last = now;
 
@@ -438,10 +440,10 @@ const Hero: FC = () => {
         const dx = p.x - mouse.x;
         const dy = p.y - mouse.y;
         const dist = Math.hypot(dx, dy);
-        if (dist < 120 && dist > 0.01) {
-          const force = (120 - dist) / 120;
-          p.x += (dx / dist) * force * 0.6;
-          p.y += (dy / dist) * force * 0.6;
+        if (dist < 110 && dist > 0.01) {
+          const force = (110 - dist) / 110;
+          p.x += (dx / dist) * force * 0.5;
+          p.y += (dy / dist) * force * 0.5;
         }
 
         const px = p.x + parallax.x * 0.015;
@@ -455,7 +457,7 @@ const Hero: FC = () => {
       }
 
       ctx.globalAlpha = 1;
-      ctx.lineWidth = 0.6;
+      ctx.lineWidth = 0.5;
       for (let i = 0; i < particles.length; i++) {
         const a = particles[i];
         for (let j = i + 1; j < particles.length; j++) {
@@ -464,7 +466,7 @@ const Hero: FC = () => {
           const dy = a.y - b.y;
           const dist = Math.hypot(dx, dy);
           if (dist < CONNECT_DISTANCE) {
-            const opacity = (1 - dist / CONNECT_DISTANCE) * 0.7;
+            const opacity = (1 - dist / CONNECT_DISTANCE) * 0.65;
             ctx.strokeStyle = LINK_COLOR;
             ctx.globalAlpha = opacity;
             ctx.beginPath();
@@ -479,9 +481,25 @@ const Hero: FC = () => {
       rafId = requestAnimationFrame(render);
     };
 
-    rafId = requestAnimationFrame(render);
+    // Detener/Reanudar animación cuando el Hero entra o sale del Viewport (Pausar Renders fuera de vista)
+    const heroObserver = new IntersectionObserver(([entry]) => {
+      isIntersecting = entry.isIntersecting;
+      if (isIntersecting) {
+        if (!running) {
+          running = true;
+          last = performance.now();
+          rafId = requestAnimationFrame(render);
+        }
+      } else {
+        running = false;
+        cancelAnimationFrame(rafId);
+      }
+    }, { threshold: 0.05 });
+
+    heroObserver.observe(section);
 
     const onMouseMove = (e: MouseEvent) => {
+      if (!isIntersecting) return;
       const rect = section.getBoundingClientRect();
       mouse.x = e.clientX - rect.left;
       mouse.y = e.clientY - rect.top;
@@ -499,6 +517,7 @@ const Hero: FC = () => {
     return () => {
       running = false;
       cancelAnimationFrame(rafId);
+      heroObserver.disconnect();
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', onMouseMove);
       section.removeEventListener('mouseleave', onMouseLeave);
@@ -539,7 +558,7 @@ const Hero: FC = () => {
         }
       `}</style>
 
-      {/* Glows de fondo de baja carga GPU */}
+      {/* Glows de fondo con degradados suaves estáticos (Sin filtros de blur en vivo) */}
       <div
         aria-hidden="true"
         style={{
@@ -549,8 +568,7 @@ const Hero: FC = () => {
           width: '420px',
           height: '420px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(200,169,106,0.35), transparent 70%)',
-          filter: 'blur(60px)',
+          background: 'radial-gradient(circle at 50% 50%, rgba(200,169,106,0.30) 0%, rgba(200,169,106,0.12) 45%, transparent 70%)',
           pointerEvents: 'none'
         }}
       />
@@ -563,8 +581,7 @@ const Hero: FC = () => {
           width: '520px',
           height: '520px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(214,195,165,0.45), transparent 70%)',
-          filter: 'blur(80px)',
+          background: 'radial-gradient(circle at 50% 50%, rgba(214,195,165,0.40) 0%, rgba(214,195,165,0.15) 50%, transparent 70%)',
           pointerEvents: 'none'
         }}
       />
@@ -583,7 +600,7 @@ const Hero: FC = () => {
         }}
       />
 
-      {/* Glow central */}
+      {/* Glow central estático */}
       <div
         aria-hidden="true"
         style={{
@@ -594,8 +611,7 @@ const Hero: FC = () => {
           width: '500px',
           height: '500px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,255,255,0.25), transparent 65%)',
-          filter: 'blur(70px)',
+          background: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.22) 0%, transparent 65%)',
           pointerEvents: 'none',
           zIndex: 0
         }}
@@ -630,14 +646,13 @@ const Hero: FC = () => {
             marginBottom: '1.5rem',
             opacity: 0,
             transform: 'translateY(12px)',
-            transition: 'opacity 500ms ease, transform 500ms ease',
-            willChange: 'opacity, transform'
+            transition: 'opacity 500ms ease, transform 500ms ease'
           }}
         >
           Código • Cancha • Conciencia
         </span>
 
-        {/* ② TÍTULO PRINCIPAL: Direct DOM Mutation (Zero Layout Shift & Zero React Re-render) */}
+        {/* ② TÍTULO PRINCIPAL: Direct DOM Mutation (Zero Layout Shift) */}
         <h1
           style={{
             margin: '0 auto 1.4rem',
@@ -672,8 +687,7 @@ const Hero: FC = () => {
                   whiteSpace: 'pre',
                   opacity: 0,
                   transform: 'translateY(4px)',
-                  transition: 'opacity 220ms ease, transform 220ms ease',
-                  willChange: 'opacity, transform'
+                  transition: 'opacity 220ms ease, transform 220ms ease'
                 }}
               >
                 {word}{idx < FINAL_TITLE_WORDS.length - 1 ? ' ' : ''}
@@ -710,8 +724,7 @@ const Hero: FC = () => {
             color: 'var(--ws-text)',
             opacity: 0,
             transform: 'translateY(12px)',
-            transition: 'opacity 500ms ease, transform 500ms ease',
-            willChange: 'opacity, transform'
+            transition: 'opacity 500ms ease, transform 500ms ease'
           }}
         >
           Una franquicia creada para elevar el potencial humano.
@@ -729,8 +742,7 @@ const Hero: FC = () => {
             maxWidth: '680px',
             lineHeight: 1.6,
             transform: 'translateY(12px)',
-            transition: 'opacity 500ms ease, transform 500ms ease',
-            willChange: 'opacity, transform'
+            transition: 'opacity 500ms ease, transform 500ms ease'
           }}
         >
           Reunimos desarrollo web de estándar global, una tienda e-commerce atemporal y la mística de nuestro club de fútbol en torno a la filosofía de la Gnosis.
@@ -746,8 +758,7 @@ const Hero: FC = () => {
             flexWrap: 'wrap',
             opacity: 0,
             transform: 'scale(0.96) translateY(10px)',
-            transition: 'opacity 500ms ease, transform 500ms ease',
-            willChange: 'opacity, transform'
+            transition: 'opacity 500ms ease, transform 500ms ease'
           }}
         >
           <MagneticButton href="#franquicia" variant="primary">
