@@ -1,7 +1,8 @@
+import { useEffect, useRef, useState } from 'react';
 import type { FC, ReactNode, CSSProperties } from 'react';
 
 interface SectionProps {
-  /** ID único de la sección (debe coincidir con el navbar). */
+  /** ID único de la sección (coincide con el navbar). */
   id: string;
   /** Título visible de la sección. */
   title: string;
@@ -9,7 +10,7 @@ interface SectionProps {
   subtitle?: string;
   /** Contenido específico de la sección. */
   children?: ReactNode;
-  /** Variante de acento visual (cambia el degradado sutil de fondo). */
+  /** Variante de acento visual. */
   variant?: 'default' | 'accent' | 'muted';
 }
 
@@ -20,14 +21,34 @@ const VARIANTS: Record<NonNullable<SectionProps['variant']>, CSSProperties> = {
 };
 
 /**
- * Contenedor base de sección.
- * Garantiza `min-height: 100vh`, centrado vertical del contenido y un
- * acento visual sutil. Cada sección concreta lo reutiliza para mantener
- * consistencia y desacoplar su contenido del layout.
+ * Contenedor base de sección con animación IntersectionObserver.
+ * Las secciones aparecen con Fade Up + Blur + TranslateY + Opacity al hacer scroll.
  */
 const Section: FC<SectionProps> = ({ id, title, subtitle, children, variant = 'default' }) => {
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const el = sectionRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.unobserve(entry.target); // Se anima una sola vez
+        }
+      },
+      { threshold: 0.12 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <section
+      ref={sectionRef}
       id={id}
       style={{
         minHeight: '100vh',
@@ -37,6 +58,11 @@ const Section: FC<SectionProps> = ({ id, title, subtitle, children, variant = 'd
         alignItems: 'center',
         padding: 'clamp(5rem, 10vh, 8rem) clamp(1.25rem, 5vw, 4rem)',
         scrollMarginTop: '72px',
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible ? 'translateY(0)' : 'translateY(36px)',
+        filter: isVisible ? 'blur(0px)' : 'blur(10px)',
+        transition: 'opacity 800ms cubic-bezier(0.16, 1, 0.3, 1), transform 800ms cubic-bezier(0.16, 1, 0.3, 1), filter 800ms cubic-bezier(0.16, 1, 0.3, 1)',
+        willChange: 'opacity, transform, filter',
         ...VARIANTS[variant]
       }}
     >

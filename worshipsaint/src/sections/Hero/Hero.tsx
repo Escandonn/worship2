@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
-import type { FC } from 'react';
+import React, { useEffect, useRef, memo } from 'react';
+import type { FC, ReactNode, CSSProperties } from 'react';
 
 /* ------------------------------------------------------------------ */
-/*  Configuración de partículas (paleta WorshipSaint)                  */
+/*  Configuración de partículas (Paleta WorshipSaint)                  */
 /* ------------------------------------------------------------------ */
 const PARTICLE_COLORS = ['#C8A96A', '#B8954E', '#D6C3A5', '#ECE5DA', '#A8843C'];
 const LINK_COLOR = 'rgba(200,169,106,0.55)';
@@ -17,92 +17,348 @@ interface Particle {
   baseAlpha: number;
   alpha: number;
   color: string;
-  phase: number; // para parpadeo suave
+  phase: number;
 }
 
 /* ------------------------------------------------------------------ */
-/*  Hook: Typewriter que alterna frases                                */
+/*  Frases Rotativas + Título Definitivo (Maquetación Previa Fija)     */
 /* ------------------------------------------------------------------ */
-const PHRASES = [
-  'WorshipSaint',
-  'Diseño Premium',
-  'Experiencias Digitales',
-  'Minimalismo Atemporal'
+const ROTATING_PHRASES = [
+  'Pasión en cada proyecto.',
+  'Tecnología con propósito.',
+  'Diseño que trasciende.',
+  'Comunidad que inspira.'
 ];
 
-function useTypewriter() {
-  const [text, setText] = useState('');
-  const [showCursor, setShowCursor] = useState(true);
+const FINAL_TITLE_TEXT = 'Diseño en código. Pasión en cancha. Conciencia en el ser. El ecosistema WorshipSaint.';
+const FINAL_TITLE_WORDS = FINAL_TITLE_TEXT.split(' ');
 
+/* ------------------------------------------------------------------ */
+/*  Componente: Botón Magnético Premium (Zero React Re-render)          */
+/* ------------------------------------------------------------------ */
+interface MagneticButtonProps {
+  href: string;
+  variant: 'primary' | 'secondary';
+  children: ReactNode;
+  style?: CSSProperties;
+}
+
+const MagneticButton: FC<MagneticButtonProps> = memo(({ href, variant, children, style }) => {
+  const btnRef = useRef<HTMLAnchorElement | null>(null);
+  const isPrimary = variant === 'primary';
+
+  const handleMouseEnter = () => {
+    if (!btnRef.current) return;
+    btnRef.current.style.transform = 'translateY(-2px) scale(1.02)';
+    btnRef.current.style.boxShadow = isPrimary
+      ? 'var(--ws-shadow-btn-hover)'
+      : '0 15px 35px rgba(44, 33, 24, 0.12)';
+  };
+
+  const handleMouseLeave = () => {
+    if (!btnRef.current) return;
+    btnRef.current.style.transform = 'translateY(0) scale(1)';
+    btnRef.current.style.boxShadow = isPrimary
+      ? 'var(--ws-shadow-btn)'
+      : 'var(--ws-shadow-card)';
+  };
+
+  return (
+    <a
+      ref={btnRef}
+      href={href}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '0.95rem 2.2rem',
+        borderRadius: 'var(--ws-radius-btn)',
+        background: isPrimary ? 'var(--ws-gradient-btn)' : 'var(--ws-gradient-btn-secondary)',
+        color: 'var(--ws-text)',
+        border: isPrimary ? 'none' : '1px solid rgba(44,33,24,0.12)',
+        fontFamily: 'var(--ws-font)',
+        fontWeight: 600,
+        fontSize: '1rem',
+        textDecoration: 'none',
+        boxShadow: isPrimary ? 'var(--ws-shadow-btn)' : 'var(--ws-shadow-card)',
+        transform: 'translateY(0) scale(1)',
+        transition: 'transform 250ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 250ms ease',
+        willChange: 'transform',
+        ...style
+      }}
+    >
+      {children}
+    </a>
+  );
+});
+
+MagneticButton.displayName = 'MagneticButton';
+
+/* ------------------------------------------------------------------ */
+/*  Componente: Indicador de Scroll Elegante (Zero React Re-render)    */
+/* ------------------------------------------------------------------ */
+interface ScrollIndicatorProps {
+  buttonRef: React.RefObject<HTMLButtonElement | null>;
+  onClick: () => void;
+}
+
+const ScrollIndicator: FC<ScrollIndicatorProps> = memo(({ buttonRef, onClick }) => {
+  return (
+    <button
+      ref={buttonRef}
+      onClick={onClick}
+      aria-label="Desplazarse hacia abajo"
+      style={{
+        position: 'absolute',
+        bottom: '2.5rem',
+        left: '50%',
+        transform: 'translateX(-50%) translateY(16px)',
+        opacity: 0,
+        transition: 'opacity 600ms ease, transform 600ms ease',
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        zIndex: 10,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '0.4rem',
+        willChange: 'opacity, transform'
+      }}
+    >
+      <span
+        style={{
+          fontFamily: 'var(--ws-font)',
+          fontSize: '0.7rem',
+          fontWeight: 600,
+          letterSpacing: '0.14em',
+          textTransform: 'uppercase',
+          color: 'var(--ws-text)',
+          opacity: 0.75
+        }}
+      >
+        Scroll
+      </span>
+      <div
+        style={{
+          width: '20px',
+          height: '32px',
+          borderRadius: '999px',
+          border: '1.5px solid var(--ws-text)',
+          display: 'flex',
+          justifyContent: 'center',
+          paddingTop: '6px'
+        }}
+      >
+        <div
+          style={{
+            width: '3px',
+            height: '6px',
+            borderRadius: '999px',
+            background: 'var(--ws-accent)',
+            animation: 'wsMouseWheel 2s infinite cubic-bezier(0.4, 0, 0.6, 1)'
+          }}
+        />
+      </div>
+    </button>
+  );
+});
+
+ScrollIndicator.displayName = 'ScrollIndicator';
+
+/* ------------------------------------------------------------------ */
+/*  Componente Hero Principal (Renders = EXACTAMENTE 1)                 */
+/* ------------------------------------------------------------------ */
+const Hero: FC = () => {
+  const sectionRef = useRef<HTMLElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const heroContentRef = useRef<HTMLDivElement | null>(null);
+
+  // Direct DOM Refs para animaciones fuera de React
+  const badgeRef = useRef<HTMLSpanElement | null>(null);
+  const rotatingContainerRef = useRef<HTMLSpanElement | null>(null);
+  const rotatingTextRef = useRef<HTMLSpanElement | null>(null);
+  const finalContainerRef = useRef<HTMLSpanElement | null>(null);
+  const wordsRef = useRef<(HTMLSpanElement | null)[]>([]);
+  const cursorRef = useRef<HTMLSpanElement | null>(null);
+
+  const subtitleRef = useRef<HTMLHeadingElement | null>(null);
+  const paragraphRef = useRef<HTMLParagraphElement | null>(null);
+  const buttonsRef = useRef<HTMLDivElement | null>(null);
+  const scrollIndicatorRef = useRef<HTMLButtonElement | null>(null);
+
+  // 1. Animaciones de entrada escalonadas y Typewriter (Fuera del ciclo React)
   useEffect(() => {
+    // A. Revelado inicial escalonado directo en el DOM
+    const tBadge = requestAnimationFrame(() => {
+      if (badgeRef.current) {
+        badgeRef.current.style.opacity = '1';
+        badgeRef.current.style.transform = 'translateY(0)';
+      }
+    });
+
+    const tSubtitle = setTimeout(() => {
+      if (subtitleRef.current) {
+        subtitleRef.current.style.opacity = '0.9';
+        subtitleRef.current.style.transform = 'translateY(0)';
+      }
+    }, 380);
+
+    const tParagraph = setTimeout(() => {
+      if (paragraphRef.current) {
+        paragraphRef.current.style.opacity = '0.85';
+        paragraphRef.current.style.transform = 'translateY(0)';
+      }
+    }, 650);
+
+    // B. Animación Typewriter por manipulación directa del DOM (0 Renders de React)
     let phraseIndex = 0;
     let charIndex = 0;
     let deleting = false;
-    let timeout: ReturnType<typeof setTimeout>;
+    let typeTimer: ReturnType<typeof setTimeout>;
 
-    const TYPE_MS = 85; // 70–100 ms por carácter
-    const DELETE_MS = 45;
-    const HOLD_AFTER_TYPE = 1500; // 1.5s antes de borrar
-    const HOLD_AFTER_DELETE = 250;
+    const TYPE_MS = 55;
+    const DELETE_MS = 30;
+    const HOLD_AFTER_TYPE = 900;
+    const HOLD_AFTER_DELETE = 160;
 
-    const tick = () => {
-      const current = PHRASES[phraseIndex];
+    const showFinalPhase = () => {
+      if (rotatingContainerRef.current) {
+        rotatingContainerRef.current.style.display = 'none';
+      }
+      if (finalContainerRef.current) {
+        finalContainerRef.current.style.display = 'inline';
+      }
+
+      // Revelado Palabra por Palabra sin alteración de Layout (Zero Reflow)
+      let wordIdx = 0;
+      const WORD_SPEED_MS = 90;
+
+      const wordInterval = setInterval(() => {
+        if (wordsRef.current[wordIdx]) {
+          wordsRef.current[wordIdx]!.style.opacity = '1';
+          wordsRef.current[wordIdx]!.style.transform = 'translateY(0)';
+        }
+        wordIdx += 1;
+
+        if (wordIdx >= FINAL_TITLE_WORDS.length) {
+          clearInterval(wordInterval);
+
+          // Mostrar botones e indicador de scroll
+          if (buttonsRef.current) {
+            buttonsRef.current.style.opacity = '1';
+            buttonsRef.current.style.transform = 'scale(1) translateY(0)';
+          }
+          if (scrollIndicatorRef.current) {
+            scrollIndicatorRef.current.style.opacity = '0.75';
+            scrollIndicatorRef.current.style.transform = 'translateX(-50%) translateY(0)';
+          }
+
+          // Desvanecer el cursor 800ms después
+          setTimeout(() => {
+            if (cursorRef.current) {
+              cursorRef.current.style.opacity = '0';
+            }
+          }, 800);
+        }
+      }, WORD_SPEED_MS);
+    };
+
+    const tickRotating = () => {
+      const current = ROTATING_PHRASES[phraseIndex];
 
       if (!deleting) {
         charIndex += 1;
-        setText(current.slice(0, charIndex));
+        if (rotatingTextRef.current) {
+          rotatingTextRef.current.textContent = current.slice(0, charIndex);
+        }
         if (charIndex >= current.length) {
-          // Frase completa: mantener y luego borrar (salvo la última frase).
-          if (phraseIndex === PHRASES.length - 1) {
-            return; // Dejar la última frase escrita permanentemente.
+          if (phraseIndex === ROTATING_PHRASES.length - 1) {
+            typeTimer = setTimeout(showFinalPhase, HOLD_AFTER_TYPE);
+            return;
           }
           deleting = true;
-          timeout = setTimeout(tick, HOLD_AFTER_TYPE);
+          typeTimer = setTimeout(tickRotating, HOLD_AFTER_TYPE);
           return;
         }
-        timeout = setTimeout(tick, TYPE_MS);
+        typeTimer = setTimeout(tickRotating, TYPE_MS);
       } else {
         charIndex -= 1;
-        setText(current.slice(0, charIndex));
+        if (rotatingTextRef.current) {
+          rotatingTextRef.current.textContent = current.slice(0, charIndex);
+        }
         if (charIndex <= 0) {
           deleting = false;
-          phraseIndex = (phraseIndex + 1) % PHRASES.length;
-          timeout = setTimeout(tick, HOLD_AFTER_DELETE);
+          phraseIndex += 1;
+          typeTimer = setTimeout(tickRotating, HOLD_AFTER_DELETE);
           return;
         }
-        timeout = setTimeout(tick, DELETE_MS);
+        typeTimer = setTimeout(tickRotating, DELETE_MS);
       }
     };
 
-    timeout = setTimeout(tick, 600); // pequeño retardo inicial
-    return () => clearTimeout(timeout);
+    typeTimer = setTimeout(tickRotating, 100);
+
+    // Fallback de seguridad para asegurar visibilidad de botones
+    const fallbackTimer = setTimeout(() => {
+      if (buttonsRef.current) {
+        buttonsRef.current.style.opacity = '1';
+        buttonsRef.current.style.transform = 'scale(1) translateY(0)';
+      }
+      if (scrollIndicatorRef.current) {
+        scrollIndicatorRef.current.style.opacity = '0.75';
+        scrollIndicatorRef.current.style.transform = 'translateX(-50%) translateY(0)';
+      }
+    }, 4200);
+
+    return () => {
+      cancelAnimationFrame(tBadge);
+      clearTimeout(tSubtitle);
+      clearTimeout(tParagraph);
+      clearTimeout(typeTimer);
+      clearTimeout(fallbackTimer);
+    };
   }, []);
 
-  // Parpadeo del cursor.
+  // 2. Parpadeo del cursor sin React setState
   useEffect(() => {
-    const id = setInterval(() => setShowCursor((v) => !v), 530);
-    return () => clearInterval(id);
+    let blinkState = true;
+    const interval = setInterval(() => {
+      if (cursorRef.current && cursorRef.current.style.opacity !== '0') {
+        blinkState = !blinkState;
+        cursorRef.current.style.opacity = blinkState ? '1' : '0';
+      }
+    }, 480);
+    return () => clearInterval(interval);
   }, []);
 
-  return { text, showCursor };
-}
-
-/* ------------------------------------------------------------------ */
-/*  Componente Hero enriquecido                                        */
-/* ------------------------------------------------------------------ */
-const Hero: FC = () => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const sectionRef = useRef<HTMLElement | null>(null);
-  const [mounted, setMounted] = useState(false);
-  const { text, showCursor } = useTypewriter();
-
-  // Fade-in escalonado al montar.
+  // 3. Listener de Scroll pasivo directo al DOM
   useEffect(() => {
-    const id = requestAnimationFrame(() => setMounted(true));
-    return () => cancelAnimationFrame(id);
+    let ticking = false;
+
+    const handleScroll = () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const y = window.scrollY;
+          if (heroContentRef.current) {
+            const op = Math.max(0, 1 - y / 550);
+            const tr = y * 0.25;
+            heroContentRef.current.style.opacity = String(op);
+            heroContentRef.current.style.transform = `translate3d(0, ${tr}px, 0)`;
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  /* ---------------- Canvas de partículas + parallax ---------------- */
+  // 4. Canvas de Partículas 60 FPS aislado (0 React Renders)
   useEffect(() => {
     const canvas = canvasRef.current;
     const section = sectionRef.current;
@@ -125,15 +381,13 @@ const Hero: FC = () => {
       const newW = Math.max(1, rect.width);
       const newH = Math.max(1, rect.height);
 
-      // Densidad según dispositivo.
       const vw = window.innerWidth;
       let densityFactor = 1;
-      if (vw < 768) densityFactor = 0.3; // móvil: -70%
-      else if (vw < 1024) densityFactor = 0.6; // tablet: -40%
-      const baseCount = 180; // más cantidad
-      const count = Math.max(40, Math.round(baseCount * densityFactor));
+      if (vw < 768) densityFactor = 0.3;
+      else if (vw < 1024) densityFactor = 0.6;
+      const baseCount = 140;
+      const count = Math.max(35, Math.round(baseCount * densityFactor));
 
-      // Re-inicializar partículas si cambió el tamaño o el conteo.
       if (newW !== width || newH !== height || particles.length !== count) {
         width = newW;
         height = newH;
@@ -160,18 +414,11 @@ const Hero: FC = () => {
 
     const render = (now: number) => {
       if (!running) return;
-      const dt = Math.min((now - last) / 16.67, 3); // normalizado a 60fps
+      const dt = Math.min((now - last) / 16.67, 3);
       last = now;
-
-      // Re-dimensionar si la sección cambió de tamaño (layout tardío).
-      const rect = section.getBoundingClientRect();
-      if (Math.abs(rect.width - width) > 1 || Math.abs(rect.height - height) > 1) {
-        resize();
-      }
 
       ctx.clearRect(0, 0, width, height);
 
-      // Parallax suave hacia el mouse (interpolación).
       parallax.x += (mouse.x - parallax.x) * 0.02;
       parallax.y += (mouse.y - parallax.y) * 0.02;
 
@@ -180,17 +427,14 @@ const Hero: FC = () => {
         p.x += p.vx * dt;
         p.y += p.vy * dt;
 
-        // Reaparecer al salir del área.
         if (p.x < -10) p.x = width + 10;
         if (p.x > width + 10) p.x = -10;
         if (p.y < -10) p.y = height + 10;
         if (p.y > height + 10) p.y = -10;
 
-        // Parpadeo suave de opacidad.
         p.phase += 0.01 * dt;
         p.alpha = p.baseAlpha * (0.6 + 0.4 * Math.sin(p.phase));
 
-        // Reacción leve al mouse (repulsión muy sutil).
         const dx = p.x - mouse.x;
         const dy = p.y - mouse.y;
         const dist = Math.hypot(dx, dy);
@@ -210,7 +454,6 @@ const Hero: FC = () => {
         ctx.fill();
       }
 
-      // Líneas de conexión muy finas.
       ctx.globalAlpha = 1;
       ctx.lineWidth = 0.6;
       for (let i = 0; i < particles.length; i++) {
@@ -221,7 +464,7 @@ const Hero: FC = () => {
           const dy = a.y - b.y;
           const dist = Math.hypot(dx, dy);
           if (dist < CONNECT_DISTANCE) {
-            const opacity = (1 - dist / CONNECT_DISTANCE) * 0.8;
+            const opacity = (1 - dist / CONNECT_DISTANCE) * 0.7;
             ctx.strokeStyle = LINK_COLOR;
             ctx.globalAlpha = opacity;
             ctx.beginPath();
@@ -238,36 +481,36 @@ const Hero: FC = () => {
 
     rafId = requestAnimationFrame(render);
 
-    const onResize = () => resize();
     const onMouseMove = (e: MouseEvent) => {
       const rect = section.getBoundingClientRect();
       mouse.x = e.clientX - rect.left;
       mouse.y = e.clientY - rect.top;
     };
+
     const onMouseLeave = () => {
       mouse.x = -9999;
       mouse.y = -9999;
     };
 
-    window.addEventListener('resize', onResize);
-    window.addEventListener('mousemove', onMouseMove);
-    section.addEventListener('mouseleave', onMouseLeave);
+    window.addEventListener('resize', resize, { passive: true });
+    window.addEventListener('mousemove', onMouseMove, { passive: true });
+    section.addEventListener('mouseleave', onMouseLeave, { passive: true });
 
     return () => {
       running = false;
       cancelAnimationFrame(rafId);
-      window.removeEventListener('resize', onResize);
+      window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', onMouseMove);
       section.removeEventListener('mouseleave', onMouseLeave);
     };
   }, []);
 
-  /* ---------------- Estilos de animación escalonada ---------------- */
-  const step = (delay: number) => ({
-    opacity: mounted ? 1 : 0,
-    transform: mounted ? 'translateY(0)' : 'translateY(16px)',
-    transition: `opacity 0.7s ease ${delay}ms, transform 0.7s ease ${delay}ms`
-  });
+  const handleScrollClick = () => {
+    const nextSection = document.querySelector('main > section:nth-of-type(2)');
+    if (nextSection) {
+      nextSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
     <section
@@ -284,10 +527,19 @@ const Hero: FC = () => {
         padding: 'clamp(5rem, 10vh, 8rem) clamp(1.25rem, 5vw, 4rem)',
         scrollMarginTop: '72px',
         overflow: 'hidden',
-        background: 'linear-gradient(135deg, #F8F6F2 0%, #ECE5DA 45%, #D6C3A5 100%)'
+        background: 'linear-gradient(135deg, #F8F6F2 0%, #ECE5DA 45%, #D6C3A5 100%)',
+        contain: 'layout style paint'
       }}
     >
-      {/* Efectos de luz difuminados (originales) */}
+      <style>{`
+        @keyframes wsMouseWheel {
+          0% { transform: translateY(0); opacity: 1; }
+          50% { transform: translateY(9px); opacity: 0; }
+          100% { transform: translateY(0); opacity: 0; }
+        }
+      `}</style>
+
+      {/* Glows de fondo de baja carga GPU */}
       <div
         aria-hidden="true"
         style={{
@@ -317,7 +569,7 @@ const Hero: FC = () => {
         }}
       />
 
-      {/* Canvas de partículas (capa 2) */}
+      {/* Canvas de partículas independiente */}
       <canvas
         ref={canvasRef}
         aria-hidden="true"
@@ -331,149 +583,187 @@ const Hero: FC = () => {
         }}
       />
 
-      {/* Glow muy suave (capa 3) */}
+      {/* Glow central */}
       <div
         aria-hidden="true"
         style={{
           position: 'absolute',
-          inset: 0,
-          background:
-            'radial-gradient(ellipse at 50% 45%, rgba(255,255,255,0.18), transparent 60%)',
+          top: '45%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '500px',
+          height: '500px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,255,255,0.25), transparent 65%)',
+          filter: 'blur(70px)',
           pointerEvents: 'none',
           zIndex: 0
         }}
       />
 
-      <div style={{ position: 'relative', zIndex: 1, maxWidth: '860px' }}>
+      {/* Contenedor principal (Zero React Re-render en Scroll/Typewriter) */}
+      <div
+        ref={heroContentRef}
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          maxWidth: '860px',
+          transform: 'translate3d(0, 0, 0)',
+          willChange: 'transform, opacity'
+        }}
+      >
+        {/* ① BADGE */}
         <span
+          ref={badgeRef}
           style={{
             display: 'inline-block',
-            padding: '0.4rem 1rem',
+            padding: '0.45rem 1.1rem',
             borderRadius: '999px',
-            background: 'rgba(255,255,255,0.5)',
-            border: '1px solid rgba(200,169,106,0.3)',
+            background: 'rgba(255,255,255,0.65)',
+            border: '1px solid rgba(200,169,106,0.35)',
             fontFamily: 'var(--ws-font)',
-            fontSize: '0.85rem',
+            fontSize: '0.82rem',
             fontWeight: 600,
-            letterSpacing: '0.08em',
+            letterSpacing: '0.1em',
             textTransform: 'uppercase',
             color: 'var(--ws-text)',
             marginBottom: '1.5rem',
-            ...step(0)
+            opacity: 0,
+            transform: 'translateY(12px)',
+            transition: 'opacity 500ms ease, transform 500ms ease',
+            willChange: 'opacity, transform'
           }}
         >
-          Premium · Minimalista · Atemporal
+          Código • Cancha • Conciencia
         </span>
 
+        {/* ② TÍTULO PRINCIPAL: Direct DOM Mutation (Zero Layout Shift & Zero React Re-render) */}
         <h1
           style={{
-            margin: '0 0 1.25rem',
+            margin: '0 auto 1.4rem',
+            maxWidth: '820px',
             fontFamily: 'var(--ws-font)',
-            fontWeight: 700,
-            fontSize: 'clamp(2.75rem, 7vw, 4rem)',
-            letterSpacing: '-0.03em',
-            lineHeight: 1.05,
+            fontWeight: 800,
+            fontSize: 'clamp(2.2rem, 5.2vw, 3.4rem)',
+            letterSpacing: '-0.035em',
+            lineHeight: 1.18,
             color: 'var(--ws-text)',
-            minHeight: '1.05em',
-            ...step(200)
-          }}
+            minHeight: '1.15em',
+            textAlign: 'center',
+            textWrap: 'balance',
+            WebkitTextWrap: 'balance'
+          } as CSSProperties}
         >
-          {text}
+          {/* Contenedor de Frases Rotativas */}
+          <span ref={rotatingContainerRef} style={{ display: 'inline' }}>
+            <span ref={rotatingTextRef} />
+          </span>
+
+          {/* Contenedor del Título Final Pre-maquetado Balanceado (Zero Reflow) */}
+          <span ref={finalContainerRef} style={{ display: 'none' }}>
+            {FINAL_TITLE_WORDS.map((word, idx) => (
+              <span
+                key={idx}
+                ref={(el) => {
+                  wordsRef.current[idx] = el;
+                }}
+                style={{
+                  display: 'inline-block',
+                  whiteSpace: 'pre',
+                  opacity: 0,
+                  transform: 'translateY(4px)',
+                  transition: 'opacity 220ms ease, transform 220ms ease',
+                  willChange: 'opacity, transform'
+                }}
+              >
+                {word}{idx < FINAL_TITLE_WORDS.length - 1 ? ' ' : ''}
+              </span>
+            ))}
+          </span>
+
+          {/* Cursor parpadeante */}
           <span
+            ref={cursorRef}
             aria-hidden="true"
             style={{
               display: 'inline-block',
               width: '0.04em',
               marginLeft: '0.04em',
-              opacity: showCursor ? 1 : 0,
+              opacity: 1,
               color: 'var(--ws-accent)',
-              transition: 'opacity 0.15s ease'
+              transition: 'opacity 500ms ease'
             }}
           >
             |
           </span>
         </h1>
 
+        {/* ③ SUBTÍTULO */}
+        <h2
+          ref={subtitleRef}
+          style={{
+            margin: '0 0 1.25rem',
+            fontFamily: 'var(--ws-font)',
+            fontWeight: 500,
+            fontSize: 'clamp(1.15rem, 2.5vw, 1.45rem)',
+            letterSpacing: '-0.01em',
+            color: 'var(--ws-text)',
+            opacity: 0,
+            transform: 'translateY(12px)',
+            transition: 'opacity 500ms ease, transform 500ms ease',
+            willChange: 'opacity, transform'
+          }}
+        >
+          Una franquicia creada para elevar el potencial humano.
+        </h2>
+
+        {/* ④ PÁRRAFO PRINCIPAL (LCP Target) */}
         <p
+          ref={paragraphRef}
           style={{
             margin: '0 auto 2.5rem',
             fontFamily: 'var(--ws-font)',
-            fontSize: 'clamp(1.05rem, 2vw, 1.3rem)',
+            fontSize: 'clamp(1.02rem, 1.8vw, 1.18rem)',
             color: 'var(--ws-text)',
-            opacity: mounted ? 0.8 : 0,
-            maxWidth: '640px',
+            opacity: 0,
+            maxWidth: '680px',
             lineHeight: 1.6,
-            transform: mounted ? 'translateY(0)' : 'translateY(16px)',
-            transition: 'opacity 0.7s ease 900ms, transform 0.7s ease 900ms'
+            transform: 'translateY(12px)',
+            transition: 'opacity 500ms ease, transform 500ms ease',
+            willChange: 'opacity, transform'
           }}
         >
-          Diseño premium, minimalista y atemporal. Creamos experiencias que trascienden.
+          Reunimos desarrollo web de estándar global, una tienda e-commerce atemporal y la mística de nuestro club de fútbol en torno a la filosofía de la Gnosis.
         </p>
 
+        {/* ⑤ BOTONES */}
         <div
+          ref={buttonsRef}
           style={{
             display: 'flex',
             gap: '1rem',
             justifyContent: 'center',
             flexWrap: 'wrap',
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? 'translateY(0)' : 'translateY(16px)',
-            transition: 'opacity 0.7s ease 1300ms, transform 0.7s ease 1300ms'
+            opacity: 0,
+            transform: 'scale(0.96) translateY(10px)',
+            transition: 'opacity 500ms ease, transform 500ms ease',
+            willChange: 'opacity, transform'
           }}
         >
-          <a
-            href="#tienda"
-            style={{
-              padding: '0.95rem 2rem',
-              borderRadius: 'var(--ws-radius-btn)',
-              background: 'var(--ws-gradient-btn)',
-              color: 'var(--ws-text)',
-              fontFamily: 'var(--ws-font)',
-              fontWeight: 600,
-              fontSize: '1rem',
-              textDecoration: 'none',
-              boxShadow: 'var(--ws-shadow-btn)',
-              transition: 'var(--ws-transition)'
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.transform = 'translateY(-2px)';
-              (e.currentTarget as HTMLAnchorElement).style.boxShadow = 'var(--ws-shadow-btn-hover)';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.transform = 'translateY(0)';
-              (e.currentTarget as HTMLAnchorElement).style.boxShadow = 'var(--ws-shadow-btn)';
-            }}
-          >
-            Explorar tienda
-          </a>
-          <a
-            href="#sobre-nosotros"
-            style={{
-              padding: '0.95rem 2rem',
-              borderRadius: 'var(--ws-radius-btn)',
-              background: 'var(--ws-gradient-btn-secondary)',
-              border: '1px solid rgba(44,33,24,0.12)',
-              color: 'var(--ws-text)',
-              fontFamily: 'var(--ws-font)',
-              fontWeight: 600,
-              fontSize: '1rem',
-              textDecoration: 'none',
-              boxShadow: 'var(--ws-shadow-card)',
-              transition: 'var(--ws-transition)'
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.transform = 'translateY(-2px)';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLAnchorElement).style.transform = 'translateY(0)';
-            }}
-          >
-            Conócenos
-          </a>
+          <MagneticButton href="#franquicia" variant="primary">
+            Explorar WorshipSaint
+          </MagneticButton>
+
+          <MagneticButton href="#servicios" variant="secondary">
+            Iniciar Proyecto Web
+          </MagneticButton>
         </div>
       </div>
+
+      {/* ⑥ SCROLL INDICATOR */}
+      <ScrollIndicator buttonRef={scrollIndicatorRef} onClick={handleScrollClick} />
     </section>
   );
 };
 
-export default Hero;
+export default memo(Hero);
