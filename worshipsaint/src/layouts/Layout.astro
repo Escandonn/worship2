@@ -78,12 +78,21 @@ const {
 		margin: 0;
 		padding: 0;
 		width: 100%;
+		max-width: 100%;
 		min-height: 100%;
+		overflow-x: clip;
 		background-color: var(--ws-bg);
 		color: var(--ws-text);
 		font-family: var(--ws-font);
 		-webkit-font-smoothing: antialiased;
 		-moz-osx-font-smoothing: grayscale;
+	}
+
+	#root,
+	main {
+		width: 100%;
+		max-width: 100%;
+		overflow-x: clip;
 	}
 
 	* {

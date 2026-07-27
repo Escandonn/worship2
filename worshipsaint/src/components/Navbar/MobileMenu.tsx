@@ -42,6 +42,7 @@ const MobileMenu: FC<MobileMenuProps> = ({ routes, activeId, isOpen, onClose }) 
       <div
         onClick={onClose}
         aria-hidden="true"
+        className="ws-mobile-menu-overlay"
         style={{
           position: 'fixed',
           inset: 0,
@@ -59,6 +60,7 @@ const MobileMenu: FC<MobileMenuProps> = ({ routes, activeId, isOpen, onClose }) 
         role="dialog"
         aria-modal="true"
         aria-label="Menú de navegación"
+        className="ws-mobile-menu-panel"
         style={{
           position: 'fixed',
           top: 0,
@@ -131,6 +133,15 @@ const MobileMenu: FC<MobileMenuProps> = ({ routes, activeId, isOpen, onClose }) 
           </ul>
         </nav>
       </aside>
+
+      <style>{`
+        @media (min-width: 1024px) {
+          .ws-mobile-menu-overlay,
+          .ws-mobile-menu-panel {
+            display: none !important;
+          }
+        }
+      `}</style>
     </>
   );
 };

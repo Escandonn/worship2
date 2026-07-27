@@ -5,6 +5,8 @@ import Logo from './Logo';
 import NavItem from './NavItem';
 import MobileMenu from './MobileMenu';
 
+const MOBILE_BREAKPOINT = 1024;
+
 /**
  * Navbar principal de WorshipSaint.
  *
@@ -21,6 +23,20 @@ const Navbar: FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [activeId, setActiveId] = useState<string>(NAV_ROUTES[0]?.id ?? '');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detectar viewport móvil (<1024px) para renderizar solo ahí el menú lateral.
+  useEffect(() => {
+    const update = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
+  // Cerrar el menú si se pasa a escritorio mientras está abierto.
+  useEffect(() => {
+    if (!isMobile && menuOpen) setMenuOpen(false);
+  }, [isMobile, menuOpen]);
 
   // Detectar scroll para activar glassmorphism.
   useEffect(() => {
@@ -118,15 +134,17 @@ const Navbar: FC = () => {
         </svg>
       </button>
 
-      <MobileMenu
-        routes={NAV_ROUTES}
-        activeId={activeId}
-        isOpen={menuOpen}
-        onClose={() => setMenuOpen(false)}
-      />
+      {isMobile && (
+        <MobileMenu
+          routes={NAV_ROUTES}
+          activeId={activeId}
+          isOpen={menuOpen}
+          onClose={() => setMenuOpen(false)}
+        />
+      )}
 
       <style>{`
-        @media (max-width: 860px) {
+        @media (max-width: 1023px) {
           .ws-nav-desktop { display: none !important; }
           .ws-nav-burger { display: inline-flex !important; }
         }
