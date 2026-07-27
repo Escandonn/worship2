@@ -1,24 +1,6 @@
 import React, { useEffect, useRef, memo } from 'react';
 import type { FC, ReactNode, CSSProperties } from 'react';
-
-/* ------------------------------------------------------------------ */
-/*  Configuración de partículas (Paleta WorshipSaint)                  */
-/* ------------------------------------------------------------------ */
-const PARTICLE_COLORS = ['#C8A96A', '#B8954E', '#D6C3A5', '#ECE5DA', '#A8843C'];
-const LINK_COLOR = 'rgba(200,169,106,0.55)';
-const CONNECT_DISTANCE = 140;
-
-interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  radius: number;
-  baseAlpha: number;
-  alpha: number;
-  color: string;
-  phase: number;
-}
+import { BackgroundParticles } from '../../components/BackgroundParticles';
 
 /* ------------------------------------------------------------------ */
 /*  Frases Rotativas + Título Definitivo (Maquetación Previa Fija)     */
@@ -171,7 +153,6 @@ ScrollIndicator.displayName = 'ScrollIndicator';
 /* ------------------------------------------------------------------ */
 const Hero: FC = () => {
   const sectionRef = useRef<HTMLElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const heroContentRef = useRef<HTMLDivElement | null>(null);
 
   // Direct DOM Refs para animaciones fuera de React
@@ -359,170 +340,8 @@ const Hero: FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // 4. Canvas de Partículas Aislado + Pause/Resume automático por IntersectionObserver (Presentation Delay Fix)
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const section = sectionRef.current;
-    if (!canvas || !section) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const mouse = { x: -9999, y: -9999 };
-    const parallax = { x: 0, y: 0 };
-    let particles: Particle[] = [];
-    let width = 0;
-    let height = 0;
-    let rafId = 0;
-    let last = performance.now();
-    let running = false;
-    let isIntersecting = true;
-
-    const resize = () => {
-      const rect = section.getBoundingClientRect();
-      const newW = Math.max(1, rect.width);
-      const newH = Math.max(1, rect.height);
-
-      const vw = window.innerWidth;
-      let densityFactor = 1;
-      if (vw < 768) densityFactor = 0.3;
-      else if (vw < 1024) densityFactor = 0.6;
-      const baseCount = 120; // Optimizado para rasterización ligera
-      const count = Math.max(30, Math.round(baseCount * densityFactor));
-
-      if (newW !== width || newH !== height || particles.length !== count) {
-        width = newW;
-        height = newH;
-        canvas.width = Math.floor(width * dpr);
-        canvas.height = Math.floor(height * dpr);
-        canvas.style.width = `${width}px`;
-        canvas.style.height = `${height}px`;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        particles = Array.from({ length: count }, () => ({
-          x: Math.random() * width,
-          y: Math.random() * height,
-          vx: (Math.random() - 0.5) * 0.25,
-          vy: (Math.random() - 0.5) * 0.25,
-          radius: Math.random() * 2.6 + 0.8,
-          baseAlpha: Math.random() * 0.4 + 0.3,
-          alpha: 0,
-          color: PARTICLE_COLORS[Math.floor(Math.random() * PARTICLE_COLORS.length)],
-          phase: Math.random() * Math.PI * 2
-        }));
-      }
-    };
-
-    resize();
-
-    const render = (now: number) => {
-      if (!running || !isIntersecting) return;
-      const dt = Math.min((now - last) / 16.67, 3);
-      last = now;
-
-      ctx.clearRect(0, 0, width, height);
-
-      parallax.x += (mouse.x - parallax.x) * 0.02;
-      parallax.y += (mouse.y - parallax.y) * 0.02;
-
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-
-        if (p.x < -10) p.x = width + 10;
-        if (p.x > width + 10) p.x = -10;
-        if (p.y < -10) p.y = height + 10;
-        if (p.y > height + 10) p.y = -10;
-
-        p.phase += 0.01 * dt;
-        p.alpha = p.baseAlpha * (0.6 + 0.4 * Math.sin(p.phase));
-
-        const dx = p.x - mouse.x;
-        const dy = p.y - mouse.y;
-        const dist = Math.hypot(dx, dy);
-        if (dist < 110 && dist > 0.01) {
-          const force = (110 - dist) / 110;
-          p.x += (dx / dist) * force * 0.5;
-          p.y += (dy / dist) * force * 0.5;
-        }
-
-        const px = p.x + parallax.x * 0.015;
-        const py = p.y + parallax.y * 0.015;
-
-        ctx.beginPath();
-        ctx.arc(px, py, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = p.alpha;
-        ctx.fill();
-      }
-
-      ctx.globalAlpha = 1;
-      ctx.lineWidth = 0.5;
-      for (let i = 0; i < particles.length; i++) {
-        const a = particles[i];
-        for (let j = i + 1; j < particles.length; j++) {
-          const b = particles[j];
-          const dx = a.x - b.x;
-          const dy = a.y - b.y;
-          const dist = Math.hypot(dx, dy);
-          if (dist < CONNECT_DISTANCE) {
-            const opacity = (1 - dist / CONNECT_DISTANCE) * 0.65;
-            ctx.strokeStyle = LINK_COLOR;
-            ctx.globalAlpha = opacity;
-            ctx.beginPath();
-            ctx.moveTo(a.x + parallax.x * 0.015, a.y + parallax.y * 0.015);
-            ctx.lineTo(b.x + parallax.x * 0.015, b.y + parallax.y * 0.015);
-            ctx.stroke();
-          }
-        }
-      }
-      ctx.globalAlpha = 1;
-
-      rafId = requestAnimationFrame(render);
-    };
-
-    // Detener/Reanudar animación cuando el Hero entra o sale del Viewport (Pausar Renders fuera de vista)
-    const heroObserver = new IntersectionObserver(([entry]) => {
-      isIntersecting = entry.isIntersecting;
-      if (isIntersecting) {
-        if (!running) {
-          running = true;
-          last = performance.now();
-          rafId = requestAnimationFrame(render);
-        }
-      } else {
-        running = false;
-        cancelAnimationFrame(rafId);
-      }
-    }, { threshold: 0.05 });
-
-    heroObserver.observe(section);
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isIntersecting) return;
-      const rect = section.getBoundingClientRect();
-      mouse.x = e.clientX - rect.left;
-      mouse.y = e.clientY - rect.top;
-    };
-
-    const onMouseLeave = () => {
-      mouse.x = -9999;
-      mouse.y = -9999;
-    };
-
-    window.addEventListener('resize', resize, { passive: true });
-    window.addEventListener('mousemove', onMouseMove, { passive: true });
-    section.addEventListener('mouseleave', onMouseLeave, { passive: true });
-
-    return () => {
-      running = false;
-      cancelAnimationFrame(rafId);
-      heroObserver.disconnect();
-      window.removeEventListener('resize', resize);
-      window.removeEventListener('mousemove', onMouseMove);
-      section.removeEventListener('mouseleave', onMouseLeave);
-    };
-  }, []);
+  // 4. Partículas: delegadas al componente independiente BackgroundParticles (@tsparticles/react)
+  //    — motor slim, IntersectionObserver + Page Visibility API gestionados internamente.
 
   const handleScrollClick = () => {
     const nextSection = document.querySelector('main > section:nth-of-type(2)');
@@ -586,19 +405,8 @@ const Hero: FC = () => {
         }}
       />
 
-      {/* Canvas de partículas independiente */}
-      <canvas
-        ref={canvasRef}
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
-          zIndex: 0
-        }}
-      />
+      {/* Motor de partículas oficial @tsparticles/react (componente independiente) */}
+      <BackgroundParticles />
 
       {/* Glow central estático */}
       <div

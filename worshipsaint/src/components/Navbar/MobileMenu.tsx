@@ -126,7 +126,13 @@ const MobileMenu: FC<MobileMenuProps> = ({ routes, activeId, isOpen, onClose }) 
                 <NavItem
                   {...route}
                   isActive={activeId === route.id}
-                  onClick={onClose}
+                  onClick={() => {
+                    onClose();
+                    // Disparar replay de la animación cinematográfica de Tienda
+                    if (route.id === 'tienda') {
+                      window.dispatchEvent(new CustomEvent('ws:replay-tienda'));
+                    }
+                  }}
                 />
               </div>
             ))}

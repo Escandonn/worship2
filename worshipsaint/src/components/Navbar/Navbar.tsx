@@ -103,7 +103,18 @@ const Navbar: FC = () => {
           }}
         >
           {NAV_ROUTES.map((route) => (
-            <NavItem key={route.id} {...route} isActive={activeId === route.id} />
+            <NavItem
+              key={route.id}
+              {...route}
+              isActive={activeId === route.id}
+              onClick={() => {
+                // Disparar replay de la animación cinematográfica de Tienda
+                // al hacer clic en su enlace de navegación.
+                if (route.id === 'tienda') {
+                  window.dispatchEvent(new CustomEvent('ws:replay-tienda'));
+                }
+              }}
+            />
           ))}
         </ul>
       </nav>

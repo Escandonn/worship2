@@ -1,5 +1,5 @@
 import type { FC, MouseEvent } from 'react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Section from '../Section';
 import gorra1 from '../../assets/gorra.jpg';
 import gorra2 from '../../assets/gorra2.jpg';
@@ -209,6 +209,8 @@ const CapCard: FC<CapCardProps> = ({
   );
 };
 
+const TIENDA_REPLAY_EVENT = 'ws:replay-tienda';
+
 const Tienda: FC = () => {
   const [animateCards, setAnimateCards] = useState(false);
   const [animateCaps, setAnimateCaps] = useState(false);
@@ -216,36 +218,97 @@ const Tienda: FC = () => {
   const [triggerSheen, setTriggerSheen] = useState(false);
   const [triggerIdle, setTriggerIdle] = useState(false);
 
+  // Refs para la máquina de estados IDLE/PLAYING/FINISHED
+  const isPlayingRef = useRef(false);
+  const hasLeftViewportRef = useRef(false);
+  const timersRef = useRef<number[]>([]);
+
+  // Secuencia cinematográfica completa (reutilizable)
+  const runCinematicSequence = useCallback(() => {
+    // Evita reinicios duplicados si ya está reproduciéndose
+    if (isPlayingRef.current) return;
+    isPlayingRef.current = true;
+
+    // Limpia timers previos (por si acaso)
+    timersRef.current.forEach((t) => clearTimeout(t));
+    timersRef.current = [];
+
+    // Reset completo: vuelve a estado inicial para reproducir desde cero
+    setAnimateCards(false);
+    setAnimateCaps(false);
+    setAnimateDetails(false);
+    setTriggerSheen(false);
+    setTriggerIdle(false);
+
+    // Forzar reflow para que el navegador reinicie las animaciones CSS
+    void document.getElementById('tienda')?.offsetWidth;
+
+    // 1. Cards vacías (150ms)
+    timersRef.current.push(window.setTimeout(() => setAnimateCards(true), 150));
+
+    // 2. Descenso Cinematográfico 3D de las Gorras desde arriba del Hero (300ms)
+    timersRef.current.push(window.setTimeout(() => setAnimateCaps(true), 300));
+
+    // 3. Detalles del producto y botones (1400ms)
+    timersRef.current.push(window.setTimeout(() => setAnimateDetails(true), 1400));
+
+    // 4. Brillo sobre la visera (1600ms)
+    timersRef.current.push(window.setTimeout(() => setTriggerSheen(true), 1600));
+
+    // 5. Animación de respiración continua/idle (1800ms)
+    timersRef.current.push(window.setTimeout(() => setTriggerIdle(true), 1800));
+
+    // Liberar el lock tras finalizar la secuencia (2s)
+    timersRef.current.push(
+      window.setTimeout(() => {
+        isPlayingRef.current = false;
+      }, 2000)
+    );
+  }, []);
+
   useEffect(() => {
     const el = document.getElementById('tienda');
     if (!el) return;
 
+    // Observer que detecta entrada Y salida completa del viewport
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          // 1. Cards vacías (150ms)
-          setTimeout(() => setAnimateCards(true), 150);
-
-          // 2. Descenso Cinematográfico 3D de las Gorras desde arriba del Hero (300ms)
-          setTimeout(() => setAnimateCaps(true), 300);
-
-          // 3. Detalles del producto y botones (1400ms)
-          setTimeout(() => setAnimateDetails(true), 1400);
-
-          // 4. Brillo sobre la visera (1600ms)
-          setTimeout(() => setTriggerSheen(true), 1600);
-
-          // 5. Animación de respiración continua/idle (1800ms)
-          setTimeout(() => setTriggerIdle(true), 1800);
-
-          observer.unobserve(entry.target);
+          // Solo reproducir si la sección había salido completamente antes
+          // (evita replay en la primera carga controlada por el flag inicial)
+          if (hasLeftViewportRef.current) {
+            hasLeftViewportRef.current = false;
+            runCinematicSequence();
+          } else if (!isPlayingRef.current && !animateCaps) {
+            // Primera vez que entra al viewport (carga inicial)
+            runCinematicSequence();
+          }
+        } else {
+          // Marca que la sección salió completamente del viewport
+          // (solo cuando NO es parcial — intersectionRatio === 0)
+          if (entry.intersectionRatio === 0) {
+            hasLeftViewportRef.current = true;
+          }
         }
       },
-      { threshold: 0.30 }
+      { threshold: [0, 0.30] }
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
+
+    // Listener para replay forzado desde el Navbar (clic en "Tienda")
+    const handleReplay = () => {
+      // Si ya está visible y no reproduciéndose, fuerza el replay
+      runCinematicSequence();
+    };
+    window.addEventListener(TIENDA_REPLAY_EVENT, handleReplay);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener(TIENDA_REPLAY_EVENT, handleReplay);
+      timersRef.current.forEach((t) => clearTimeout(t));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
