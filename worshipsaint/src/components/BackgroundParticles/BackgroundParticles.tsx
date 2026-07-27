@@ -1,17 +1,17 @@
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 import type { FC, CSSProperties } from 'react';
-import { initParticlesEngine, Particles } from '@tsparticles/react';
+import { Particles, ParticlesProvider } from '@tsparticles/react';
 import { loadSlim } from '@tsparticles/slim';
 import type { ISourceOptions, Container, Engine } from '@tsparticles/engine';
 
 /* ------------------------------------------------------------------ */
 /*  BackgroundParticles                                                */
 /*  ------------------------------------------------------------------ */
-/*  Motor de partículas oficial @tsparticles/react (bundle slim).     */
-/*  Desacoplado del Hero: recibe un `containerId` y se monta como      */
-/*  capa de fondo absoluta. Pausa con IntersectionObserver y se       */
-/*  detiene con la Page Visibility API. Sin recrear el motor por      */
-/*  render (initParticlesEngine singleton + useMemo options).         */
+/*  Motor de partículas oficial @tsparticles/react v4 (bundle slim).  */
+/*  Desacoplado del Hero: se monta como capa de fondo absoluta.       */
+/*  Pausa con IntersectionObserver y se detiene con la Page          */
+/*  Visibility API. El motor se inicializa una sola vez vía          */
+/*  ParticlesProvider (init callback estable con useCallback).        */
 /* ------------------------------------------------------------------ */
 
 export interface BackgroundParticlesProps {
@@ -27,34 +27,17 @@ export interface BackgroundParticlesProps {
 const PARTICLE_COLORS = ['#C8A96A', '#B8954E', '#D6C3A5', '#ECE5DA', '#A8843C'];
 const LINK_COLOR = '#C8A96A';
 
-/** Singleton: el motor se inicializa una sola vez por sesión. */
-let enginePromise: Promise<Engine> | null = null;
-
-const getEngine = (): Promise<Engine> => {
-  if (!enginePromise) {
-    enginePromise = initParticlesEngine(async (engineInstance) => {
-      // Carga únicamente los módulos slim (mínimo bundle, sin presets pesados).
-      await loadSlim(engineInstance);
-    });
-  }
-  return enginePromise;
-};
-
 const BackgroundParticles: FC<BackgroundParticlesProps> = memo(
   ({ id = 'ws-background-particles', className, style }) => {
     const wrapperRef = useRef<HTMLDivElement | null>(null);
     const containerRef = useRef<Container | null>(null);
-    const [ready, setReady] = useState(false);
 
-    /* ── 1. Inicialización única del motor (no se recrea por render) ── */
-    useEffect(() => {
-      let mounted = true;
-      getEngine().then(() => {
-        if (mounted) setReady(true);
-      });
-      return () => {
-        mounted = false;
-      };
+    /* ── 1. init callback estable para ParticlesProvider (v4 API) ── */
+    // Debe ser referencialmente estable: ParticlesProvider lanza error si
+    // cambia entre renders. useCallback con deps vacías lo garantiza.
+    const initEngine = useCallback(async (engine: Engine) => {
+      // Carga únicamente los módulos slim (mínimo bundle, sin presets pesados).
+      await loadSlim(engine);
     }, []);
 
     /* ── 2. Opciones memoizadas (paridad visual con el canvas anterior) ── */
@@ -150,7 +133,7 @@ const BackgroundParticles: FC<BackgroundParticlesProps> = memo(
 
       observer.observe(wrapper);
       return () => observer.disconnect();
-    }, [ready]);
+    }, []);
 
     /* ── 5. Page Visibility API: detener animación cuando la pestaña está oculta ── */
     useEffect(() => {
@@ -188,11 +171,11 @@ const BackgroundParticles: FC<BackgroundParticlesProps> = memo(
       [style]
     );
 
-    if (!ready) return null;
-
     return (
       <div ref={wrapperRef} className={className} style={wrapperStyle} aria-hidden="true">
-        <Particles id={id} options={options} particlesLoaded={particlesLoaded} />
+        <ParticlesProvider init={initEngine}>
+          <Particles id={id} options={options} particlesLoaded={particlesLoaded} />
+        </ParticlesProvider>
       </div>
     );
   }
