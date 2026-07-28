@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
 import type { FC, CSSProperties } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
@@ -32,17 +32,6 @@ const ROTACIONES = 3;
 const INTERVALO_ROT = 1700;   // Card protagonista: ~1.7s (dinámico pero elegante)
 const TRANS_JUG = 600;        // Transición entre jugadores: 600ms
 const easeCubic = [0.65, 0, 0.35, 1] as const;
-
-/* Triángulo de conexiones — posiciones en viewBox 0 0 100 130.
-   Calibradas al layout real del grid: card protagonista arriba
-   (centrada), dos cards inferiores abajo. Los nodos se sitúan en
-   el BORDE INTERNO de cada card → las líneas nunca atraviesan
-   la pantalla, solo conectan las 3 cards. */
-const TRI_VERTS = [
-  { x: 50, y: 14 },   // vértice superior (card protagonista, borde inferior)
-  { x: 22, y: 116 },  // vértice inferior izquierdo (card izq, borde sup-interno)
-  { x: 78, y: 116 }   // vértice inferior derecho (card der, borde sup-interno)
-] as const;
 
 const glassCard: CSSProperties = {
   borderRadius: 'var(--ws-radius-card)',
@@ -104,6 +93,88 @@ const EquipoFutbol: FC = () => {
   const py = useSpring(my, { stiffness: 120, damping: 18 });
   const tiltX = useTransform(py, [-1, 1], [4, -4]);
   const tiltY = useTransform(px, [-1, 1], [-4, 4]);
+
+  /* -------------------------------------------------------------- */
+  /* RED VIVA — Medición real de las cards                          */
+  /* Medimos las posiciones reales de las 3 cards con getBounding-  */
+  /* ClientRect relativas al contenedor del grid. Esto garantiza    */
+  /* que las líneas anclen EXACTAMENTE a los nodos, sin importar    */
+  /* el tamaño de pantalla, y se recalculen al cambiar protagonista.*/
+  /* Los nodos se sitúan en el BORDE EXTERIOR de cada foto circular,*/
+  /* orientados hacia el centro del triángulo.                      */
+  /* -------------------------------------------------------------- */
+  const gridRef = useRef<HTMLDivElement | null>(null);
+  // Refs de las fotos circulares (no de las cards completas)
+  const fotoRefs = useRef<(HTMLDivElement | null)[]>([null, null, null]);
+  // Posiciones medidas de los nodos en píxeles reales (relativas al grid)
+  const [nodos, setNodos] = useState<{ x: number; y: number }[]>([
+    { x: 0, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 0 }
+  ]);
+  // Tamaño del contenedor grid (para el viewBox del SVG)
+  const [gridSize, setGridSize] = useState({ w: 0, h: 0 });
+
+  // Calcula el centro de cada nodo en el borde exterior de la foto,
+  // orientado hacia el centro del triángulo.
+  const medirNodos = useCallback(() => {
+    const grid = gridRef.current;
+    if (!grid) return;
+    const gRect = grid.getBoundingClientRect();
+    setGridSize({ w: gRect.width, h: gRect.height });
+
+    // Centros de cada foto circular
+    const centros: { cx: number; cy: number; r: number }[] = [];
+    fotoRefs.current.forEach((f) => {
+      if (!f) { centros.push({ cx: 0, cy: 0, r: 0 }); return; }
+      const r = f.getBoundingClientRect();
+      centros.push({
+        cx: r.left - gRect.left + r.width / 2,
+        cy: r.top - gRect.top + r.height / 2,
+        r: r.width / 2
+      });
+    });
+
+    // Centro del triángulo (baricentro de los 3 centros)
+    const bcx = (centros[0].cx + centros[1].cx + centros[2].cx) / 3;
+    const bcy = (centros[0].cy + centros[1].cy + centros[2].cy) / 3;
+
+    // Cada nodo se sitúa en el borde exterior de la foto, en dirección
+    // OPUESTA al baricentro (hacia afuera del triángulo). Pero las líneas
+    // deben conectar los nodos SIN atravesar las cards → el nodo debe
+    // estar en el borde orientado hacia la conexión.
+    // En un triángulo, cada vértice conecta con los otros dos. El punto
+    // del borde de la foto más cercano a ambos otros vértices es el que
+    // mira hacia el baricentro. Por eso orientamos hacia el baricentro.
+    const nuevos = centros.map((c) => {
+      const dx = bcx - c.cx;
+      const dy = bcy - c.cy;
+      const dist = Math.hypot(dx, dy) || 1;
+      // Nodo en el borde de la foto, hacia el centro del triángulo
+      return {
+        x: c.cx + (dx / dist) * c.r,
+        y: c.cy + (dy / dist) * c.r
+      };
+    });
+    setNodos(nuevos);
+  }, []);
+
+  // Medición inicial + ResizeObserver (recalcula al cambiar tamaño/protagonista)
+  useLayoutEffect(() => {
+    medirNodos();
+    const grid = gridRef.current;
+    if (!grid) return;
+    const ro = new ResizeObserver(() => medirNodos());
+    ro.observe(grid);
+    // También observar las fotos por si cambian de tamaño
+    fotoRefs.current.forEach((f) => { if (f) ro.observe(f); });
+    return () => ro.disconnect();
+  }, [medirNodos]);
+
+  // Recalcular cuando cambia el protagonista (las cards se reordenan)
+  useLayoutEffect(() => {
+    // Pequeño delay para que el DOM se reordene antes de medir
+    const t = window.setTimeout(() => medirNodos(), 50);
+    return () => window.clearTimeout(t);
+  }, [protagonista, medirNodos]);
 
   /* -------------------------------------------------------------- */
   /* Secuencia de entrada cinematográfica                           */
@@ -258,17 +329,14 @@ const EquipoFutbol: FC = () => {
         >
           {/* ──────────────────────────────────────────────────────────── */}
           {/* RED VIVA — Conexiones entre las 3 cards                     */}
-          {/* El SVG vive DENTRO del contenedor del grid (position relative)*/}
-          {/* y usa preserveAspectRatio="xMidYMid meet" → sin deformación. */}
-          {/* viewBox 0 0 100 130 calibrado al layout real del grid:        */}
-          {/*   vértice superior  (50, 14)  = card protagonista (centrada) */}
-          {/*   vértice inf. izq. (22, 116)  = card inferior izquierda       */}
-          {/*   vértice inf. der. (78, 116)  = card inferior derecha        */}
-          {/* Los nodos se sitúan en el BORDE INTERNO de cada card, así las */}
-          {/* líneas nacen y terminan exactamente en las cards — nunca     */}
-          {/* atraviesan la pantalla. Lenguaje visual = Hero.              */}
+          {/* El SVG usa coordenadas en PÍXELES REALES medidos con         */}
+          {/* getBoundingClientRect + ResizeObserver. Las líneas anclan    */}
+          {/* EXACTAMENTE a los nodos en el borde exterior de cada foto,  */}
+          {/* y se recalculan automáticamente al cambiar el protagonista. */}
+          {/* Lenguaje visual = Hero (oro #C8A96A, glow, breathing).       */}
           {/* ──────────────────────────────────────────────────────────── */}
           <div
+            ref={gridRef}
             style={{
               position: 'relative',
               display: 'grid',
@@ -280,11 +348,11 @@ const EquipoFutbol: FC = () => {
               padding: 'clamp(0.4rem, 1.6vw, 0.8rem) 0'
             }}
           >
-            {/* SVG de conexiones — superpuesto al grid, mismo contenedor */}
+            {/* SVG de conexiones — coordenadas en píxeles reales */}
             <svg
               aria-hidden
-              viewBox="0 0 100 130"
-              preserveAspectRatio="xMidYMid meet"
+              viewBox={`0 0 ${gridSize.w} ${gridSize.h}`}
+              preserveAspectRatio="none"
               style={{
                 position: 'absolute',
                 inset: 0,
@@ -297,9 +365,8 @@ const EquipoFutbol: FC = () => {
               }}
             >
               <defs>
-                {/* Glow suave — paridad con shadow.blur=3 de BackgroundParticles */}
                 <filter id="tri-glow" x="-100%" y="-100%" width="300%" height="300%">
-                  <feGaussianBlur stdDeviation="0.5" result="b" />
+                  <feGaussianBlur stdDeviation="2" result="b" />
                   <feMerge>
                     <feMergeNode in="b" />
                     <feMergeNode in="SourceGraphic" />
@@ -312,21 +379,20 @@ const EquipoFutbol: FC = () => {
                 </radialGradient>
               </defs>
 
-              {/* ── Líneas del triángulo — dibujo progresivo (600-800ms total) ── */}
-              {/* strokeWidth 1.2 → ~1px visual. Opacidad 0.3 = elegante, tenue. */}
-              {TRI_VERTS.map((v, i) => {
-                const next = TRI_VERTS[(i + 1) % 3];
+              {/* ── Líneas del triángulo — entre nodos reales ── */}
+              {nodos.map((v, i) => {
+                const next = nodos[(i + 1) % 3];
                 const len = Math.hypot(next.x - v.x, next.y - v.y);
                 return (
                   <motion.line
                     key={`ln-${i}`}
                     x1={v.x} y1={v.y} x2={next.x} y2={next.y}
                     stroke="#C8A96A"
-                    strokeWidth={1.2}
+                    strokeWidth={2}
                     strokeLinecap="round"
                     filter="url(#tri-glow)"
                     initial={{ pathLength: 0, opacity: 0 }}
-                    animate={visTriangulo ? { pathLength: 1, opacity: 0.3 } : { pathLength: 0, opacity: 0 }}
+                    animate={visTriangulo ? { pathLength: 1, opacity: 0.42 } : { pathLength: 0, opacity: 0 }}
                     transition={{ duration: 0.55, delay: 0.25 + i * 0.18, ease: easeCubic }}
                     style={{ strokeDasharray: len }}
                   />
@@ -334,13 +400,12 @@ const EquipoFutbol: FC = () => {
               })}
 
               {/* ── Pulsos de energía — recorren las líneas cada ~4s ── */}
-              {/* Discretos, lentos, elegantes. Solo opacity + cx/cy (transform). */}
-              {TRI_VERTS.map((v, i) => {
-                const next = TRI_VERTS[(i + 1) % 3];
+              {nodos.map((v, i) => {
+                const next = nodos[(i + 1) % 3];
                 return (
                   <motion.circle
                     key={`pulse-${i}`}
-                    r={0.8}
+                    r={3}
                     fill="#F5E6C8"
                     filter="url(#tri-glow)"
                     initial={{ cx: v.x, cy: v.y, opacity: 0 }}
@@ -361,10 +426,8 @@ const EquipoFutbol: FC = () => {
                 );
               })}
 
-              {/* ── Nodos en el borde interno de cada card ── */}
-              {/* Aparición escalonada (nacen → pulso → encienden al llegar).  */}
-              {/* Luego respiran suavemente (paridad opacity.animation Hero).    */}
-              {TRI_VERTS.map((v, i) => (
+              {/* ── Nodos en el borde exterior de cada foto ── */}
+              {nodos.map((v, i) => (
                 <motion.g
                   key={`node-${i}`}
                   initial={{ scale: 0, opacity: 0 }}
@@ -379,11 +442,9 @@ const EquipoFutbol: FC = () => {
                   } : { duration: 0.3 }}
                   style={{ transformOrigin: `${v.x}px ${v.y}px` }}
                 >
-                  {/* Halo exterior — glow amplio y tenue */}
-                  <circle cx={v.x} cy={v.y} r={2.6} fill="url(#tri-node-grad)" opacity={0.45} />
-                  {/* Núcleo dorado sólido — el "nodo" (6-8px visual) */}
+                  <circle cx={v.x} cy={v.y} r={9} fill="url(#tri-node-grad)" opacity={0.45} />
                   <motion.circle
-                    cx={v.x} cy={v.y} r={1.3}
+                    cx={v.x} cy={v.y} r={5}
                     fill="#C8A96A"
                     filter="url(#tri-glow)"
                     animate={visTriangulo ? {
@@ -399,18 +460,17 @@ const EquipoFutbol: FC = () => {
                     } : { duration: 0.3 }}
                     style={{ transformOrigin: `${v.x}px ${v.y}px` }}
                   />
-                  {/* Punto central brillante — núcleo luminoso */}
-                  <circle cx={v.x} cy={v.y} r={0.45} fill="#F5E6C8" opacity={0.95} />
+                  <circle cx={v.x} cy={v.y} r={2} fill="#F5E6C8" opacity={0.95} />
                 </motion.g>
               ))}
             </svg>
 
-            {/* Card protagonista (arriba, centrada) — sin key dinámica */}
+            {/* Card protagonista (arriba, centrada) — 130-140% de las secundarias */}
             <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center' }}>
               <div
                 style={{
                   ...glassCard,
-                  width: 'clamp(176px, 30vw, 248px)',
+                  width: 'clamp(200px, 34vw, 296px)',
                   padding: 'clamp(0.85rem, 2.6vw, 1.25rem)',
                   textAlign: 'center',
                   borderColor: 'rgba(200,169,106,0.7)',
@@ -418,9 +478,10 @@ const EquipoFutbol: FC = () => {
                 }}
               >
                 <div
+                  ref={(el) => { fotoRefs.current[0] = el; }}
                   style={{
-                    width: 'clamp(84px, 15vw, 124px)',
-                    height: 'clamp(84px, 15vw, 124px)',
+                    width: 'clamp(96px, 17vw, 140px)',
+                    height: 'clamp(96px, 17vw, 140px)',
                     borderRadius: '50%',
                     margin: '0 auto 0.6rem',
                     background: JUGADORES[protagonista].grad,
@@ -436,18 +497,23 @@ const EquipoFutbol: FC = () => {
               </div>
             </div>
 
-            {/* Cards inferiores (solo foto pequeña, sin texto) */}
+            {/* Cards inferiores — hacia las esquinas (justify-self extremos) */}
             {JUGADORES.map((j, i) => {
               if (i === protagonista) return null;
+              // La primera card inferior va a la izquierda, la segunda a la derecha
+              const idx = i < protagonista ? i + 1 : i;
+              const isLeft = idx === 1;
               return (
                 <div
                   key={j.id}
+                  ref={(el) => { fotoRefs.current[idx] = el; }}
                   style={{
-                    width: 'clamp(84px, 15vw, 116px)',
-                    height: 'clamp(84px, 15vw, 116px)',
+                    width: 'clamp(72px, 13vw, 104px)',
+                    height: 'clamp(72px, 13vw, 104px)',
                     borderRadius: '50%',
                     background: j.grad,
-                    boxShadow: '0 8px 24px rgba(200,169,106,0.25)'
+                    boxShadow: '0 8px 24px rgba(200,169,106,0.25)',
+                    justifySelf: isLeft ? 'start' : 'end'
                   }}
                 />
               );
