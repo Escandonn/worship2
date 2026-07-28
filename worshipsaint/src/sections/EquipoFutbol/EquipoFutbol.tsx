@@ -29,8 +29,16 @@ const JUGADORES: Jugador[] = [
 type Fase = 'idle' | 'triangulo' | 'rotando' | 'fila' | 'interactivo';
 
 const ROTACIONES = 3;
-const INTERVALO_ROT = 2500;
+const INTERVALO_ROT = 1700;   // Card protagonista: ~1.7s (dinámico pero elegante)
+const TRANS_JUG = 600;        // Transición entre jugadores: 600ms
 const easeCubic = [0.65, 0, 0.35, 1] as const;
+
+/* Triángulo de conexiones — posiciones relativas de los 3 vértices */
+const TRI_VERTS = [
+  { x: 50, y: 12 },   // vértice superior (card protagonista)
+  { x: 20, y: 82 },   // vértice inferior izquierdo
+  { x: 80, y: 82 }    // vértice inferior derecho
+] as const;
 
 const glassCard: CSSProperties = {
   borderRadius: 'var(--ws-radius-card)',
@@ -56,6 +64,8 @@ const EquipoFutbol: FC = () => {
   const contRef = useRef<HTMLDivElement | null>(null);
   const sectionElRef = useRef<HTMLElement | null>(null);
   const { ref: inViewRef, inView } = useInView({ threshold: 0.35, triggerOnce: true });
+  // Visibilidad de la CTA final (entrada por scroll)
+  const { ref: ctaRef, inView: ctaInView } = useInView({ threshold: 0.25, triggerOnce: true });
 
   /* -------------------------------------------------------------- */
   /* Neutralizar el content-visibility:auto del <section> padre.    */
@@ -110,13 +120,14 @@ const EquipoFutbol: FC = () => {
         setProtagonista((p) => (p + 1) % JUGADORES.length);
         window.setTimeout(rotar, INTERVALO_ROT);
       } else {
+        // Última card visible ~1.7s, luego transición elegante a fila
         window.setTimeout(() => {
           setFase('fila');
           window.setTimeout(() => {
             setFase('interactivo');
             setActivo(0);
             setPresentationCompleted(true);
-          }, 700);
+          }, 800);
         }, INTERVALO_ROT);
       }
     };
@@ -239,6 +250,173 @@ const EquipoFutbol: FC = () => {
           transition={{ duration: 0.7, ease: easeCubic }}
           style={{ position: 'absolute', inset: 0, zIndex: 2, minHeight: '440px', pointerEvents: visTriangulo ? 'auto' : 'none' }}
         >
+          {/* ──────────────────────────────────────────────────────────── */}
+          {/* RED VIVA — Conexiones entre las 3 cards                     */}
+          {/* Lenguaje visual idéntico al Hero (BackgroundParticles):     */}
+          {/* nodos dorados #C8A96A, líneas 1px, glow blur 3, op. ~0.42.  */}
+          {/* Construcción: nodos nacen → pulso viaja la línea → nodo    */}
+          {/* destino se enciende → triángulo formado → flujo recurrente. */}
+          {/* ──────────────────────────────────────────────────────────── */}
+          <svg
+            aria-hidden
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              zIndex: 0,
+              opacity: visTriangulo ? 1 : 0,
+              transition: 'opacity 0.8s ease'
+            }}
+          >
+            <defs>
+              {/* Glow suave — paridad con shadow.blur=3 de BackgroundParticles */}
+              <filter id="tri-glow" x="-100%" y="-100%" width="300%" height="300%">
+                <feGaussianBlur stdDeviation="0.55" result="b" />
+                <feMerge>
+                  <feMergeNode in="b" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+              {/* Gradiente radial para nodos (núcleo brillante) */}
+              <radialGradient id="tri-node-grad">
+                <stop offset="0%" stopColor="#F5E6C8" stopOpacity="1" />
+                <stop offset="45%" stopColor="#C8A96A" stopOpacity="0.95" />
+                <stop offset="100%" stopColor="#C8A96A" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+
+            {/* ── Líneas del triángulo — dibujo progresivo + glow tenue ── */}
+            {/* strokeWidth 1.1 en viewBox 100 → ~1px visual real. Opacidad  */}
+            {/* 0.42 = paridad exacta con links.opacity de BackgroundParticles. */}
+            {TRI_VERTS.map((v, i) => {
+              const next = TRI_VERTS[(i + 1) % 3];
+              const len = Math.hypot(next.x - v.x, next.y - v.y);
+              return (
+                <motion.line
+                  key={`ln-${i}`}
+                  x1={v.x} y1={v.y} x2={next.x} y2={next.y}
+                  stroke="#C8A96A"
+                  strokeWidth={1.1}
+                  strokeLinecap="round"
+                  filter="url(#tri-glow)"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={visTriangulo ? { pathLength: 1, opacity: 0.42 } : { pathLength: 0, opacity: 0 }}
+                  transition={{ duration: 1.1, delay: 0.35 + i * 0.35, ease: easeCubic }}
+                  style={{ strokeDasharray: len }}
+                />
+              );
+            })}
+
+            {/* ── Pulsos de luz que viajan por las líneas (energy flow) ── */}
+            {/* Nacen en el nodo origen, recorren la línea, llegan al      */}
+            {/* nodo destino. Se repiten discretamente cada ~3.5s.         */}
+            {TRI_VERTS.map((v, i) => {
+              const next = TRI_VERTS[(i + 1) % 3];
+              return (
+                <motion.circle
+                  key={`pulse-${i}`}
+                  r={0.9}
+                  fill="#F5E6C8"
+                  filter="url(#tri-glow)"
+                  initial={{ cx: v.x, cy: v.y, opacity: 0 }}
+                  animate={visTriangulo ? {
+                    cx: [v.x, next.x],
+                    cy: [v.y, next.y],
+                    opacity: [0, 0.95, 0.95, 0]
+                  } : { opacity: 0 }}
+                  transition={visTriangulo ? {
+                    duration: 1.6,
+                    delay: 0.35 + i * 0.35 + 0.2,
+                    times: [0, 0.15, 0.85, 1],
+                    ease: 'easeInOut',
+                    repeat: Infinity,
+                    repeatDelay: 1.9
+                  } : { duration: 0.4 }}
+                />
+              );
+            })}
+
+            {/* ── Nodos en cada card — anclados a los vértices del triángulo ── */}
+            {/* Aparición escalonada: cada nodo "nace" con un pulso de luz.     */}
+            {/* Luego respiran suavemente (paridad con opacity.animation del Hero). */}
+            {TRI_VERTS.map((v, i) => (
+              <motion.g
+                key={`node-${i}`}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={visTriangulo ? {
+                  scale: [0, 1.6, 1],
+                  opacity: [0, 1, 0.85]
+                } : { scale: 0, opacity: 0 }}
+                transition={visTriangulo ? {
+                  duration: 0.9,
+                  delay: 0.2 + i * 0.35,
+                  ease: easeCubic
+                } : { duration: 0.4 }}
+                style={{ transformOrigin: `${v.x}px ${v.y}px` }}
+              >
+                {/* Halo exterior — glow amplio y tenue */}
+                <circle cx={v.x} cy={v.y} r={3.2} fill="url(#tri-node-grad)" opacity={0.5} />
+                {/* Núcleo dorado sólido — el "nodo" propiamente dicho */}
+                <motion.circle
+                  cx={v.x} cy={v.y} r={1.4}
+                  fill="#C8A96A"
+                  filter="url(#tri-glow)"
+                  animate={visTriangulo ? {
+                    opacity: [0.85, 0.5, 0.85],
+                    scale: [1, 1.25, 1]
+                  } : { opacity: 0 }}
+                  transition={visTriangulo ? {
+                    duration: 2.6,
+                    delay: 0.2 + i * 0.35 + 0.9,
+                    repeat: Infinity,
+                    repeatType: 'reverse',
+                    ease: 'easeInOut'
+                  } : { duration: 0.4 }}
+                  style={{ transformOrigin: `${v.x}px ${v.y}px` }}
+                />
+                {/* Punto central brillante — núcleo luminoso */}
+                <circle cx={v.x} cy={v.y} r={0.5} fill="#F5E6C8" opacity={0.95} />
+              </motion.g>
+            ))}
+
+            {/* ── Nodo central — corazón de la red (pulso lento) ── */}
+            <motion.circle
+              cx={50} cy={58} r={1.6}
+              fill="url(#tri-node-grad)"
+              filter="url(#tri-glow)"
+              initial={{ scale: 0, opacity: 0 }}
+              animate={visTriangulo ? {
+                scale: [0, 1.4, 1],
+                opacity: [0, 0.7, 0.45]
+              } : { scale: 0, opacity: 0 }}
+              transition={visTriangulo ? {
+                duration: 1.6,
+                delay: 1.5,
+                ease: easeCubic
+              } : { duration: 0.5 }}
+              style={{ transformOrigin: '50px 58px' }}
+            />
+            <motion.circle
+              cx={50} cy={58} r={0.7}
+              fill="#F5E6C8"
+              filter="url(#tri-glow)"
+              initial={{ opacity: 0 }}
+              animate={visTriangulo ? {
+                opacity: [0, 0.9, 0.5, 0.9],
+                scale: [1, 1.4, 1]
+              } : { opacity: 0 }}
+              transition={visTriangulo ? {
+                opacity: { duration: 2.4, delay: 1.5, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' },
+                scale: { duration: 2.4, delay: 1.5, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }
+              } : { duration: 0.4 }}
+              style={{ transformOrigin: '50px 58px' }}
+            />
+          </svg>
+
           <div
             style={{
               display: 'grid',
@@ -441,6 +619,136 @@ const EquipoFutbol: FC = () => {
           />
         </motion.div>
       </div>
+
+      {/* ---------------------------------------------------------- */}
+      {/* CTA FINAL — "Más que un equipo, una comunidad"              */}
+      {/* Continuación natural de la sección. Fade In + elevación +  */}
+      {/* blur→enfoque. Fondo de partículas tenues + degradado dorado.*/}
+      {/* ---------------------------------------------------------- */}
+      <motion.section
+        ref={ctaRef}
+        aria-label="Mensaje de comunidad"
+        initial={{ opacity: 0, y: 20, filter: 'blur(8px)' }}
+        animate={ctaInView ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}}
+        transition={{ duration: 0.8, ease: easeCubic }}
+        style={{
+          position: 'relative',
+          marginTop: 'clamp(80px, 12vw, 120px)',
+          padding: 'clamp(2.5rem, 6vw, 4.5rem) clamp(1.5rem, 5vw, 3rem)',
+          borderRadius: 'var(--ws-radius-card)',
+          overflow: 'hidden',
+          textAlign: 'center',
+          background: 'linear-gradient(180deg, rgba(236,229,218,0.4) 0%, rgba(214,195,165,0.25) 100%)',
+          border: '1px solid rgba(200,169,106,0.18)',
+          isolation: 'isolate'
+        }}
+      >
+        {/* Fondo: red de partículas tenues + degradado dorado */}
+        <svg
+          aria-hidden
+          viewBox="0 0 1200 400"
+          preserveAspectRatio="xMidYMid slice"
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.5, pointerEvents: 'none', zIndex: -1 }}
+        >
+          <defs>
+            <radialGradient id="cta-grad" cx="50%" cy="40%" r="60%">
+              <stop offset="0%" stopColor="rgba(200,169,106,0.18)" />
+              <stop offset="100%" stopColor="transparent" />
+            </radialGradient>
+          </defs>
+          <rect width="1200" height="400" fill="url(#cta-grad)" />
+          {/* Nodos brillando lentamente */}
+          {[
+            { x: 180, y: 90 }, { x: 420, y: 60 }, { x: 760, y: 110 }, { x: 1020, y: 80 },
+            { x: 300, y: 320 }, { x: 640, y: 340 }, { x: 920, y: 300 }, { x: 1120, y: 330 }
+          ].map((n, i) => (
+            <motion.circle
+              key={i}
+              cx={n.x} cy={n.y} r={2.5}
+              fill="rgba(200,169,106,0.55)"
+              animate={{ opacity: [0.2, 0.7, 0.2], scale: [1, 1.4, 1] }}
+              transition={{ duration: 3.5, delay: i * 0.4, repeat: Infinity, ease: 'easeInOut' }}
+            />
+          ))}
+          {/* Conexiones tenues entre nodos cercanos */}
+          {[
+            { x1: 180, y1: 90, x2: 420, y2: 60 },
+            { x1: 420, y1: 60, x2: 760, y2: 110 },
+            { x1: 760, y1: 110, x2: 1020, y2: 80 },
+            { x1: 300, y1: 320, x2: 640, y2: 340 },
+            { x1: 640, y1: 340, x2: 920, y2: 300 }
+          ].map((ln, i) => (
+            <line
+              key={i}
+              x1={ln.x1} y1={ln.y1} x2={ln.x2} y2={ln.y2}
+              stroke="rgba(200,169,106,0.12)"
+              strokeWidth={1}
+            />
+          ))}
+        </svg>
+
+        <h2
+          style={{
+            margin: '0 0 0.75rem',
+            fontFamily: 'var(--ws-font)',
+            fontWeight: 800,
+            color: 'var(--ws-text)',
+            fontSize: 'clamp(1.6rem, 4vw, 2.4rem)',
+            letterSpacing: '-0.01em',
+            lineHeight: 1.15
+          }}
+        >
+          Más que un equipo, una comunidad.
+        </h2>
+        <p
+          style={{
+            margin: '0 auto 1rem',
+            maxWidth: '640px',
+            fontFamily: 'var(--ws-font)',
+            color: 'var(--ws-accent)',
+            fontWeight: 600,
+            fontSize: 'clamp(1rem, 2.2vw, 1.15rem)'
+          }}
+        >
+          Cada jugador representa disciplina, identidad y compromiso con WorshipSaint.
+        </p>
+        <p
+          style={{
+            margin: '0 auto 2rem',
+            maxWidth: '680px',
+            fontFamily: 'var(--ws-font)',
+            color: 'var(--ws-text)',
+            opacity: 0.78,
+            fontSize: 'clamp(0.95rem, 2vw, 1.05rem)',
+            lineHeight: 1.7
+          }}
+        >
+          Nuestro equipo refleja los valores que impulsan cada proyecto: pasión, constancia, colaboración y crecimiento. Dentro y fuera del campo construimos una comunidad que comparte una misma visión y una misma identidad.
+        </p>
+        <motion.a
+          href="#sobre-nosotros"
+          whileHover={{ scale: 1.04, y: -2 }}
+          whileTap={{ scale: 0.97 }}
+          transition={{ duration: 0.3, ease: easeCubic }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '0.9rem 2.2rem',
+            fontFamily: 'var(--ws-font)',
+            fontWeight: 700,
+            fontSize: '1rem',
+            color: '#fff',
+            textDecoration: 'none',
+            borderRadius: 'var(--ws-radius-btn)',
+            background: 'var(--ws-gradient-btn, linear-gradient(135deg, #C8A96A 0%, #8a6d3b 100%))',
+            boxShadow: 'var(--ws-shadow-btn)',
+            willChange: 'transform'
+          }}
+        >
+          Conoce nuestra historia
+        </motion.a>
+      </motion.section>
       </ParallaxProvider>
     </Section>
   );
