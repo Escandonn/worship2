@@ -128,9 +128,13 @@ const MobileMenu: FC<MobileMenuProps> = ({ routes, activeId, isOpen, onClose }) 
                   isActive={activeId === route.id}
                   onClick={() => {
                     onClose();
-                    // Disparar replay de la animación cinematográfica de Tienda
+                    // Disparar replay de la animación cinematográfica al
+                    // hacer clic en el enlace correspondiente.
                     if (route.id === 'tienda') {
                       window.dispatchEvent(new CustomEvent('ws:replay-tienda'));
+                    }
+                    if (route.id === 'equipo-futbol') {
+                      window.dispatchEvent(new CustomEvent('ws:replay-equipo'));
                     }
                   }}
                 />

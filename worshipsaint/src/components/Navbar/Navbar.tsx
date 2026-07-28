@@ -108,10 +108,13 @@ const Navbar: FC = () => {
               {...route}
               isActive={activeId === route.id}
               onClick={() => {
-                // Disparar replay de la animación cinematográfica de Tienda
-                // al hacer clic en su enlace de navegación.
+                // Disparar replay de la animación cinematográfica al hacer
+                // clic en el enlace de navegación correspondiente.
                 if (route.id === 'tienda') {
                   window.dispatchEvent(new CustomEvent('ws:replay-tienda'));
+                }
+                if (route.id === 'equipo-futbol') {
+                  window.dispatchEvent(new CustomEvent('ws:replay-equipo'));
                 }
               }}
             />
