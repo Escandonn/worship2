@@ -33,11 +33,15 @@ const INTERVALO_ROT = 1700;   // Card protagonista: ~1.7s (dinámico pero elegan
 const TRANS_JUG = 600;        // Transición entre jugadores: 600ms
 const easeCubic = [0.65, 0, 0.35, 1] as const;
 
-/* Triángulo de conexiones — posiciones relativas de los 3 vértices */
+/* Triángulo de conexiones — posiciones en viewBox 0 0 100 130.
+   Calibradas al layout real del grid: card protagonista arriba
+   (centrada), dos cards inferiores abajo. Los nodos se sitúan en
+   el BORDE INTERNO de cada card → las líneas nunca atraviesan
+   la pantalla, solo conectan las 3 cards. */
 const TRI_VERTS = [
-  { x: 50, y: 12 },   // vértice superior (card protagonista)
-  { x: 20, y: 82 },   // vértice inferior izquierdo
-  { x: 80, y: 82 }    // vértice inferior derecho
+  { x: 50, y: 14 },   // vértice superior (card protagonista, borde inferior)
+  { x: 22, y: 116 },  // vértice inferior izquierdo (card izq, borde sup-interno)
+  { x: 78, y: 116 }   // vértice inferior derecho (card der, borde sup-interno)
 ] as const;
 
 const glassCard: CSSProperties = {
@@ -232,8 +236,8 @@ const EquipoFutbol: FC = () => {
             position: 'absolute',
             inset: '-10% 0 0 0',
             margin: '0 auto',
-            width: 'min(620px, 90%)',
-            height: '420px',
+            width: 'min(496px, 90%)',
+            height: '336px',
             background: 'radial-gradient(circle at 50% 40%, rgba(200,169,106,0.35), transparent 65%)',
             filter: 'blur(40px)',
             pointerEvents: 'none',
@@ -244,196 +248,170 @@ const EquipoFutbol: FC = () => {
         {/* ---------------------------------------------------------- */}
         {/* ESCENA 1 — Triángulo + rotación de protagonismo            */}
         {/* SIEMPRE MONTADA. Se desvanece por opacity al llegar a fila. */}
+        {/* El SVG vive DENTRO del grid de cards (contenedor relativo)  */}
+        {/* para que las líneas anclen exactamente a los nodos reales.  */}
         {/* ---------------------------------------------------------- */}
         <motion.div
           animate={{ opacity: visTriangulo, scale: visTriangulo ? 1 : 0.96, filter: visTriangulo ? 'blur(0px)' : 'blur(8px)' }}
           transition={{ duration: 0.7, ease: easeCubic }}
-          style={{ position: 'absolute', inset: 0, zIndex: 2, minHeight: '440px', pointerEvents: visTriangulo ? 'auto' : 'none' }}
+          style={{ position: 'absolute', inset: 0, zIndex: 2, pointerEvents: visTriangulo ? 'auto' : 'none' }}
         >
           {/* ──────────────────────────────────────────────────────────── */}
           {/* RED VIVA — Conexiones entre las 3 cards                     */}
-          {/* Lenguaje visual idéntico al Hero (BackgroundParticles):     */}
-          {/* nodos dorados #C8A96A, líneas 1px, glow blur 3, op. ~0.42.  */}
-          {/* Construcción: nodos nacen → pulso viaja la línea → nodo    */}
-          {/* destino se enciende → triángulo formado → flujo recurrente. */}
+          {/* El SVG vive DENTRO del contenedor del grid (position relative)*/}
+          {/* y usa preserveAspectRatio="xMidYMid meet" → sin deformación. */}
+          {/* viewBox 0 0 100 130 calibrado al layout real del grid:        */}
+          {/*   vértice superior  (50, 14)  = card protagonista (centrada) */}
+          {/*   vértice inf. izq. (22, 116)  = card inferior izquierda       */}
+          {/*   vértice inf. der. (78, 116)  = card inferior derecha        */}
+          {/* Los nodos se sitúan en el BORDE INTERNO de cada card, así las */}
+          {/* líneas nacen y terminan exactamente en las cards — nunca     */}
+          {/* atraviesan la pantalla. Lenguaje visual = Hero.              */}
           {/* ──────────────────────────────────────────────────────────── */}
-          <svg
-            aria-hidden
-            viewBox="0 0 100 100"
-            preserveAspectRatio="none"
-            style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              pointerEvents: 'none',
-              zIndex: 0,
-              opacity: visTriangulo ? 1 : 0,
-              transition: 'opacity 0.8s ease'
-            }}
-          >
-            <defs>
-              {/* Glow suave — paridad con shadow.blur=3 de BackgroundParticles */}
-              <filter id="tri-glow" x="-100%" y="-100%" width="300%" height="300%">
-                <feGaussianBlur stdDeviation="0.55" result="b" />
-                <feMerge>
-                  <feMergeNode in="b" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
-              {/* Gradiente radial para nodos (núcleo brillante) */}
-              <radialGradient id="tri-node-grad">
-                <stop offset="0%" stopColor="#F5E6C8" stopOpacity="1" />
-                <stop offset="45%" stopColor="#C8A96A" stopOpacity="0.95" />
-                <stop offset="100%" stopColor="#C8A96A" stopOpacity="0" />
-              </radialGradient>
-            </defs>
-
-            {/* ── Líneas del triángulo — dibujo progresivo + glow tenue ── */}
-            {/* strokeWidth 1.1 en viewBox 100 → ~1px visual real. Opacidad  */}
-            {/* 0.42 = paridad exacta con links.opacity de BackgroundParticles. */}
-            {TRI_VERTS.map((v, i) => {
-              const next = TRI_VERTS[(i + 1) % 3];
-              const len = Math.hypot(next.x - v.x, next.y - v.y);
-              return (
-                <motion.line
-                  key={`ln-${i}`}
-                  x1={v.x} y1={v.y} x2={next.x} y2={next.y}
-                  stroke="#C8A96A"
-                  strokeWidth={1.1}
-                  strokeLinecap="round"
-                  filter="url(#tri-glow)"
-                  initial={{ pathLength: 0, opacity: 0 }}
-                  animate={visTriangulo ? { pathLength: 1, opacity: 0.42 } : { pathLength: 0, opacity: 0 }}
-                  transition={{ duration: 1.1, delay: 0.35 + i * 0.35, ease: easeCubic }}
-                  style={{ strokeDasharray: len }}
-                />
-              );
-            })}
-
-            {/* ── Pulsos de luz que viajan por las líneas (energy flow) ── */}
-            {/* Nacen en el nodo origen, recorren la línea, llegan al      */}
-            {/* nodo destino. Se repiten discretamente cada ~3.5s.         */}
-            {TRI_VERTS.map((v, i) => {
-              const next = TRI_VERTS[(i + 1) % 3];
-              return (
-                <motion.circle
-                  key={`pulse-${i}`}
-                  r={0.9}
-                  fill="#F5E6C8"
-                  filter="url(#tri-glow)"
-                  initial={{ cx: v.x, cy: v.y, opacity: 0 }}
-                  animate={visTriangulo ? {
-                    cx: [v.x, next.x],
-                    cy: [v.y, next.y],
-                    opacity: [0, 0.95, 0.95, 0]
-                  } : { opacity: 0 }}
-                  transition={visTriangulo ? {
-                    duration: 1.6,
-                    delay: 0.35 + i * 0.35 + 0.2,
-                    times: [0, 0.15, 0.85, 1],
-                    ease: 'easeInOut',
-                    repeat: Infinity,
-                    repeatDelay: 1.9
-                  } : { duration: 0.4 }}
-                />
-              );
-            })}
-
-            {/* ── Nodos en cada card — anclados a los vértices del triángulo ── */}
-            {/* Aparición escalonada: cada nodo "nace" con un pulso de luz.     */}
-            {/* Luego respiran suavemente (paridad con opacity.animation del Hero). */}
-            {TRI_VERTS.map((v, i) => (
-              <motion.g
-                key={`node-${i}`}
-                initial={{ scale: 0, opacity: 0 }}
-                animate={visTriangulo ? {
-                  scale: [0, 1.6, 1],
-                  opacity: [0, 1, 0.85]
-                } : { scale: 0, opacity: 0 }}
-                transition={visTriangulo ? {
-                  duration: 0.9,
-                  delay: 0.2 + i * 0.35,
-                  ease: easeCubic
-                } : { duration: 0.4 }}
-                style={{ transformOrigin: `${v.x}px ${v.y}px` }}
-              >
-                {/* Halo exterior — glow amplio y tenue */}
-                <circle cx={v.x} cy={v.y} r={3.2} fill="url(#tri-node-grad)" opacity={0.5} />
-                {/* Núcleo dorado sólido — el "nodo" propiamente dicho */}
-                <motion.circle
-                  cx={v.x} cy={v.y} r={1.4}
-                  fill="#C8A96A"
-                  filter="url(#tri-glow)"
-                  animate={visTriangulo ? {
-                    opacity: [0.85, 0.5, 0.85],
-                    scale: [1, 1.25, 1]
-                  } : { opacity: 0 }}
-                  transition={visTriangulo ? {
-                    duration: 2.6,
-                    delay: 0.2 + i * 0.35 + 0.9,
-                    repeat: Infinity,
-                    repeatType: 'reverse',
-                    ease: 'easeInOut'
-                  } : { duration: 0.4 }}
-                  style={{ transformOrigin: `${v.x}px ${v.y}px` }}
-                />
-                {/* Punto central brillante — núcleo luminoso */}
-                <circle cx={v.x} cy={v.y} r={0.5} fill="#F5E6C8" opacity={0.95} />
-              </motion.g>
-            ))}
-
-            {/* ── Nodo central — corazón de la red (pulso lento) ── */}
-            <motion.circle
-              cx={50} cy={58} r={1.6}
-              fill="url(#tri-node-grad)"
-              filter="url(#tri-glow)"
-              initial={{ scale: 0, opacity: 0 }}
-              animate={visTriangulo ? {
-                scale: [0, 1.4, 1],
-                opacity: [0, 0.7, 0.45]
-              } : { scale: 0, opacity: 0 }}
-              transition={visTriangulo ? {
-                duration: 1.6,
-                delay: 1.5,
-                ease: easeCubic
-              } : { duration: 0.5 }}
-              style={{ transformOrigin: '50px 58px' }}
-            />
-            <motion.circle
-              cx={50} cy={58} r={0.7}
-              fill="#F5E6C8"
-              filter="url(#tri-glow)"
-              initial={{ opacity: 0 }}
-              animate={visTriangulo ? {
-                opacity: [0, 0.9, 0.5, 0.9],
-                scale: [1, 1.4, 1]
-              } : { opacity: 0 }}
-              transition={visTriangulo ? {
-                opacity: { duration: 2.4, delay: 1.5, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' },
-                scale: { duration: 2.4, delay: 1.5, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }
-              } : { duration: 0.4 }}
-              style={{ transformOrigin: '50px 58px' }}
-            />
-          </svg>
-
           <div
             style={{
+              position: 'relative',
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
-              gap: 'clamp(1rem, 3vw, 2.5rem)',
-              maxWidth: '760px',
+              gap: 'clamp(0.6rem, 2vw, 1.6rem)',
+              maxWidth: 'clamp(288px, 88vw, 576px)',
               margin: '0 auto',
-              justifyItems: 'center'
+              justifyItems: 'center',
+              padding: 'clamp(0.4rem, 1.6vw, 0.8rem) 0'
             }}
           >
+            {/* SVG de conexiones — superpuesto al grid, mismo contenedor */}
+            <svg
+              aria-hidden
+              viewBox="0 0 100 130"
+              preserveAspectRatio="xMidYMid meet"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'none',
+                zIndex: 5,
+                opacity: visTriangulo ? 1 : 0,
+                transition: 'opacity 0.7s ease'
+              }}
+            >
+              <defs>
+                {/* Glow suave — paridad con shadow.blur=3 de BackgroundParticles */}
+                <filter id="tri-glow" x="-100%" y="-100%" width="300%" height="300%">
+                  <feGaussianBlur stdDeviation="0.5" result="b" />
+                  <feMerge>
+                    <feMergeNode in="b" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+                <radialGradient id="tri-node-grad">
+                  <stop offset="0%" stopColor="#F5E6C8" stopOpacity="1" />
+                  <stop offset="45%" stopColor="#C8A96A" stopOpacity="0.95" />
+                  <stop offset="100%" stopColor="#C8A96A" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+
+              {/* ── Líneas del triángulo — dibujo progresivo (600-800ms total) ── */}
+              {/* strokeWidth 1.2 → ~1px visual. Opacidad 0.3 = elegante, tenue. */}
+              {TRI_VERTS.map((v, i) => {
+                const next = TRI_VERTS[(i + 1) % 3];
+                const len = Math.hypot(next.x - v.x, next.y - v.y);
+                return (
+                  <motion.line
+                    key={`ln-${i}`}
+                    x1={v.x} y1={v.y} x2={next.x} y2={next.y}
+                    stroke="#C8A96A"
+                    strokeWidth={1.2}
+                    strokeLinecap="round"
+                    filter="url(#tri-glow)"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={visTriangulo ? { pathLength: 1, opacity: 0.3 } : { pathLength: 0, opacity: 0 }}
+                    transition={{ duration: 0.55, delay: 0.25 + i * 0.18, ease: easeCubic }}
+                    style={{ strokeDasharray: len }}
+                  />
+                );
+              })}
+
+              {/* ── Pulsos de energía — recorren las líneas cada ~4s ── */}
+              {/* Discretos, lentos, elegantes. Solo opacity + cx/cy (transform). */}
+              {TRI_VERTS.map((v, i) => {
+                const next = TRI_VERTS[(i + 1) % 3];
+                return (
+                  <motion.circle
+                    key={`pulse-${i}`}
+                    r={0.8}
+                    fill="#F5E6C8"
+                    filter="url(#tri-glow)"
+                    initial={{ cx: v.x, cy: v.y, opacity: 0 }}
+                    animate={visTriangulo ? {
+                      cx: [v.x, next.x],
+                      cy: [v.y, next.y],
+                      opacity: [0, 0.9, 0.9, 0]
+                    } : { opacity: 0 }}
+                    transition={visTriangulo ? {
+                      duration: 1.4,
+                      delay: 0.25 + i * 0.18 + 0.15,
+                      times: [0, 0.12, 0.88, 1],
+                      ease: 'easeInOut',
+                      repeat: Infinity,
+                      repeatDelay: 2.6
+                    } : { duration: 0.3 }}
+                  />
+                );
+              })}
+
+              {/* ── Nodos en el borde interno de cada card ── */}
+              {/* Aparición escalonada (nacen → pulso → encienden al llegar).  */}
+              {/* Luego respiran suavemente (paridad opacity.animation Hero).    */}
+              {TRI_VERTS.map((v, i) => (
+                <motion.g
+                  key={`node-${i}`}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={visTriangulo ? {
+                    scale: [0, 1.5, 1],
+                    opacity: [0, 1, 0.9]
+                  } : { scale: 0, opacity: 0 }}
+                  transition={visTriangulo ? {
+                    duration: 0.5,
+                    delay: 0.15 + i * 0.18,
+                    ease: easeCubic
+                  } : { duration: 0.3 }}
+                  style={{ transformOrigin: `${v.x}px ${v.y}px` }}
+                >
+                  {/* Halo exterior — glow amplio y tenue */}
+                  <circle cx={v.x} cy={v.y} r={2.6} fill="url(#tri-node-grad)" opacity={0.45} />
+                  {/* Núcleo dorado sólido — el "nodo" (6-8px visual) */}
+                  <motion.circle
+                    cx={v.x} cy={v.y} r={1.3}
+                    fill="#C8A96A"
+                    filter="url(#tri-glow)"
+                    animate={visTriangulo ? {
+                      opacity: [0.9, 0.55, 0.9],
+                      scale: [1, 1.2, 1]
+                    } : { opacity: 0 }}
+                    transition={visTriangulo ? {
+                      duration: 2.8,
+                      delay: 0.15 + i * 0.18 + 0.6,
+                      repeat: Infinity,
+                      repeatType: 'reverse',
+                      ease: 'easeInOut'
+                    } : { duration: 0.3 }}
+                    style={{ transformOrigin: `${v.x}px ${v.y}px` }}
+                  />
+                  {/* Punto central brillante — núcleo luminoso */}
+                  <circle cx={v.x} cy={v.y} r={0.45} fill="#F5E6C8" opacity={0.95} />
+                </motion.g>
+              ))}
+            </svg>
+
             {/* Card protagonista (arriba, centrada) — sin key dinámica */}
             <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center' }}>
               <div
                 style={{
                   ...glassCard,
-                  width: 'clamp(220px, 38vw, 300px)',
-                  padding: '1.5rem',
+                  width: 'clamp(176px, 30vw, 248px)',
+                  padding: 'clamp(0.85rem, 2.6vw, 1.25rem)',
                   textAlign: 'center',
                   borderColor: 'rgba(200,169,106,0.7)',
                   boxShadow: '0 18px 50px rgba(200,169,106,0.35), 0 0 30px rgba(200,169,106,0.25)'
@@ -441,18 +419,18 @@ const EquipoFutbol: FC = () => {
               >
                 <div
                   style={{
-                    width: 'clamp(120px, 22vw, 170px)',
-                    height: 'clamp(120px, 22vw, 170px)',
+                    width: 'clamp(84px, 15vw, 124px)',
+                    height: 'clamp(84px, 15vw, 124px)',
                     borderRadius: '50%',
-                    margin: '0 auto 1rem',
+                    margin: '0 auto 0.6rem',
                     background: JUGADORES[protagonista].grad,
                     boxShadow: '0 10px 30px rgba(200,169,106,0.4)'
                   }}
                 />
-                <h3 style={{ margin: 0, fontFamily: 'var(--ws-font)', fontWeight: 700, color: 'var(--ws-text)', fontSize: 'clamp(1.1rem, 2.4vw, 1.4rem)' }}>
+                <h3 style={{ margin: 0, fontFamily: 'var(--ws-font)', fontWeight: 700, color: 'var(--ws-text)', fontSize: 'clamp(1.05rem, 2.2vw, 1.35rem)' }}>
                   {JUGADORES[protagonista].nombre} {JUGADORES[protagonista].numero}
                 </h3>
-                <p style={{ margin: '0.4rem 0 0', color: 'var(--ws-muted)', fontFamily: 'var(--ws-font)', fontSize: '0.95rem' }}>
+                <p style={{ margin: '0.3rem 0 0', color: 'var(--ws-muted)', fontFamily: 'var(--ws-font)', fontSize: '0.9rem' }}>
                   {JUGADORES[protagonista].rol}
                 </p>
               </div>
@@ -465,8 +443,8 @@ const EquipoFutbol: FC = () => {
                 <div
                   key={j.id}
                   style={{
-                    width: 'clamp(110px, 20vw, 150px)',
-                    height: 'clamp(110px, 20vw, 150px)',
+                    width: 'clamp(84px, 15vw, 116px)',
+                    height: 'clamp(84px, 15vw, 116px)',
                     borderRadius: '50%',
                     background: j.grad,
                     boxShadow: '0 8px 24px rgba(200,169,106,0.25)'
@@ -492,10 +470,10 @@ const EquipoFutbol: FC = () => {
             style={{
               display: 'flex',
               justifyContent: 'center',
-              marginBottom: 'clamp(1.5rem, 4vw, 2.5rem)'
+              marginBottom: 'clamp(1.2rem, 3.2vw, 2rem)'
             }}
           >
-            <Parallax speed={-8} style={{ width: 'min(90%, 520px)' }}>
+            <Parallax speed={-8} style={{ width: 'min(90%, 440px)' }}>
               <div {...bindHover()} style={{ width: '100%' }}>
                 <motion.div
                   onClick={onMainClick}
@@ -551,7 +529,7 @@ const EquipoFutbol: FC = () => {
           <div
             style={{
               display: 'flex',
-              gap: 'clamp(0.75rem, 2vw, 1.5rem)',
+              gap: 'clamp(0.6rem, 1.6vw, 1.2rem)',
               justifyContent: 'center',
               flexWrap: 'wrap'
             }}
@@ -576,8 +554,8 @@ const EquipoFutbol: FC = () => {
                   aria-label={`Seleccionar ${j.nombre} ${j.numero}`}
                   aria-pressed={esActivo}
                   style={{
-                    width: 'clamp(64px, 14vw, 88px)',
-                    height: 'clamp(64px, 14vw, 88px)',
+                    width: 'clamp(54px, 12vw, 74px)',
+                    height: 'clamp(54px, 12vw, 74px)',
                     borderRadius: '50%',
                     border: esActivo ? '2px solid rgba(200,169,106,0.9)' : 'none',
                     padding: 0,
@@ -597,7 +575,7 @@ const EquipoFutbol: FC = () => {
           animate={{ opacity: visIdle }}
           transition={{ duration: 0.5, ease: easeCubic }}
           style={{
-            height: '440px',
+            height: 'clamp(224px, 42vw, 300px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -610,8 +588,8 @@ const EquipoFutbol: FC = () => {
             animate={{ opacity: visIdle ? [0.3, 0.6, 0.3] : 0 }}
             transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
             style={{
-              width: 'clamp(120px, 22vw, 170px)',
-              height: 'clamp(120px, 22vw, 170px)',
+              width: 'clamp(100px, 18vw, 140px)',
+              height: 'clamp(100px, 18vw, 140px)',
               borderRadius: '50%',
               background: 'radial-gradient(circle, rgba(200,169,106,0.25), transparent 70%)',
               filter: 'blur(8px)'
@@ -633,8 +611,8 @@ const EquipoFutbol: FC = () => {
         transition={{ duration: 0.8, ease: easeCubic }}
         style={{
           position: 'relative',
-          marginTop: 'clamp(80px, 12vw, 120px)',
-          padding: 'clamp(2.5rem, 6vw, 4.5rem) clamp(1.5rem, 5vw, 3rem)',
+          marginTop: 'clamp(32px, 5.6vw, 58px)',
+          padding: 'clamp(2rem, 4.8vw, 3.6rem) clamp(1.2rem, 4vw, 2.4rem)',
           borderRadius: 'var(--ws-radius-card)',
           overflow: 'hidden',
           textAlign: 'center',
