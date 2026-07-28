@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, memo } from 'react';
 import type { FC, ReactNode, CSSProperties } from 'react';
 import { BackgroundParticles } from '../../components/BackgroundParticles';
+import { SacredSymbol } from '../../components/SacredSymbol';
 
 /* ------------------------------------------------------------------ */
 /*  Frases Rotativas + Título Definitivo (Maquetación Previa Fija)     */
@@ -459,6 +460,12 @@ const Hero: FC = () => {
           zIndex: 0
         }}
       />
+
+      {/* ✦ SÍMBOLO GEOMÉTRICO (capa de fondo): círculo + triángulo equilátero
+          inscrito. Posicionado de forma absoluta y centrado respecto al Hero.
+          NO ocupa espacio en el flujo, NO empuja ningún elemento. Vive detrás
+          del contenido (zIndex 0) como marca de agua premium. */}
+      <SacredSymbol />
 
       {/* Contenedor principal (Zero React Re-render en Scroll/Typewriter) */}
       <div

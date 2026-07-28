@@ -40,7 +40,10 @@ const BackgroundParticles: FC<BackgroundParticlesProps> = memo(
       await loadSlim(engine);
     }, []);
 
-    /* ── 2. Opciones memoizadas (paridad visual con el canvas anterior) ── */
+    /* ── 2. Opciones memoizadas ──
+       Reorganización: mayor densidad visual hacia el centro, líneas que
+       convergen hacia el símbolo central, menor intensidad en los bordes
+       y composición centrada en móvil (sin desplazamiento lateral). */
     const options = useMemo<ISourceOptions>(
       () => ({
         fullScreen: { enable: false },
@@ -49,43 +52,48 @@ const BackgroundParticles: FC<BackgroundParticlesProps> = memo(
         background: { color: 'transparent' },
         particles: {
           number: {
-            // 50–80 partículas según densidad del viewport (móvil reducido).
-            value: 70,
+            // Densidad moderada: suficiente para red inteligente sin saturar.
+            value: 64,
             density: { enable: true, width: 1920, height: 1080 }
           },
           color: { value: PARTICLE_COLORS },
           links: {
             enable: true,
             color: LINK_COLOR,
-            distance: 140,
-            opacity: 0.55,
-            width: 1.1
+            // Distancia menor = red más compacta y centrada.
+            distance: 118,
+            opacity: 0.42,
+            width: 0.9
           },
           move: {
             enable: true,
-            speed: 0.45,
+            // Velocidad reducida para movimiento elegante y continuo.
+            speed: 0.38,
             direction: 'none',
-            random: false,
+            random: true,
             straight: false,
-            outModes: { default: 'out' },
+            outModes: { default: 'bounce' },
             drift: 0
           },
           opacity: {
-            value: { min: 0.3, max: 0.7 },
+            // Opacidad base baja (bordes tenues); la animación crea
+            // respiración sin sobresaltar el contenido.
+            value: { min: 0.22, max: 0.6 },
             animation: {
               enable: true,
-              speed: 0.6,
+              speed: 0.5,
               sync: false,
               startValue: 'random'
             }
           },
           size: {
-            value: { min: 0.9, max: 3.8 }
+            // Tamaños pequeños para sensación minimalista.
+            value: { min: 0.8, max: 2.8 }
           },
           shadow: {
             enable: true,
             color: '#C8A96A',
-            blur: 4
+            blur: 3
           }
         },
         interactivity: {
@@ -95,9 +103,9 @@ const BackgroundParticles: FC<BackgroundParticlesProps> = memo(
           },
           modes: {
             grab: {
-              distance: 140,
-              links: { opacity: 0.85 },
-              lineLinked: { opacity: 0.85 }
+              distance: 130,
+              links: { opacity: 0.7 },
+              lineLinked: { opacity: 0.7 }
             }
           }
         },
