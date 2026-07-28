@@ -375,6 +375,41 @@ const Hero: FC = () => {
           50% { transform: translateY(9px); opacity: 0; }
           100% { transform: translateY(0); opacity: 0; }
         }
+
+        /* ───────────────────────────────────────────────────────────────
+           CORRECCIÓN MOBILE-ONLY: Estabilidad del título durante el typing.
+           Aplica únicamente en móviles (<= 768px). No afecta desktop/tablet.
+           Objetivo: reservar desde el inicio la altura del título final y
+           evitar que las palabras salten de línea mientras se escriben.
+        ─────────────────────────────────────────────────────────────── */
+        @media (max-width: 768px) {
+          #hero h1 {
+            /* Margen lateral adecuado para que las palabras no rocen el borde
+               y tengan espacio para crecer sin reorganizarse bruscamente. */
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+            /* Reducción mínima del tamaño del título solo en móviles para
+               garantizar que las frases rotativas (que se escriben letra a
+               letra en una sola línea) quepan sin desbordar. */
+            font-size: clamp(1.7rem, 6vw, 2.1rem) !important;
+            /* Reserva desde el inicio la altura del bloque del título final
+               (varias líneas en móvil) para que el contenedor no crezca
+               durante la animación y las palabras no salten de línea. */
+            min-height: 6.4em !important;
+            /* text-wrap: balance recalcula el reparto de líneas en cada
+               carácter añadido, provocando saltos. En móvil, durante la
+               escritura, usamos el flujo natural (wrap) que es estable. */
+            text-wrap: wrap !important;
+            -webkit-text-wrap: wrap !important;
+          }
+          /* Las frases rotativas se escriben letra por letra. En móvil,
+             forzamos una sola línea (nowrap) para que el texto no salte
+             de línea mientras crece; son frases cortas que caben en una
+             línea con el tamaño reducido del título. */
+          #hero h1 > span:first-child {
+            white-space: nowrap !important;
+          }
+        }
       `}</style>
 
       {/* Glows de fondo con degradados suaves estáticos (Sin filtros de blur en vivo) */}
