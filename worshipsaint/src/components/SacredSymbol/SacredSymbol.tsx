@@ -52,8 +52,8 @@ const SacredSymbol: FC<SacredSymbolProps> = memo(
       top: '50%',
       left: '50%',
       transform: 'translate(-50%, -50%)',
-      width: 'clamp(150px, 32vw, 320px)',
-      height: 'clamp(150px, 32vw, 320px)',
+      width: 'clamp(190px, 100vw, 700px)',
+      height: 'clamp(190px, 40vw, 400px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -69,7 +69,7 @@ const SacredSymbol: FC<SacredSymbolProps> = memo(
       height: '100%',
       display: 'block',
       overflow: 'visible',
-      filter: 'drop-shadow(0 0 5px rgba(200,169,106,0.25))'
+      filter: 'drop-shadow(0 0 9px rgba(200,169,106,0.45))'
     };
 
     return (
@@ -77,7 +77,7 @@ const SacredSymbol: FC<SacredSymbolProps> = memo(
         <style>{`
           @keyframes wsSymbolEnter {
             0% { opacity: 0; transform: translate(-50%, -50%) scale(0.94); }
-            100% { opacity: 0.22; transform: translate(-50%, -50%) scale(1); }
+            100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
           }
           @keyframes wsSymbolFloat {
             0%, 100% { transform: translate(-50%, -50%) translateY(0); }
@@ -88,8 +88,15 @@ const SacredSymbol: FC<SacredSymbolProps> = memo(
             100% { transform: rotate(360deg); }
           }
           @keyframes wsSymbolBreathe {
-            0%, 100% { opacity: 0.18; }
-            50% { opacity: 0.26; }
+            0%, 100% { opacity: 0.34; }
+            50% { opacity: 0.46; }
+          }
+          @keyframes wsSymbolCircleBreathe {
+            0%, 100% { opacity: 0.36; }
+            50% { opacity: 0.48; }
+          }
+          .ws-symbol-circle-breathe {
+            animation: wsSymbolCircleBreathe 10s ease-in-out infinite;
           }
           .ws-symbol-float {
             animation: wsSymbolFloat 7s ease-in-out infinite;
@@ -104,7 +111,8 @@ const SacredSymbol: FC<SacredSymbolProps> = memo(
           @media (prefers-reduced-motion: reduce) {
             .ws-symbol-float,
             .ws-symbol-rotate,
-            .ws-symbol-breathe {
+            .ws-symbol-breathe,
+            .ws-symbol-circle-breathe {
               animation: none !important;
             }
           }
@@ -116,22 +124,25 @@ const SacredSymbol: FC<SacredSymbolProps> = memo(
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
-            {/* Círculo fino con respiración de opacidad */}
+            {/* Círculo fino integrado con la red de partículas:
+                mismo color (#C8A96A), grosor similar a las conexiones,
+                glow dorado suave y respiración sutil de 10s.
+                vectorEffect non-scaling-stroke => grosor idéntico en móvil. */}
             <circle
-              className="ws-symbol-breathe"
+              className="ws-symbol-circle-breathe"
               cx={CIRCLE_CX}
               cy={CIRCLE_CY}
               r={CIRCLE_R}
-              stroke="var(--ws-accent, #C8A96A)"
-              strokeWidth={1.1}
+              stroke="#C8A96A"
+              strokeWidth={1.6}
               vectorEffect="non-scaling-stroke"
             />
             {/* Triángulo equilátero inscrito con rotación muy lenta */}
             <polygon
               className="ws-symbol-rotate"
               points={TRIANGLE_POINTS}
-              stroke="var(--ws-accent, #C8A96A)"
-              strokeWidth={1.1}
+              stroke="#C8A96A"
+              strokeWidth={1.5}
               strokeLinejoin="round"
               vectorEffect="non-scaling-stroke"
             />
