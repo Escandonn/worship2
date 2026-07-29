@@ -54,6 +54,16 @@ const EquipoFutbol: FC = () => {
   // desmontaje. Garantiza que la sección permanezca visible tras la animación.
   const [presentationCompleted, setPresentationCompleted] = useState(false);
 
+  // Detección de Desktop (≥1024px) — para mejoras exclusivas PC
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
   const contRef = useRef<HTMLDivElement | null>(null);
   const sectionElRef = useRef<HTMLElement | null>(null);
   const { ref: inViewRef, inView } = useInView({ threshold: 0.35, triggerOnce: true });
@@ -341,8 +351,8 @@ const EquipoFutbol: FC = () => {
               position: 'relative',
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
-              gap: 'clamp(0.6rem, 2vw, 1.6rem)',
-              maxWidth: 'clamp(288px, 88vw, 576px)',
+              gap: isDesktop ? 'clamp(1.2rem, 4vw, 3.2rem)' : 'clamp(0.6rem, 2vw, 1.6rem)',
+              maxWidth: isDesktop ? 'clamp(480px, 70vw, 760px)' : 'clamp(288px, 88vw, 576px)',
               margin: '0 auto',
               justifyItems: 'center',
               padding: 'clamp(0.4rem, 1.6vw, 0.8rem) 0'
@@ -360,7 +370,7 @@ const EquipoFutbol: FC = () => {
                 height: '100%',
                 pointerEvents: 'none',
                 zIndex: 5,
-                opacity: visTriangulo ? 1 : 0,
+                opacity: visTriangulo && isDesktop ? 1 : 0,
                 transition: 'opacity 0.7s ease'
               }}
             >
@@ -470,7 +480,7 @@ const EquipoFutbol: FC = () => {
               <div
                 style={{
                   ...glassCard,
-                  width: 'clamp(200px, 34vw, 296px)',
+                  width: isDesktop ? 'clamp(260px, 40vw, 384px)' : 'clamp(200px, 34vw, 296px)',
                   padding: 'clamp(0.85rem, 2.6vw, 1.25rem)',
                   textAlign: 'center',
                   borderColor: 'rgba(200,169,106,0.7)',
@@ -480,8 +490,8 @@ const EquipoFutbol: FC = () => {
                 <div
                   ref={(el) => { fotoRefs.current[0] = el; }}
                   style={{
-                    width: 'clamp(96px, 17vw, 140px)',
-                    height: 'clamp(96px, 17vw, 140px)',
+                    width: isDesktop ? 'clamp(128px, 22vw, 188px)' : 'clamp(96px, 17vw, 140px)',
+                    height: isDesktop ? 'clamp(128px, 22vw, 188px)' : 'clamp(96px, 17vw, 140px)',
                     borderRadius: '50%',
                     margin: '0 auto 0.6rem',
                     background: JUGADORES[protagonista].grad,
@@ -508,8 +518,8 @@ const EquipoFutbol: FC = () => {
                   key={j.id}
                   ref={(el) => { fotoRefs.current[idx] = el; }}
                   style={{
-                    width: 'clamp(72px, 13vw, 104px)',
-                    height: 'clamp(72px, 13vw, 104px)',
+                    width: isDesktop ? 'clamp(88px, 15vw, 128px)' : 'clamp(72px, 13vw, 104px)',
+                    height: isDesktop ? 'clamp(88px, 15vw, 128px)' : 'clamp(72px, 13vw, 104px)',
                     borderRadius: '50%',
                     background: j.grad,
                     boxShadow: '0 8px 24px rgba(200,169,106,0.25)',
