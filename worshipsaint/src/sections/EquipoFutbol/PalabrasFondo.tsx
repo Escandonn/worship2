@@ -3,24 +3,29 @@ import type { FC, CSSProperties } from 'react';
 import { useInView } from 'react-intersection-observer';
 
 /* ------------------------------------------------------------------ */
-/*  Fondo tipográfico editorial — WorshipSaint Premium                */
+/*  Fondo tipográfico editorial vertical — WorshipSaint Premium       */
 /*  ----------------------------------------------------------------  */
-/*  Slots verticales distribuidos a lo largo de TODA la altura de la  */
-/*  sección. Cada slot aloja una palabra que se escribe (typewriter   */
-/*  manual idéntico al Hero), permanece, se desvanece con blur leve  */
-/*  y es reemplazada por otra. Los slots están desfasados en tiempo.  */
+/*  Sistema editorial de palabras verticales con anti-colisión.        */
 /*                                                                    */
-/*  • Responsive: Desktop 4-5 slots/lado, Tablet 3-4, Mobile 2-3.     */
-/*  • Distribución vertical con separación amplia (flex space-evenly).*/
-/*  • Tipografías editoriales variadas (Playfair, Cormorant, Cinzel, */
-/*    Inter, Manrope) con pesos Regular/Medium/SemiBold.             */
-/*  • Tamaños 22-46px.                                               */
-/*  • Paleta dorada premium, opacidad 65%-90% (alta legibilidad).    */
-/*  • Glow muy sutil.                                                */
-/*  • Deriva vertical ≤8px (translate3d, GPU-only).                  */
-/*  • Solo transform/opacity/translate3d/will-change.                */
-/*  • IntersectionObserver: no anima fuera del viewport.             */
-/*  • overflow hidden → sin scroll horizontal.                       */
+/*  • Desktop: 4-6 columnas/lado · Tablet: 3 · Mobile: 1-2.           */
+/*  • Cada columna: UNA sola palabra, escrita letra por letra         */
+/*    verticalmente (apiladas de arriba hacia abajo).                 */
+/*  • Anti-colisión: antes de renderizar se verifica posición,        */
+/*    altura ocupada y separación mínima. Si hay conflicto, se        */
+/*    reubica automáticamente en una posición libre.                 */
+/*  • Zona central protegida: las palabras nunca invaden el área      */
+/*    del contenido principal (card, miniaturas, imagen, títulos).    */
+/*  • Posicionamiento dinámico: se calcula ancho/alto/columnas y      */
+/*    se distribuyen las columnas equilibradamente (no posiciones      */
+/*    fijas).                                                          */
+/*  • Cada columna: temporizador independiente (4s, 5s, 6s, 7s...).  */
+/*  • Secuencia: Fade In → Máquina de escribir → Pausa →              */
+/*    Flotación → Fade Out → Nueva palabra.                           */
+/*  • Flotación vertical ≤6px (translate3d, GPU-only).               */
+/*  • Tipografías: Cinzel, Playfair, Cormorant, Inter, Manrope.      */
+/*  • Tamaños 24-48px variados. Opacidad 75%-90%.                     */
+/*  • Solo transform/opacity/translate3d/will-change. 60 FPS.        */
+/*  • IntersectionObserver: pausa fuera del viewport.                 */
 /* ------------------------------------------------------------------ */
 
 const PALABRAS = [
@@ -33,11 +38,11 @@ const PALABRAS = [
   'APRENDER', 'ENSEÑAR', 'PERSEVERANCIA', 'SUPERACIÓN', 'VALOR', 'EQUIPO'
 ];
 
-// Paleta dorada premium WorshipSaint (alta visibilidad)
+// Paleta dorada premium WorshipSaint (alta visibilidad 75-90%)
 const COLORES = [
-  '#C8A96A', // dorado elegante
+  '#C8A96A', // oro premium
   '#D6C3A5', // beige cálido
-  '#F5E6C8', // blanco cálido
+  '#F5E6C8', // blanco marfil
   '#E8D5A8', // champagne
   '#B8954E', // oro satinado
   '#C9A86A'  // dorado suave
@@ -45,9 +50,9 @@ const COLORES = [
 
 // Familias tipográficas editoriales
 const FAMILIAS = [
+  "'Cinzel', serif",
   "'Playfair Display', serif",
   "'Cormorant Garamond', serif",
-  "'Cinzel', serif",
   "'Inter', sans-serif",
   "'Manrope', sans-serif"
 ];
@@ -63,10 +68,10 @@ interface Variante {
 
 // Genera una variante aleatoria estable (no cambia por palabra)
 const nuevaVariante = (): Variante => {
-  const sizes = [22, 26, 30, 34, 38, 42, 46];
+  const sizes = [24, 28, 30, 34, 38, 42, 46, 48];
   const weights = [400, 500, 600];
-  const spacings = ['0.04em', '0.08em', '0.12em', '0.16em'];
-  const opacities = [0.65, 0.72, 0.78, 0.82, 0.88, 0.90];
+  const spacings = ['0.02em', '0.06em', '0.10em'];
+  const opacities = [0.75, 0.80, 0.85, 0.88, 0.90];
   return {
     size: sizes[Math.floor(Math.random() * sizes.length)],
     weight: weights[Math.floor(Math.random() * weights.length)],
@@ -77,37 +82,102 @@ const nuevaVariante = (): Variante => {
   };
 };
 
-// Nº de slots por lado según ancho
-const slotsPorLado = (w: number): number => {
-  if (w >= 1024) return 5;   // Desktop: 4-5
-  if (w >= 768) return 4;    // Tablet: 3-4
-  if (w >= 480) return 3;    // Mobile grande: 3
-  return 2;                   // Mobile pequeño: 2-3
+// Nº de columnas por lado según ancho disponible (dinámico)
+const columnasPorLado = (w: number): number => {
+  if (w >= 1280) return 6;   // Desktop XL: 6 columnas/lado
+  if (w >= 1024) return 5;   // Desktop: 5 columnas/lado
+  if (w >= 900)  return 4;   // Desktop pequeño: 4 columnas/lado
+  if (w >= 768)  return 3;   // Tablet: 3 columnas/lado
+  if (w >= 480)  return 2;   // Mobile grande: 2 columnas/lado
+  return 1;                   // Mobile pequeño: 1 columna/lado
 };
 
+// Temporizadores independientes por columna (4s, 5s, 6s, 7s...)
+const HOLDS = [4000, 5000, 6000, 7000, 4500, 5500];
+
+// Separación mínima vertical entre palabras de la misma columna (px)
+const SEP_MIN = 28;
+
 /* ------------------------------------------------------------------ */
-/*  Slot individual — una palabra que se escribe, permanece,          */
-/*  se desvanece con blur leve y es reemplazada por otra.             */
+/*  Utilidad anti-colisión: gestiona rangos verticales ocupados        */
 /* ------------------------------------------------------------------ */
-interface SlotProps {
+class GestorEspacio {
+  private rangos: Array<{ y0: number; y1: number }> = [];
+  private altoTotal: number;
+
+  constructor(altoTotal: number) {
+    this.altoTotal = altoTotal;
+  }
+
+  reset() { this.rangos = []; }
+
+  // Verifica si un rango [y0, y1] colisiona con alguno existente
+  private colisiona(y0: number, y1: number): boolean {
+    return this.rangos.some(r => !(y1 + SEP_MIN <= r.y0 || y0 >= r.y1 + SEP_MIN));
+  }
+
+  // Intenta colocar una palabra de altura `h` en `yPreferido`.
+  // Si colisiona, busca la posición libre más cercana. Devuelve y0.
+  colocar(h: number, yPreferido: number): number {
+    const max0 = Math.max(0, this.altoTotal - h);
+    let y = Math.min(Math.max(0, yPreferido), max0);
+
+    // Búsqueda expansiva: intenta y, luego y±step, y±2step...
+    const step = 18;
+    const intentos = Math.ceil(this.altoTotal / step) + 4;
+    for (let i = 0; i < intentos; i++) {
+      const yA = y + i * step;
+      const yB = y - i * step;
+      if (yA <= max0 && !this.colisiona(yA, yA + h)) {
+        this.rangos.push({ y0: yA, y1: yA + h });
+        return yA;
+      }
+      if (i > 0 && yB >= 0 && !this.colisiona(yB, yB + h)) {
+        this.rangos.push({ y0: yB, y1: yB + h });
+        return yB;
+      }
+    }
+    // No se pudo colocar sin colisión: lo acepta igual (mejor esfuerzo)
+    const yFinal = Math.min(Math.max(0, yPreferido), max0);
+    this.rangos.push({ y0: yFinal, y1: yFinal + h });
+    return yFinal;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Columna vertical — una palabra escrita letra por letra vertical   */
+/* ------------------------------------------------------------------ */
+interface ColumnaProps {
   palabras: string[];
   delayInicio: number;
   velocidadBase: number;
-  alineacion: 'start' | 'center' | 'end';
+  holdMs: number;          // tiempo de permanencia (independiente por columna)
+  xPct: number;            // posición horizontal dinámica (% del ancho del lado)
+  yPct: number;            // posición vertical dinámica (% de la altura, anti-colisión)
+  variante: Variante;      // variante tipográfica estable por columna
+  pausar: boolean;         // pausa cuando está fuera del viewport
 }
 
-const Slot: FC<SlotProps> = ({ palabras, delayInicio, velocidadBase, alineacion }) => {
-  const textoRef = useRef<HTMLSpanElement | null>(null);
+const Columna: FC<ColumnaProps> = ({
+  palabras,
+  delayInicio,
+  velocidadBase,
+  holdMs,
+  xPct,
+  yPct,
+  variante,
+  pausar
+}) => {
+  const stackRef = useRef<HTMLDivElement | null>(null);
   const cursorRef = useRef<HTMLSpanElement | null>(null);
-  const slotRef = useRef<HTMLDivElement | null>(null);
-  const variante = useMemo<Variante>(() => nuevaVariante(), []);
-  const [driftY] = useState<number>(() => Math.random() * 8 - 4);
+  const colRef = useRef<HTMLDivElement | null>(null);
+  const [driftY] = useState<number>(() => Math.random() * 6 - 3); // ≤6px
 
   useEffect(() => {
-    const texto = textoRef.current;
+    const stack = stackRef.current;
     const cursor = cursorRef.current;
-    const slot = slotRef.current;
-    if (!texto || !cursor || !slot) return;
+    const col = colRef.current;
+    if (!stack || !cursor || !col) return;
 
     let palabraIdx = Math.floor(Math.random() * palabras.length);
     let charIndex = 0;
@@ -115,22 +185,32 @@ const Slot: FC<SlotProps> = ({ palabras, delayInicio, velocidadBase, alineacion 
     let timer: ReturnType<typeof setTimeout>;
     let blinkState = true;
     let blinkInterval: ReturnType<typeof setInterval> | null = null;
+    let destruido = false;
 
     const typeMs = velocidadBase + Math.floor(Math.random() * 20);
     const deleteMs = Math.floor(velocidadBase * 0.5);
-    const holdType = 1800 + Math.floor(Math.random() * 1200);
-    const holdDelete = 300 + Math.floor(Math.random() * 300);
+    const holdDelete = 350 + Math.floor(Math.random() * 300);
+
+    // Renderiza las letras visibles (0..charIndex) apiladas verticalmente
+    const renderLetras = () => {
+      const current = palabras[palabraIdx];
+      const letras = current.slice(0, charIndex).split('');
+      stack.textContent = '';
+      letras.forEach(letra => {
+        const span = document.createElement('span');
+        span.textContent = letra;
+        span.style.display = 'block';
+        span.style.textAlign = 'center';
+        span.style.lineHeight = '1';
+        stack.appendChild(span);
+      });
+    };
 
     // Estado visual: aparece (fade + translateY), se desvanece (blur leve)
     const mostrar = () => {
-      slot.style.opacity = '1';
-      slot.style.transform = 'translate3d(0, 0, 0)';
-      slot.style.filter = 'blur(0px)';
-    };
-    const desvanecer = () => {
-      slot.style.opacity = '0';
-      slot.style.transform = 'translate3d(0, -6px, 0)';
-      slot.style.filter = 'blur(2px)';
+      col.style.opacity = String(variante.opacity);
+      col.style.transform = 'translate3d(0, 0, 0)';
+      col.style.filter = 'blur(0px)';
     };
 
     const iniciarBlink = () => {
@@ -145,26 +225,29 @@ const Slot: FC<SlotProps> = ({ palabras, delayInicio, velocidadBase, alineacion 
     };
 
     const tick = () => {
+      if (destruido) return;
       const current = palabras[palabraIdx];
       if (!deleting) {
         charIndex += 1;
-        if (texto) texto.textContent = current.slice(0, charIndex);
+        renderLetras();
         if (charIndex >= current.length) {
           deleting = true;
           detenerBlink();
           if (cursor) cursor.style.opacity = '0';
-          timer = setTimeout(tick, holdType);
+          // Permanece visible (holdMs independiente por columna)
+          timer = setTimeout(tick, holdMs);
           return;
         }
         timer = setTimeout(tick, typeMs);
       } else {
         charIndex -= 1;
-        if (texto) texto.textContent = current.slice(0, charIndex);
+        renderLetras();
         if (charIndex <= 0) {
           deleting = false;
           palabraIdx = (palabraIdx + 1) % palabras.length;
-          // Pequeña pausa en vacío antes de la siguiente
+          // Pausa en vacío antes de la siguiente palabra
           timer = setTimeout(() => {
+            if (destruido) return;
             mostrar();
             iniciarBlink();
             tick();
@@ -177,81 +260,105 @@ const Slot: FC<SlotProps> = ({ palabras, delayInicio, velocidadBase, alineacion 
 
     // Arranque con desfase independiente
     timer = setTimeout(() => {
+      if (destruido) return;
       mostrar();
       iniciarBlink();
       tick();
     }, delayInicio);
 
     return () => {
+      destruido = true;
       clearTimeout(timer);
       detenerBlink();
     };
-  }, [palabras, delayInicio, velocidadBase]);
+  }, [palabras, delayInicio, velocidadBase, holdMs, variante.opacity]);
+
+  // Pausa fuera del viewport: detiene animación de flotación
+  useEffect(() => {
+    if (!colRef.current) return;
+    colRef.current.style.animationPlayState = pausar ? 'paused' : 'running';
+  }, [pausar]);
 
   const glow = `0 0 5px ${variante.color}40, 0 0 12px ${variante.color}20`;
 
-  const slotStyle: CSSProperties = {
+  // Contenedor de la columna: posición absoluta con offset dinámico
+  const colStyle: CSSProperties = {
+    position: 'absolute',
+    top: `${yPct}%`,
+    left: `${xPct}%`,
     display: 'flex',
-    justifyContent: alineacion,
+    flexDirection: 'column',
     alignItems: 'center',
-    flex: '1 1 0',
-    minHeight: 0,
+    justifyContent: 'flex-start',
     opacity: 0,
     transform: 'translate3d(0, 6px, 0)',
     filter: 'blur(2px)',
     transition: 'opacity 700ms ease, transform 700ms ease, filter 700ms ease',
     willChange: 'opacity, transform',
-    // Deriva vertical muy lenta (≤8px) — solo translate3d (GPU)
+    // Deriva vertical muy lenta (≤6px) — solo translate3d (GPU)
     animation: `wsDrift ${14 + (delayInicio % 8)}s ease-in-out infinite alternate`,
     ['--drift' as string]: `${driftY}px`
   };
 
-  const textStyle: CSSProperties = {
+  // Stack de letras verticales (cada letra en su propia línea)
+  const stackStyle: CSSProperties = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
     fontFamily: variante.familia,
-    fontSize: `clamp(${variante.size * 0.7}px, ${variante.size / 16}vw, ${variante.size}px)`,
+    fontSize: `clamp(${Math.round(variante.size * 0.7)}px, ${variante.size / 16}vw, ${variante.size}px)`,
     fontWeight: variante.weight,
     letterSpacing: variante.spacing,
     color: variante.color,
-    opacity: variante.opacity,
     textShadow: glow,
-    whiteSpace: 'nowrap',
-    display: 'inline-block',
-    lineHeight: 1.1
+    lineHeight: 1,
+    willChange: 'contents'
   };
 
+  // Cursor parpadeante debajo de la última letra
   const cursorStyle: CSSProperties = {
-    display: 'inline-block',
+    display: 'block',
     width: '0.04em',
-    marginLeft: '0.08em',
     height: '0.9em',
-    verticalAlign: 'baseline',
+    marginTop: '0.06em',
     background: variante.color,
     opacity: 0,
     willChange: 'opacity'
   };
 
   return (
-    <div ref={slotRef} style={slotStyle}>
-      <span style={textStyle} ref={textoRef} />
-      <span style={cursorStyle} ref={cursorRef} aria-hidden />
+    <div ref={colRef} style={colStyle}>
+      <div ref={stackRef} style={stackStyle} />
+      <span ref={cursorRef} style={cursorStyle} aria-hidden />
     </div>
   );
 };
 
 /* ------------------------------------------------------------------ */
-/*  Componente principal — fondo editorial a ambos lados             */
+/*  Componente principal — columnas verticales a ambos lados          */
+/*  con anti-colisión y zona central protegida                        */
 /* ------------------------------------------------------------------ */
 const PalabrasFondo: FC = () => {
   const { ref, inView } = useInView({ threshold: 0.05, triggerOnce: false });
-  const [numSlots, setNumSlots] = useState<number>(5);
+  const [dims, setDims] = useState<{ w: number; h: number }>({ w: 1024, h: 600 });
+  const contRef = useRef<HTMLDivElement | null>(null);
 
+  // Medición dinámica del contenedor (ancho/alto reales)
   useEffect(() => {
-    const update = () => setNumSlots(slotsPorLado(window.innerWidth));
-    update();
+    const medir = () => {
+      const el = contRef.current;
+      if (el) {
+        const r = el.getBoundingClientRect();
+        setDims({ w: r.width || window.innerWidth, h: r.height || 600 });
+      } else {
+        setDims({ w: window.innerWidth, h: 600 });
+      }
+    };
+    medir();
     let raf = 0;
     const onResize = () => {
       cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(update);
+      raf = requestAnimationFrame(medir);
     };
     window.addEventListener('resize', onResize, { passive: true });
     return () => {
@@ -260,44 +367,91 @@ const PalabrasFondo: FC = () => {
     };
   }, []);
 
-  // Genera configuración estable de slots (solo al cambiar numSlots)
-  const { slotsIzq, slotsDer } = useMemo(() => {
+  const numCols = columnasPorLado(dims.w);
+
+  // Genera configuración dinámica de columnas (solo al cambiar numCols/dims)
+  const { colsIzq, colsDer } = useMemo(() => {
+    // Ancho lateral disponible (zona protegida central ~62-72%)
+    // Las columnas solo viven en el margen lateral (≤19% cada lado)
+    const anchoLadoPct = dims.w >= 1024 ? 19 : dims.w >= 768 ? 16 : 14;
+
+    // Altura disponible en px (para anti-colisión)
+    const altoPx = dims.h;
+
+    // Gestores de espacio por lado (anti-colisión)
+    const gestorIzq = new GestorEspacio(altoPx);
+    const gestorDer = new GestorEspacio(altoPx);
+
+    // Altura estimada de una palabra vertical: letras * (size * 1.0 lineHeight)
+    const estimarAlto = (palabra: string, size: number): number =>
+      palabra.length * size * 1.0 + 12; // +12px cursor/margen
+
     const mk = (n: number, lado: 'izq' | 'der') => {
-      const arr: { palabras: string[]; delay: number; vel: number; align: 'start' | 'center' | 'end' }[] = [];
+      const gestor = lado === 'izq' ? gestorIzq : gestorDer;
+      const arr: {
+        palabras: string[];
+        delay: number;
+        vel: number;
+        hold: number;
+        xPct: number;
+        yPct: number;
+        variante: Variante;
+      }[] = [];
+
+      // Distribución horizontal dinámica dentro del ancho lateral
+      // Cada columna recibe una posición x equilibrada con pequeño jitter
       for (let i = 0; i < n; i++) {
-        // Cada slot recorre una porción distinta de la lista (rotación variada)
+        const variante = nuevaVariante();
+
+        // Posición x dentro del lado: distribuida uniformemente + jitter orgánico
+        const baseX = n === 1 ? 50 : (i / (n - 1)) * 100;
+        const jitter = (Math.random() - 0.5) * (anchoLadoPct / n) * 0.4;
+        const xPct = Math.max(2, Math.min(96, baseX + jitter));
+
+        // Offset vertical preferido orgánico (nunca todas alineadas)
+        const yPreferidoPct = (i * 17 + (lado === 'der' ? 9 : 0)) % 80 + Math.random() * 8;
+        const yPreferidoPx = (yPreferidoPct / 100) * altoPx;
+
+        // Palabra inicial y su altura estimada
         const offset = (lado === 'izq' ? i * 5 : i * 5 + 3) % PALABRAS.length;
         const palabras = Array.from(
           { length: PALABRAS.length },
           (_, k) => PALABRAS[(k + offset) % PALABRAS.length]
         );
+        const altoPalabra = estimarAlto(palabras[0], variante.size);
+
+        // Anti-colisión: colocar en posición libre
+        const yFinalPx = gestor.colocar(altoPalabra, yPreferidoPx);
+        const yPct = (yFinalPx / altoPx) * 100;
+
         arr.push({
           palabras,
-          // Desfase amplio entre slots (orgánico, nunca sincronizados)
+          // Desfase amplio entre columnas (orgánico, nunca sincronizadas)
           delay: 600 + i * 1400 + (lado === 'der' ? 2200 : 0) + Math.floor(Math.random() * 900),
-          vel: 80 + Math.floor(Math.random() * 40), // 80-120ms (Hero 55ms → más lento)
-          align: lado === 'izq' ? 'end' : 'start'
+          vel: 80 + Math.floor(Math.random() * 40), // 80-120ms
+          hold: HOLDS[i % HOLDS.length],
+          xPct,
+          yPct,
+          variante
         });
       }
       return arr;
     };
-    return { slotsIzq: mk(numSlots, 'izq'), slotsDer: mk(numSlots, 'der') };
-  }, [numSlots]);
+    return { colsIzq: mk(numCols, 'izq'), colsDer: mk(numCols, 'der') };
+  }, [numCols, dims.w, dims.h]);
 
-  // Zona lateral: ocupa el margen, distribuye slots verticalmente
+  // Zona lateral: ocupa el margen, aloja columnas verticales independientes
+  // Zona central protegida: el centro (62-72%) queda libre de palabras
+  const anchoLado = dims.w >= 1024 ? '19%' : dims.w >= 768 ? '16%' : '14%';
+
   const ladoStyle = (lado: 'izq' | 'der'): CSSProperties => ({
     position: 'absolute',
     top: 0,
     bottom: 0,
-    width: numSlots >= 5 ? '17%' : numSlots >= 4 ? '15%' : '12%',
+    width: anchoLado,
     [lado === 'izq' ? 'left' : 'right']: 0,
     overflow: 'hidden',
     pointerEvents: 'none',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-evenly',
-    alignItems: 'stretch',
-    padding: 'clamp(0.5rem, 2vh, 1.5rem) 0',
     opacity: inView ? 1 : 0,
     transition: 'opacity 800ms ease',
     willChange: 'opacity'
@@ -315,7 +469,7 @@ const PalabrasFondo: FC = () => {
         }
       `}</style>
       <div
-        ref={ref}
+        ref={(node) => { ref(node); contRef.current = node; }}
         aria-hidden
         style={{
           position: 'absolute',
@@ -327,26 +481,34 @@ const PalabrasFondo: FC = () => {
       >
         {/* Lado izquierdo */}
         <div style={ladoStyle('izq')}>
-          {slotsIzq.map((s, i) => (
-            <Slot
+          {colsIzq.map((c, i) => (
+            <Columna
               key={`izq-${i}`}
-              palabras={s.palabras}
-              delayInicio={s.delay}
-              velocidadBase={s.vel}
-              alineacion={s.align}
+              palabras={c.palabras}
+              delayInicio={c.delay}
+              velocidadBase={c.vel}
+              holdMs={c.hold}
+              xPct={c.xPct}
+              yPct={c.yPct}
+              variante={c.variante}
+              pausar={!inView}
             />
           ))}
         </div>
 
         {/* Lado derecho */}
         <div style={ladoStyle('der')}>
-          {slotsDer.map((s, i) => (
-            <Slot
+          {colsDer.map((c, i) => (
+            <Columna
               key={`der-${i}`}
-              palabras={s.palabras}
-              delayInicio={s.delay}
-              velocidadBase={s.vel}
-              alineacion={s.align}
+              palabras={c.palabras}
+              delayInicio={c.delay}
+              velocidadBase={c.vel}
+              holdMs={c.hold}
+              xPct={c.xPct}
+              yPct={c.yPct}
+              variante={c.variante}
+              pausar={!inView}
             />
           ))}
         </div>
