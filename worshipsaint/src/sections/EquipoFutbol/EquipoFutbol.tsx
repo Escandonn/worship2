@@ -5,6 +5,7 @@ import { useInView } from 'react-intersection-observer';
 import { useGesture } from '@use-gesture/react';
 import { Parallax, ParallaxProvider } from 'react-scroll-parallax';
 import Section from '../Section';
+import PalabrasFondo from './PalabrasFondo';
 
 /* ------------------------------------------------------------------ */
 /* Datos del equipo (sin imágenes reales → gradientes dorados premium) */
@@ -325,6 +326,12 @@ const EquipoFutbol: FC = () => {
             zIndex: 0
           }}
         />
+
+        {/* Fondo tipográfico dinámico — palabras inspiradoras animadas
+            (typewriter) a ambos lados. Capa decorativa (zIndex 1),
+            pointerEvents none, overflow hidden. No invade el contenido
+            central ni provoca scroll horizontal. */}
+        <PalabrasFondo />
 
         {/* ---------------------------------------------------------- */}
         {/* ESCENA 1 — Triángulo + rotación de protagonismo            */}
