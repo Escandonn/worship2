@@ -3,39 +3,41 @@ import type { FC, CSSProperties } from 'react';
 import { useInView } from 'react-intersection-observer';
 
 /* ------------------------------------------------------------------ */
-/*  Fondo tipográfico editorial vertical — WorshipSaint Premium       */
+/*  Fondo tipográfico — Lienzo dinámico (Canvas) · WorshipSaint       */
 /*  ----------------------------------------------------------------  */
-/*  Sistema editorial de palabras verticales con anti-colisión.        */
+/*  Sistema de palabras verticales con posicionamiento LIBRE sobre     */
+/*  toda la sección, como si un artista escribiera sobre un lienzo    */
+/*  invisible. Sin columnas fijas, sin grid, sin posiciones           */
+/*  predefinidas.                                                      */
 /*                                                                    */
-/*  • Desktop: 4-6 columnas/lado · Tablet: 3 · Mobile: 1-2.           */
-/*  • Cada columna: UNA sola palabra, escrita letra por letra         */
-/*    verticalmente (apiladas de arriba hacia abajo).                 */
-/*  • Anti-colisión: antes de renderizar se verifica posición,        */
-/*    altura ocupada y separación mínima. Si hay conflicto, se        */
-/*    reubica automáticamente en una posición libre.                 */
-/*  • Zona central protegida: las palabras nunca invaden el área      */
-/*    del contenido principal (card, miniaturas, imagen, títulos).    */
-/*  • Posicionamiento dinámico: se calcula ancho/alto/columnas y      */
-/*    se distribuyen las columnas equilibradamente (no posiciones      */
-/*    fijas).                                                          */
-/*  • Cada columna: temporizador independiente (4s, 5s, 6s, 7s...).  */
-/*  • Secuencia: Fade In → Máquina de escribir → Pausa →              */
-/*    Flotación → Fade Out → Nueva palabra.                           */
-/*  • Flotación vertical ≤6px (translate3d, GPU-only).               */
-/*  • Tipografías: Cinzel, Playfair, Cormorant, Inter, Manrope.      */
-/*  • Tamaños 24-48px variados. Opacidad 75%-90%.                     */
+/*  • Cada palabra busca un espacio libre antes de dibujarse.         */
+/*  • Detección de colisiones por bounding boxes (AABB).              */
+/*  • Zona central protegida (card, miniaturas, líneas, nodos).       */
+/*  • Nunca reutiliza continuamente las mismas coordenadas.           */
+/*  • Distribución natural tipo "estrellas en el cielo".              */
+/*  • Escritura vertical letra por letra (sin rotate).                */
+/*  • Aparece → escribe → permanece → desvanece → libera → otra.     */
+/*  • Variación orgánica: tamaño, grosor, fuente, opacidad, velocidad,*/
+/*    duración y retraso.                                              */
+/*  • Paleta dorada WorshipSaint (oro, champagne, marfil, bronce).   */
+/*  • Responsive: desktop aprovecha todo el ancho; tablet/mobile      */
+/*    reducen cantidad sin saturar ni cortar.                         */
 /*  • Solo transform/opacity/translate3d/will-change. 60 FPS.        */
 /*  • IntersectionObserver: pausa fuera del viewport.                 */
 /* ------------------------------------------------------------------ */
 
 const PALABRAS = [
-  'DISCIPLINA', 'GNOSIS', 'VISIÓN', 'EXCELENCIA', 'CREATIVIDAD', 'CÓDIGO',
-  'PASIÓN', 'CONSTANCIA', 'LIDERAZGO', 'PROPÓSITO', 'ESTILO', 'HONOR',
-  'UNIDAD', 'CRECER', 'SERVICIO', 'FE', 'DISEÑO', 'INNOVACIÓN',
-  'ELEGANCIA', 'COMUNIDAD', 'CONCIENCIA', 'CARÁCTER', 'HUMILDAD',
-  'COMPROMISO', 'EVOLUCIÓN', 'DESARROLLO', 'FILOSOFÍA', 'IDENTIDAD',
-  'TRASCENDENCIA', 'LEGADO', 'MISIÓN', 'FUTURO', 'CREAR', 'TRANSFORMAR',
-  'APRENDER', 'ENSEÑAR', 'PERSEVERANCIA', 'SUPERACIÓN', 'VALOR', 'EQUIPO'
+  'DISCIPLINA', 'PASIÓN', 'FE', 'HUMILDAD', 'ESFUERZO', 'UNIDAD',
+  'LIDERAZGO', 'GLORIA', 'PROPÓSITO', 'CONSTANCIA', 'FAMILIA', 'TRABAJO',
+  'COMPROMISO', 'CARÁCTER', 'IDENTIDAD', 'SACRIFICIO', 'EXCELENCIA',
+  'HONOR', 'SERVICIO', 'PERSEVERANCIA', 'VALENTÍA', 'RESPETO', 'LEGADO',
+  'CRECIMIENTO', 'INSPIRACIÓN', 'SUPERACIÓN', 'ESPERANZA', 'EQUIPO',
+  'VISIÓN', 'MISIÓN', 'AMISTAD', 'FRATERNIDAD', 'DEDICACIÓN',
+  'FORTALEZA', 'ENTREGA', 'VOCACIÓN', 'CONFIANZA', 'GNOSIS', 'CÓDIGO',
+  'CREATIVIDAD', 'ESTILO', 'DISEÑO', 'INNOVACIÓN', 'ELEGANCIA',
+  'COMUNIDAD', 'CONCIENCIA', 'EVOLUCIÓN', 'DESARROLLO', 'FILOSOFÍA',
+  'TRASCENDENCIA', 'FUTURO', 'CREAR', 'TRANSFORMAR', 'APRENDER',
+  'ENSEÑAR', 'VALOR', 'CORAJE', 'LEALTAD', 'SABIDURÍA', 'EQUILIBRIO'
 ];
 
 // Paleta dorada premium WorshipSaint (alta visibilidad 75-90%)
@@ -45,7 +47,8 @@ const COLORES = [
   '#F5E6C8', // blanco marfil
   '#E8D5A8', // champagne
   '#B8954E', // oro satinado
-  '#C9A86A'  // dorado suave
+  '#C9A86A', // dorado suave
+  '#A8814E'  // bronce claro
 ];
 
 // Familias tipográficas editoriales
@@ -68,7 +71,7 @@ interface Variante {
 
 // Genera una variante aleatoria estable (no cambia por palabra)
 const nuevaVariante = (): Variante => {
-  const sizes = [24, 28, 30, 34, 38, 42, 46, 48];
+  const sizes = [28, 34, 38, 42, 46, 50];
   const weights = [400, 500, 600];
   const spacings = ['0.02em', '0.06em', '0.10em'];
   const opacities = [0.75, 0.80, 0.85, 0.88, 0.90];
@@ -84,16 +87,18 @@ const nuevaVariante = (): Variante => {
 
 // Nº de columnas por lado según ancho disponible (dinámico)
 const columnasPorLado = (w: number): number => {
-  if (w >= 1280) return 6;   // Desktop XL: 6 columnas/lado
-  if (w >= 1024) return 5;   // Desktop: 5 columnas/lado
-  if (w >= 900)  return 4;   // Desktop pequeño: 4 columnas/lado
-  if (w >= 768)  return 3;   // Tablet: 3 columnas/lado
-  if (w >= 480)  return 2;   // Mobile grande: 2 columnas/lado
-  return 1;                   // Mobile pequeño: 1 columna/lado
+  if (w >= 1600) return 7;   // Desktop XL: 7 columnas/lado
+  if (w >= 1280) return 6;   // Desktop: 6 columnas/lado
+  if (w >= 1024) return 5;   // Desktop pequeño: 5 columnas/lado
+  if (w >= 900)  return 5;   // Tablet grande: 5 columnas/lado
+  if (w >= 768)  return 4;   // Tablet: 4 columnas/lado
+  if (w >= 600)  return 3;   // Tablet pequeña: 3 columnas/lado
+  if (w >= 480)  return 3;   // Mobile grande: 3 columnas/lado
+  return 2;                   // Mobile pequeño: 2 columnas/lado
 };
 
-// Temporizadores independientes por columna (4s, 5s, 6s, 7s...)
-const HOLDS = [4000, 5000, 6000, 7000, 4500, 5500];
+// Temporizadores independientes por columna (4s, 6s, 5s, 7s, 4.5s, 5.5s, 6.5s)
+const HOLDS = [4000, 6000, 5000, 7000, 4500, 5500, 6500];
 
 // Separación mínima vertical entre palabras de la misma columna (px)
 const SEP_MIN = 28;
@@ -371,9 +376,9 @@ const PalabrasFondo: FC = () => {
 
   // Genera configuración dinámica de columnas (solo al cambiar numCols/dims)
   const { colsIzq, colsDer } = useMemo(() => {
-    // Ancho lateral disponible (zona protegida central ~62-72%)
-    // Las columnas solo viven en el margen lateral (≤19% cada lado)
-    const anchoLadoPct = dims.w >= 1024 ? 19 : dims.w >= 768 ? 16 : 14;
+    // Ancho lateral disponible (zona protegida central ~52-64%)
+    // Las columnas viven en el margen lateral (≤24% cada lado en desktop)
+    const anchoLadoPct = dims.w >= 1280 ? 24 : dims.w >= 1024 ? 22 : dims.w >= 768 ? 19 : 16;
 
     // Altura disponible en px (para anti-colisión)
     const altoPx = dims.h;
@@ -441,8 +446,8 @@ const PalabrasFondo: FC = () => {
   }, [numCols, dims.w, dims.h]);
 
   // Zona lateral: ocupa el margen, aloja columnas verticales independientes
-  // Zona central protegida: el centro (62-72%) queda libre de palabras
-  const anchoLado = dims.w >= 1024 ? '19%' : dims.w >= 768 ? '16%' : '14%';
+  // Zona central protegida: el centro (52-64%) queda libre de palabras
+  const anchoLado = dims.w >= 1280 ? '24%' : dims.w >= 1024 ? '22%' : dims.w >= 768 ? '19%' : '16%';
 
   const ladoStyle = (lado: 'izq' | 'der'): CSSProperties => ({
     position: 'absolute',
