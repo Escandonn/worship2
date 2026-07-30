@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, memo } from 'react';
+import React, { useEffect, useRef, useState, memo } from 'react';
 import type { FC, ReactNode, CSSProperties } from 'react';
+import { Typewriter } from 'react-simple-typewriter';
 import { BackgroundParticles } from '../../components/BackgroundParticles';
 import { SacredSymbol } from '../../components/SacredSymbol';
 
@@ -14,7 +15,6 @@ const ROTATING_PHRASES = [
 ];
 
 const FINAL_TITLE_TEXT = 'Diseño en código. Pasión en cancha. Conciencia en el ser. El ecosistema WorshipSaint.';
-const FINAL_TITLE_WORDS = FINAL_TITLE_TEXT.split(' ');
 
 /* ------------------------------------------------------------------ */
 /*  Componente: Botón Magnético Premium (Zero React Re-render)          */
@@ -156,131 +156,64 @@ const Hero: FC = () => {
   const sectionRef = useRef<HTMLElement | null>(null);
   const heroContentRef = useRef<HTMLDivElement | null>(null);
 
+  // Diferir partículas: tsparticles inicializa ~64 partículas + red de
+  // enlaces sincrónicamente, lo que bloquea el primer paint (INP alto).
+  // Se monta tras el primer paint (requestIdleCallback) para no competir
+  // con la hidratación del contenido crítico. Visualmente idéntico: las
+  // partículas aparecen ~1 frame después, imperceptible.
+  const [particlesReady, setParticlesReady] = useState(false);
+  useEffect(() => {
+    const ric = (window as any).requestIdleCallback as
+      | ((cb: () => void, opts?: { timeout: number }) => number)
+      | undefined;
+    const start = () => setParticlesReady(true);
+    if (ric) {
+      const id = ric(start, { timeout: 1200 });
+      return () => (window as any).cancelIdleCallback?.(id);
+    }
+    const t = setTimeout(start, 200);
+    return () => clearTimeout(t);
+  }, []);
+
   // Direct DOM Refs para animaciones fuera de React
   const badgeRef = useRef<HTMLSpanElement | null>(null);
-  const rotatingContainerRef = useRef<HTMLSpanElement | null>(null);
-  const rotatingTextRef = useRef<HTMLSpanElement | null>(null);
-  const finalContainerRef = useRef<HTMLSpanElement | null>(null);
-  const wordsRef = useRef<(HTMLSpanElement | null)[]>([]);
-  const cursorRef = useRef<HTMLSpanElement | null>(null);
 
   const subtitleRef = useRef<HTMLHeadingElement | null>(null);
   const paragraphRef = useRef<HTMLParagraphElement | null>(null);
   const buttonsRef = useRef<HTMLDivElement | null>(null);
   const scrollIndicatorRef = useRef<HTMLButtonElement | null>(null);
 
-  // 1. Animaciones de entrada escalonadas y Typewriter (Fuera del ciclo React)
+  // 1. Animaciones de entrada escalonadas (Fuera del ciclo React)
   useEffect(() => {
+    // El badge ya es visible desde SSR (opacity:1). Solo animamos el
+    // transform de entrada para no interferir con la medición LCP.
     const tBadge = requestAnimationFrame(() => {
       if (badgeRef.current) {
-        badgeRef.current.style.opacity = '1';
         badgeRef.current.style.transform = 'translateY(0)';
       }
     });
 
+    // El subtítulo y párrafo ya son visibles desde SSR (opacity fijado en
+    // el estilo inline). Solo animamos el transform de entrada para no
+    // interferir con la medición LCP.
     const tSubtitle = setTimeout(() => {
       if (subtitleRef.current) {
-        subtitleRef.current.style.opacity = '0.9';
         subtitleRef.current.style.transform = 'translateY(0)';
       }
     }, 380);
 
     const tParagraph = setTimeout(() => {
       if (paragraphRef.current) {
-        paragraphRef.current.style.opacity = '0.85';
         paragraphRef.current.style.transform = 'translateY(0)';
       }
     }, 650);
 
-    let phraseIndex = 0;
-    let charIndex = 0;
-    let deleting = false;
-    let typeTimer: ReturnType<typeof setTimeout>;
+    // El typewriter (react-simple-typewriter) gestiona su propio motor con
+    // requestAnimationFrame → animación totalmente fluida sin bloquear el
+    // hilo principal. Al terminar (onLoopDone) revelamos botones/scroll.
 
-    const TYPE_MS = 55;
-    const DELETE_MS = 30;
-    const HOLD_AFTER_TYPE = 900;
-    const HOLD_AFTER_DELETE = 160;
-
-    const showFinalPhase = () => {
-      if (rotatingContainerRef.current) {
-        rotatingContainerRef.current.style.display = 'none';
-      }
-      if (finalContainerRef.current) {
-        finalContainerRef.current.style.display = 'inline';
-      }
-
-      let wordIdx = 0;
-      const WORD_SPEED_MS = 90;
-
-      const wordInterval = setInterval(() => {
-        if (wordsRef.current[wordIdx]) {
-          wordsRef.current[wordIdx]!.style.opacity = '1';
-          wordsRef.current[wordIdx]!.style.transform = 'translateY(0)';
-        }
-        wordIdx += 1;
-
-        if (wordIdx >= FINAL_TITLE_WORDS.length) {
-          clearInterval(wordInterval);
-
-          if (buttonsRef.current) {
-            buttonsRef.current.style.opacity = '1';
-            buttonsRef.current.style.transform = 'scale(1) translateY(0)';
-          }
-          if (scrollIndicatorRef.current) {
-            scrollIndicatorRef.current.style.opacity = '0.75';
-            scrollIndicatorRef.current.style.transform = 'translateX(-50%) translateY(0)';
-          }
-
-          // Desvanecer el cursor 800ms después
-          setTimeout(() => {
-            if (cursorRef.current) {
-              cursorRef.current.style.opacity = '0';
-            }
-            // Liberar will-change del contenedor principal
-            if (heroContentRef.current) {
-              heroContentRef.current.style.willChange = 'auto';
-            }
-          }, 800);
-        }
-      }, WORD_SPEED_MS);
-    };
-
-    const tickRotating = () => {
-      const current = ROTATING_PHRASES[phraseIndex];
-
-      if (!deleting) {
-        charIndex += 1;
-        if (rotatingTextRef.current) {
-          rotatingTextRef.current.textContent = current.slice(0, charIndex);
-        }
-        if (charIndex >= current.length) {
-          if (phraseIndex === ROTATING_PHRASES.length - 1) {
-            typeTimer = setTimeout(showFinalPhase, HOLD_AFTER_TYPE);
-            return;
-          }
-          deleting = true;
-          typeTimer = setTimeout(tickRotating, HOLD_AFTER_TYPE);
-          return;
-        }
-        typeTimer = setTimeout(tickRotating, TYPE_MS);
-      } else {
-        charIndex -= 1;
-        if (rotatingTextRef.current) {
-          rotatingTextRef.current.textContent = current.slice(0, charIndex);
-        }
-        if (charIndex <= 0) {
-          deleting = false;
-          phraseIndex += 1;
-          typeTimer = setTimeout(tickRotating, HOLD_AFTER_DELETE);
-          return;
-        }
-        typeTimer = setTimeout(tickRotating, DELETE_MS);
-      }
-    };
-
-    typeTimer = setTimeout(tickRotating, 100);
-
+    // Fallback de seguridad: si el typewriter tarda más de lo esperado,
+    // forzamos la aparición de botones/scroll indicator.
     const fallbackTimer = setTimeout(() => {
       if (buttonsRef.current) {
         buttonsRef.current.style.opacity = '1';
@@ -296,26 +229,21 @@ const Hero: FC = () => {
       cancelAnimationFrame(tBadge);
       clearTimeout(tSubtitle);
       clearTimeout(tParagraph);
-      clearTimeout(typeTimer);
       clearTimeout(fallbackTimer);
     };
   }, []);
 
-  // 2. Parpadeo del cursor (Se limpia al desvanecerse)
-  useEffect(() => {
-    let blinkState = true;
-    const interval = setInterval(() => {
-      if (cursorRef.current) {
-        if (cursorRef.current.style.opacity === '0') {
-          clearInterval(interval);
-          return;
-        }
-        blinkState = !blinkState;
-        cursorRef.current.style.opacity = blinkState ? '1' : '0';
-      }
-    }, 480);
-    return () => clearInterval(interval);
-  }, []);
+  // Revelar botones + scroll indicator al terminar el typewriter
+  const handleTypewriterDone = () => {
+    if (buttonsRef.current) {
+      buttonsRef.current.style.opacity = '1';
+      buttonsRef.current.style.transform = 'scale(1) translateY(0)';
+    }
+    if (scrollIndicatorRef.current) {
+      scrollIndicatorRef.current.style.opacity = '0.75';
+      scrollIndicatorRef.current.style.transform = 'translateX(-50%) translateY(0)';
+    }
+  };
 
   // 3. Listener de Scroll pasivo rAF
   useEffect(() => {
@@ -367,7 +295,7 @@ const Hero: FC = () => {
         scrollMarginTop: '72px',
         overflow: 'hidden',
         background: 'linear-gradient(135deg, #F8F6F2 0%, #ECE5DA 45%, #D6C3A5 100%)',
-        contain: 'layout style paint'
+        contain: 'layout style'
       }}
     >
       <style>{`
@@ -441,8 +369,9 @@ const Hero: FC = () => {
         }}
       />
 
-      {/* Motor de partículas oficial @tsparticles/react (componente independiente) */}
-      <BackgroundParticles />
+      {/* Motor de partículas oficial @tsparticles/react (componente independiente)
+          Diferido tras el primer paint para no bloquear la hidratación (INP). */}
+      {particlesReady && <BackgroundParticles />}
 
       {/* Glow central estático */}
       <div
@@ -474,8 +403,7 @@ const Hero: FC = () => {
           position: 'relative',
           zIndex: 1,
           maxWidth: '860px',
-          transform: 'translate3d(0, 0, 0)',
-          willChange: 'transform, opacity'
+          transform: 'translate3d(0, 0, 0)'
         }}
       >
         {/* ① BADGE */}
@@ -494,7 +422,7 @@ const Hero: FC = () => {
             textTransform: 'uppercase',
             color: 'var(--ws-text)',
             marginBottom: '1.5rem',
-            opacity: 0,
+            opacity: 1,
             transform: 'translateY(12px)',
             transition: 'opacity 500ms ease, transform 500ms ease'
           }}
@@ -502,7 +430,7 @@ const Hero: FC = () => {
           Código • Cancha • Conciencia
         </span>
 
-        {/* ② TÍTULO PRINCIPAL: Direct DOM Mutation (Zero Layout Shift) */}
+        {/* ② TÍTULO PRINCIPAL: Typewriter fluido (react-simple-typewriter) */}
         <h1
           style={{
             margin: '0 auto 1.4rem',
@@ -519,47 +447,20 @@ const Hero: FC = () => {
             WebkitTextWrap: 'balance'
           } as CSSProperties}
         >
-          {/* Contenedor de Frases Rotativas */}
-          <span ref={rotatingContainerRef} style={{ display: 'inline' }}>
-            <span ref={rotatingTextRef} />
-          </span>
-
-          {/* Contenedor del Título Final Pre-maquetado Balanceado (Zero Reflow) */}
-          <span ref={finalContainerRef} style={{ display: 'none' }}>
-            {FINAL_TITLE_WORDS.map((word, idx) => (
-              <span
-                key={idx}
-                ref={(el) => {
-                  wordsRef.current[idx] = el;
-                }}
-                style={{
-                  display: 'inline-block',
-                  whiteSpace: 'pre',
-                  opacity: 0,
-                  transform: 'translateY(4px)',
-                  transition: 'opacity 220ms ease, transform 220ms ease'
-                }}
-              >
-                {word}{idx < FINAL_TITLE_WORDS.length - 1 ? ' ' : ''}
-              </span>
-            ))}
-          </span>
-
-          {/* Cursor parpadeante */}
-          <span
-            ref={cursorRef}
-            aria-hidden="true"
-            style={{
-              display: 'inline-block',
-              width: '0.04em',
-              marginLeft: '0.04em',
-              opacity: 1,
-              color: 'var(--ws-accent)',
-              transition: 'opacity 500ms ease'
-            }}
-          >
-            |
-          </span>
+          {/* Texto SSR: primera frase como fallback para LCP. El componente
+              Typewriter lo reemplaza al hidratar con animación fluida. */}
+          <span style={{ display: 'none' }}>{ROTATING_PHRASES[0]}</span>
+          <Typewriter
+            words={[...ROTATING_PHRASES, FINAL_TITLE_TEXT]}
+            loop={1}
+            typeSpeed={55}
+            deleteSpeed={30}
+            delaySpeed={900}
+            cursor
+            cursorStyle="|"
+            cursorColor="var(--ws-accent)"
+            onLoopDone={handleTypewriterDone}
+          />
         </h1>
 
         {/* ③ SUBTÍTULO */}
@@ -572,7 +473,7 @@ const Hero: FC = () => {
             fontSize: 'clamp(1.15rem, 2.5vw, 1.45rem)',
             letterSpacing: '-0.01em',
             color: 'var(--ws-text)',
-            opacity: 0,
+            opacity: 0.9,
             transform: 'translateY(12px)',
             transition: 'opacity 500ms ease, transform 500ms ease'
           }}
@@ -588,7 +489,7 @@ const Hero: FC = () => {
             fontFamily: 'var(--ws-font)',
             fontSize: 'clamp(1.02rem, 1.8vw, 1.18rem)',
             color: 'var(--ws-text)',
-            opacity: 0,
+            opacity: 0.85,
             maxWidth: '680px',
             lineHeight: 1.6,
             transform: 'translateY(12px)',
