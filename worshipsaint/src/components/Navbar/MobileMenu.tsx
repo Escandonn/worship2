@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, memo } from 'react';
 import type { FC } from 'react';
 import type { NavRoute } from './navigation';
 import NavItem from './NavItem';
@@ -8,6 +8,8 @@ interface MobileMenuProps {
   activeId: string;
   isOpen: boolean;
   onClose: () => void;
+  /** Callback estable para disparar replays de animación al navegar. */
+  onNavClick: (id: string) => void;
 }
 
 /**
@@ -17,7 +19,7 @@ interface MobileMenuProps {
  * Gestiona el bloqueo del scroll del body mientras está abierto y el cierre
  * con la tecla Escape para accesibilidad por teclado.
  */
-const MobileMenu: FC<MobileMenuProps> = ({ routes, activeId, isOpen, onClose }) => {
+const MobileMenu: FC<MobileMenuProps> = ({ routes, activeId, isOpen, onClose, onNavClick }) => {
   // Cerrar con Escape y bloquear scroll del body.
   useEffect(() => {
     if (!isOpen) return;
@@ -127,15 +129,8 @@ const MobileMenu: FC<MobileMenuProps> = ({ routes, activeId, isOpen, onClose }) 
                   {...route}
                   isActive={activeId === route.id}
                   onClick={() => {
+                    onNavClick(route.id);
                     onClose();
-                    // Disparar replay de la animación cinematográfica al
-                    // hacer clic en el enlace correspondiente.
-                    if (route.id === 'tienda') {
-                      window.dispatchEvent(new CustomEvent('ws:replay-tienda'));
-                    }
-                    if (route.id === 'equipo-futbol') {
-                      window.dispatchEvent(new CustomEvent('ws:replay-equipo'));
-                    }
                   }}
                 />
               </div>
@@ -156,4 +151,4 @@ const MobileMenu: FC<MobileMenuProps> = ({ routes, activeId, isOpen, onClose }) 
   );
 };
 
-export default MobileMenu;
+export default memo(MobileMenu);
