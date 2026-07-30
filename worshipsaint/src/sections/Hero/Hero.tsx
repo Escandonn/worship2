@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, memo } from 'react';
+import React, { useEffect, useRef, useState, useCallback, memo } from 'react';
 import type { FC, ReactNode, CSSProperties } from 'react';
+import { TypeAnimation } from 'react-type-animation';
 import { BackgroundParticles } from '../../components/BackgroundParticles';
 import { SacredSymbol } from '../../components/SacredSymbol';
 
@@ -15,6 +16,16 @@ const ROTATING_PHRASES = [
 
 const FINAL_TITLE_TEXT = 'Diseño en código. Pasión en cancha. Conciencia en el ser. El ecosistema WorshipSaint.';
 const FINAL_TITLE_WORDS = FINAL_TITLE_TEXT.split(' ');
+
+/* Secuencia de animación para react-type-animation:
+   escribe/borra las 3 primeras frases, y al terminar la 4ª dispara la
+   fase final (revelado palabra a palabra del título definitivo). */
+const TYPE_SEQUENCE = [
+  ROTATING_PHRASES[0], 900,
+  ROTATING_PHRASES[1], 900,
+  ROTATING_PHRASES[2], 900,
+  ROTATING_PHRASES[3], 1200
+];
 
 /* ------------------------------------------------------------------ */
 /*  Componente: Botón Magnético Premium (Zero React Re-render)          */
@@ -158,18 +169,59 @@ const Hero: FC = () => {
 
   // Direct DOM Refs para animaciones fuera de React
   const badgeRef = useRef<HTMLSpanElement | null>(null);
-  const rotatingContainerRef = useRef<HTMLSpanElement | null>(null);
-  const rotatingTextRef = useRef<HTMLSpanElement | null>(null);
   const finalContainerRef = useRef<HTMLSpanElement | null>(null);
   const wordsRef = useRef<(HTMLSpanElement | null)[]>([]);
-  const cursorRef = useRef<HTMLSpanElement | null>(null);
 
   const subtitleRef = useRef<HTMLHeadingElement | null>(null);
   const paragraphRef = useRef<HTMLParagraphElement | null>(null);
   const buttonsRef = useRef<HTMLDivElement | null>(null);
   const scrollIndicatorRef = useRef<HTMLButtonElement | null>(null);
 
-  // 1. Animaciones de entrada escalonadas y Typewriter (Fuera del ciclo React)
+  // Estado de hidratación: evita mismatch SSR/CSR (TypeAnimation solo en cliente)
+  const [mounted, setMounted] = useState(false);
+  // Fase: 'rotating' (typewriter) | 'final' (título definitivo revelado)
+  const [phase, setPhase] = useState<'rotating' | 'final'>('rotating');
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Revela palabra a palabra el título definitivo (GPU-accelerated: opacity + transform)
+  const revealFinalTitle = useCallback(() => {
+    setPhase('final');
+    let wordIdx = 0;
+    const WORD_SPEED_MS = 90;
+
+    const wordInterval = setInterval(() => {
+      if (wordsRef.current[wordIdx]) {
+        wordsRef.current[wordIdx]!.style.opacity = '1';
+        wordsRef.current[wordIdx]!.style.transform = 'translateY(0)';
+      }
+      wordIdx += 1;
+
+      if (wordIdx >= FINAL_TITLE_WORDS.length) {
+        clearInterval(wordInterval);
+
+        if (buttonsRef.current) {
+          buttonsRef.current.style.opacity = '1';
+          buttonsRef.current.style.transform = 'scale(1) translateY(0)';
+        }
+        if (scrollIndicatorRef.current) {
+          scrollIndicatorRef.current.style.opacity = '0.75';
+          scrollIndicatorRef.current.style.transform = 'translateX(-50%) translateY(0)';
+        }
+
+        // Liberar will-change del contenedor principal tras finalizar
+        setTimeout(() => {
+          if (heroContentRef.current) {
+            heroContentRef.current.style.willChange = 'auto';
+          }
+        }, 800);
+      }
+    }, WORD_SPEED_MS);
+  }, []);
+
+  // 1. Animaciones de entrada escalonadas (Fade In + Desplazamiento vertical suave)
   useEffect(() => {
     const tBadge = requestAnimationFrame(() => {
       if (badgeRef.current) {
@@ -192,132 +244,20 @@ const Hero: FC = () => {
       }
     }, 650);
 
-    let phraseIndex = 0;
-    let charIndex = 0;
-    let deleting = false;
-    let typeTimer: ReturnType<typeof setTimeout>;
-
-    const TYPE_MS = 55;
-    const DELETE_MS = 30;
-    const HOLD_AFTER_TYPE = 900;
-    const HOLD_AFTER_DELETE = 160;
-
-    const showFinalPhase = () => {
-      if (rotatingContainerRef.current) {
-        rotatingContainerRef.current.style.display = 'none';
-      }
-      if (finalContainerRef.current) {
-        finalContainerRef.current.style.display = 'inline';
-      }
-
-      let wordIdx = 0;
-      const WORD_SPEED_MS = 90;
-
-      const wordInterval = setInterval(() => {
-        if (wordsRef.current[wordIdx]) {
-          wordsRef.current[wordIdx]!.style.opacity = '1';
-          wordsRef.current[wordIdx]!.style.transform = 'translateY(0)';
-        }
-        wordIdx += 1;
-
-        if (wordIdx >= FINAL_TITLE_WORDS.length) {
-          clearInterval(wordInterval);
-
-          if (buttonsRef.current) {
-            buttonsRef.current.style.opacity = '1';
-            buttonsRef.current.style.transform = 'scale(1) translateY(0)';
-          }
-          if (scrollIndicatorRef.current) {
-            scrollIndicatorRef.current.style.opacity = '0.75';
-            scrollIndicatorRef.current.style.transform = 'translateX(-50%) translateY(0)';
-          }
-
-          // Desvanecer el cursor 800ms después
-          setTimeout(() => {
-            if (cursorRef.current) {
-              cursorRef.current.style.opacity = '0';
-            }
-            // Liberar will-change del contenedor principal
-            if (heroContentRef.current) {
-              heroContentRef.current.style.willChange = 'auto';
-            }
-          }, 800);
-        }
-      }, WORD_SPEED_MS);
-    };
-
-    const tickRotating = () => {
-      const current = ROTATING_PHRASES[phraseIndex];
-
-      if (!deleting) {
-        charIndex += 1;
-        if (rotatingTextRef.current) {
-          rotatingTextRef.current.textContent = current.slice(0, charIndex);
-        }
-        if (charIndex >= current.length) {
-          if (phraseIndex === ROTATING_PHRASES.length - 1) {
-            typeTimer = setTimeout(showFinalPhase, HOLD_AFTER_TYPE);
-            return;
-          }
-          deleting = true;
-          typeTimer = setTimeout(tickRotating, HOLD_AFTER_TYPE);
-          return;
-        }
-        typeTimer = setTimeout(tickRotating, TYPE_MS);
-      } else {
-        charIndex -= 1;
-        if (rotatingTextRef.current) {
-          rotatingTextRef.current.textContent = current.slice(0, charIndex);
-        }
-        if (charIndex <= 0) {
-          deleting = false;
-          phraseIndex += 1;
-          typeTimer = setTimeout(tickRotating, HOLD_AFTER_DELETE);
-          return;
-        }
-        typeTimer = setTimeout(tickRotating, DELETE_MS);
-      }
-    };
-
-    typeTimer = setTimeout(tickRotating, 100);
-
+    // Fallback de seguridad: si la animación de escritura no dispara el final
     const fallbackTimer = setTimeout(() => {
-      if (buttonsRef.current) {
-        buttonsRef.current.style.opacity = '1';
-        buttonsRef.current.style.transform = 'scale(1) translateY(0)';
-      }
-      if (scrollIndicatorRef.current) {
-        scrollIndicatorRef.current.style.opacity = '0.75';
-        scrollIndicatorRef.current.style.transform = 'translateX(-50%) translateY(0)';
-      }
-    }, 4200);
+      if (phase === 'rotating') revealFinalTitle();
+    }, 9000);
 
     return () => {
       cancelAnimationFrame(tBadge);
       clearTimeout(tSubtitle);
       clearTimeout(tParagraph);
-      clearTimeout(typeTimer);
       clearTimeout(fallbackTimer);
     };
-  }, []);
+  }, [phase, revealFinalTitle]);
 
-  // 2. Parpadeo del cursor (Se limpia al desvanecerse)
-  useEffect(() => {
-    let blinkState = true;
-    const interval = setInterval(() => {
-      if (cursorRef.current) {
-        if (cursorRef.current.style.opacity === '0') {
-          clearInterval(interval);
-          return;
-        }
-        blinkState = !blinkState;
-        cursorRef.current.style.opacity = blinkState ? '1' : '0';
-      }
-    }, 480);
-    return () => clearInterval(interval);
-  }, []);
-
-  // 3. Listener de Scroll pasivo rAF
+  // 2. Listener de Scroll pasivo rAF (GPU-accelerated: transform + opacity only)
   useEffect(() => {
     let ticking = false;
 
@@ -341,7 +281,7 @@ const Hero: FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // 4. Partículas: delegadas al componente independiente BackgroundParticles (@tsparticles/react)
+  // 3. Partículas: delegadas al componente independiente BackgroundParticles (@tsparticles/react)
   //    — motor slim, IntersectionObserver + Page Visibility API gestionados internamente.
 
   const handleScrollClick = () => {
@@ -519,13 +459,35 @@ const Hero: FC = () => {
             WebkitTextWrap: 'balance'
           } as CSSProperties}
         >
-          {/* Contenedor de Frases Rotativas */}
-          <span ref={rotatingContainerRef} style={{ display: 'inline' }}>
-            <span ref={rotatingTextRef} />
-          </span>
+          {/* Contenedor de Frases Rotativas (react-type-animation) */}
+          {mounted && phase === 'rotating' ? (
+            <span style={{ display: 'inline' }}>
+              <TypeAnimation
+                sequence={[
+                  ...TYPE_SEQUENCE,
+                  () => {
+                    revealFinalTitle();
+                  }
+                ]}
+                wrapper="span"
+                speed={55}
+                deletionSpeed={30}
+                repeat={0}
+                cursor={true}
+                aria-label={FINAL_TITLE_TEXT}
+                style={{
+                  display: 'inline-block',
+                  color: 'var(--ws-text)'
+                }}
+              />
+            </span>
+          ) : null}
 
           {/* Contenedor del Título Final Pre-maquetado Balanceado (Zero Reflow) */}
-          <span ref={finalContainerRef} style={{ display: 'none' }}>
+          <span
+            ref={finalContainerRef}
+            style={{ display: phase === 'final' ? 'inline' : 'none' }}
+          >
             {FINAL_TITLE_WORDS.map((word, idx) => (
               <span
                 key={idx}
@@ -543,22 +505,6 @@ const Hero: FC = () => {
                 {word}{idx < FINAL_TITLE_WORDS.length - 1 ? ' ' : ''}
               </span>
             ))}
-          </span>
-
-          {/* Cursor parpadeante */}
-          <span
-            ref={cursorRef}
-            aria-hidden="true"
-            style={{
-              display: 'inline-block',
-              width: '0.04em',
-              marginLeft: '0.04em',
-              opacity: 1,
-              color: 'var(--ws-accent)',
-              transition: 'opacity 500ms ease'
-            }}
-          >
-            |
           </span>
         </h1>
 
