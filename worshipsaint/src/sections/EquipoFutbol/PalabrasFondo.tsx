@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FC, CSSProperties } from 'react';
 import { useInView } from 'react-intersection-observer';
+import { useTypewriter } from 'react-simple-typewriter';
 
 /* ------------------------------------------------------------------ */
 /*  Fondo tipográfico — Lienzo dinámico (Canvas) · WorshipSaint       */
@@ -177,106 +178,61 @@ const Columna: FC<ColumnaProps> = ({
   const cursorRef = useRef<HTMLSpanElement | null>(null);
   const colRef = useRef<HTMLDivElement | null>(null);
   const [driftY] = useState<number>(() => Math.random() * 6 - 3); // ≤6px
+  const [visible, setVisible] = useState(false);
 
+  // Motor de máquina de escribir (react-simple-typewriter).
+  // Reemplaza la lógica manual de setTimeout encadenados por un hook
+  // optimizado que gestiona escritura/borrado/pausas/loop internamente.
+  // typeSpeed/deleteSpeed/delaySpeed derivan de las props existentes para
+  // conservar el comportamiento visual (velocidad y pausas por columna).
+  const [texto] = useTypewriter({
+    words: palabras,
+    loop: 0,                          // infinito
+    typeSpeed: velocidadBase,         // ms por letra al escribir
+    deleteSpeed: Math.floor(velocidadBase * 0.5), // ms por letra al borrar
+    delaySpeed: holdMs                 // pausa entre frases (permanencia)
+  });
+
+  // Arranque con desfase independiente (mantiene el stagger por columna)
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), delayInicio);
+    return () => clearTimeout(t);
+  }, [delayInicio]);
+
+  // Renderiza las letras visibles apiladas verticalmente (una por línea).
+  // El texto lo provee el hook; aquí solo se proyecta al layout vertical.
   useEffect(() => {
     const stack = stackRef.current;
-    const cursor = cursorRef.current;
+    if (!stack) return;
+    const letras = texto.split('');
+    stack.textContent = '';
+    letras.forEach(letra => {
+      const span = document.createElement('span');
+      span.textContent = letra;
+      span.style.display = 'block';
+      span.style.textAlign = 'center';
+      span.style.lineHeight = '1';
+      stack.appendChild(span);
+    });
+  }, [texto]);
+
+  // Estado visual: aparece (fade + translateY) y se desvanece (blur leve).
+  // Se controla por visibilidad de columna + pausa fuera del viewport.
+  useEffect(() => {
     const col = colRef.current;
-    if (!stack || !cursor || !col) return;
+    if (!col) return;
+    const op = visible && !pausar ? variante.opacity : 0;
+    col.style.opacity = String(op);
+    col.style.transform = visible ? 'translate3d(0, 0, 0)' : 'translate3d(0, 6px, 0)';
+    col.style.filter = visible ? 'blur(0px)' : 'blur(2px)';
+  }, [visible, pausar, variante.opacity]);
 
-    let palabraIdx = Math.floor(Math.random() * palabras.length);
-    let charIndex = 0;
-    let deleting = false;
-    let timer: ReturnType<typeof setTimeout>;
-    let blinkState = true;
-    let blinkInterval: ReturnType<typeof setInterval> | null = null;
-    let destruido = false;
-
-    const typeMs = velocidadBase + Math.floor(Math.random() * 20);
-    const deleteMs = Math.floor(velocidadBase * 0.5);
-    const holdDelete = 350 + Math.floor(Math.random() * 300);
-
-    // Renderiza las letras visibles (0..charIndex) apiladas verticalmente
-    const renderLetras = () => {
-      const current = palabras[palabraIdx];
-      const letras = current.slice(0, charIndex).split('');
-      stack.textContent = '';
-      letras.forEach(letra => {
-        const span = document.createElement('span');
-        span.textContent = letra;
-        span.style.display = 'block';
-        span.style.textAlign = 'center';
-        span.style.lineHeight = '1';
-        stack.appendChild(span);
-      });
-    };
-
-    // Estado visual: aparece (fade + translateY), se desvanece (blur leve)
-    const mostrar = () => {
-      col.style.opacity = String(variante.opacity);
-      col.style.transform = 'translate3d(0, 0, 0)';
-      col.style.filter = 'blur(0px)';
-    };
-
-    const iniciarBlink = () => {
-      if (blinkInterval) return;
-      blinkInterval = setInterval(() => {
-        blinkState = !blinkState;
-        if (cursor) cursor.style.opacity = blinkState ? '0.85' : '0';
-      }, 480);
-    };
-    const detenerBlink = () => {
-      if (blinkInterval) { clearInterval(blinkInterval); blinkInterval = null; }
-    };
-
-    const tick = () => {
-      if (destruido) return;
-      const current = palabras[palabraIdx];
-      if (!deleting) {
-        charIndex += 1;
-        renderLetras();
-        if (charIndex >= current.length) {
-          deleting = true;
-          detenerBlink();
-          if (cursor) cursor.style.opacity = '0';
-          // Permanece visible (holdMs independiente por columna)
-          timer = setTimeout(tick, holdMs);
-          return;
-        }
-        timer = setTimeout(tick, typeMs);
-      } else {
-        charIndex -= 1;
-        renderLetras();
-        if (charIndex <= 0) {
-          deleting = false;
-          palabraIdx = (palabraIdx + 1) % palabras.length;
-          // Pausa en vacío antes de la siguiente palabra
-          timer = setTimeout(() => {
-            if (destruido) return;
-            mostrar();
-            iniciarBlink();
-            tick();
-          }, holdDelete);
-          return;
-        }
-        timer = setTimeout(tick, deleteMs);
-      }
-    };
-
-    // Arranque con desfase independiente
-    timer = setTimeout(() => {
-      if (destruido) return;
-      mostrar();
-      iniciarBlink();
-      tick();
-    }, delayInicio);
-
-    return () => {
-      destruido = true;
-      clearTimeout(timer);
-      detenerBlink();
-    };
-  }, [palabras, delayInicio, velocidadBase, holdMs, variante.opacity]);
+  // Cursor parpadeante mediante CSS (sin setInterval) — solo cuando escribe
+  useEffect(() => {
+    const cursor = cursorRef.current;
+    if (!cursor) return;
+    cursor.style.opacity = visible && !pausar ? '0.85' : '0';
+  }, [visible, pausar]);
 
   // Pausa fuera del viewport: detiene animación de flotación
   useEffect(() => {
@@ -320,7 +276,7 @@ const Columna: FC<ColumnaProps> = ({
     willChange: 'contents'
   };
 
-  // Cursor parpadeante debajo de la última letra
+  // Cursor parpadeante debajo de la última letra (CSS-driven, sin JS)
   const cursorStyle: CSSProperties = {
     display: 'block',
     width: '0.04em',
@@ -328,6 +284,7 @@ const Columna: FC<ColumnaProps> = ({
     marginTop: '0.06em',
     background: variante.color,
     opacity: 0,
+    animation: 'wsBlink 0.96s steps(1, end) infinite',
     willChange: 'opacity'
   };
 
@@ -469,8 +426,13 @@ const PalabrasFondo: FC = () => {
           0%   { transform: translate3d(0, calc(var(--drift, 0px) * -1), 0); }
           100% { transform: translate3d(0, var(--drift, 0px), 0); }
         }
+        @keyframes wsBlink {
+          0%, 49%   { opacity: 0.85; }
+          50%, 100% { opacity: 0; }
+        }
         @media (prefers-reduced-motion: reduce) {
           @keyframes wsDrift { 0%,100% { transform: translate3d(0,0,0); } }
+          @keyframes wsBlink { 0%,100% { opacity: 0.85; } }
         }
       `}</style>
       <div
