@@ -249,8 +249,10 @@ const EquipoFutbol: FC = () => {
   /* -------------------------------------------------------------- */
   const bindHover = useGesture({
     onMove: ({ event }) => {
-      const el = event.currentTarget as HTMLElement;
+      const el = event.currentTarget as HTMLElement | null;
+      if (!el) return;
       const r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return;
       const nx = (event.clientX - r.left) / r.width - 0.5;
       const ny = (event.clientY - r.top) / r.height - 0.5;
       mx.set(nx * 2);

@@ -177,8 +177,11 @@ const Columna: FC<ColumnaProps> = ({
   const stackRef = useRef<HTMLDivElement | null>(null);
   const cursorRef = useRef<HTMLSpanElement | null>(null);
   const colRef = useRef<HTMLDivElement | null>(null);
-  const [driftY] = useState<number>(() => Math.random() * 6 - 3); // ≤6px
+  // driftY se calcula tras el montaje para evitar Math.random() en SSR.
+  const [driftY, setDriftY] = useState<number>(0);
   const [visible, setVisible] = useState(false);
+
+  useEffect(() => { setDriftY(Math.random() * 6 - 3); }, []); // ≤6px
 
   // Motor de máquina de escribir (react-simple-typewriter).
   // Reemplaza la lógica manual de setTimeout encadenados por un hook
@@ -302,11 +305,19 @@ const Columna: FC<ColumnaProps> = ({
 /* ------------------------------------------------------------------ */
 const PalabrasFondo: FC = () => {
   const { ref, inView } = useInView({ threshold: 0.05, triggerOnce: false });
+  // Estado de montaje: evita el hydration mismatch derivado de Math.random()
+  // y de dimensiones reales (getBoundingClientRect) que difieren servidor/cliente.
+  // En el servidor y primer render del cliente NO se genera config aleatoria.
+  const [mounted, setMounted] = useState(false);
   const [dims, setDims] = useState<{ w: number; h: number }>({ w: 1024, h: 600 });
   const contRef = useRef<HTMLDivElement | null>(null);
 
-  // Medición dinámica del contenedor (ancho/alto reales)
+  // Marca montado (solo cliente) → habilita la generación de columnas.
+  useEffect(() => { setMounted(true); }, []);
+
+  // Medición dinámica del contenedor (ancho/alto reales) — solo en cliente
   useEffect(() => {
+    if (!mounted) return;
     const medir = () => {
       const el = contRef.current;
       if (el) {
@@ -327,12 +338,14 @@ const PalabrasFondo: FC = () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', onResize);
     };
-  }, []);
+  }, [mounted]);
 
   const numCols = columnasPorLado(dims.w);
 
-  // Genera configuración dinámica de columnas (solo al cambiar numCols/dims)
+  // Genera configuración dinámica de columnas (solo al cambiar numCols/dims).
+  // Se omite hasta el montaje para evitar Math.random() en SSR (hydration mismatch).
   const { colsIzq, colsDer } = useMemo(() => {
+    if (!mounted) return { colsIzq: [], colsDer: [] };
     // Ancho lateral disponible (zona protegida central ~52-64%)
     // Las columnas viven en el margen lateral (≤24% cada lado en desktop)
     const anchoLadoPct = dims.w >= 1280 ? 24 : dims.w >= 1024 ? 22 : dims.w >= 768 ? 19 : 16;
@@ -400,7 +413,7 @@ const PalabrasFondo: FC = () => {
       return arr;
     };
     return { colsIzq: mk(numCols, 'izq'), colsDer: mk(numCols, 'der') };
-  }, [numCols, dims.w, dims.h]);
+  }, [mounted, numCols, dims.w, dims.h]);
 
   // Zona lateral: ocupa el margen, aloja columnas verticales independientes
   // Zona central protegida: el centro (52-64%) queda libre de palabras
