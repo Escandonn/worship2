@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState, useCallback, memo } from 'react';
 import type { FC, ReactNode, CSSProperties } from 'react';
-import { Typewriter } from 'react-simple-typewriter';
 import { BackgroundParticles } from '../../components/BackgroundParticles';
 import { SacredSymbol } from '../../components/SacredSymbol';
+import HeroTypewriter from './HeroTypewriter';
+import { useDevMonitor } from './useDevMonitor';
 
 /* ------------------------------------------------------------------ */
 /*  Frases Rotativas + Título Definitivo (Maquetación Previa Fija)     */
@@ -17,7 +18,7 @@ const ROTATING_PHRASES = [
 const FINAL_TITLE_TEXT = 'Diseño en código. Pasión en cancha. Conciencia en el ser. El ecosistema WorshipSaint.';
 
 /* Array de palabras estable a nivel de módulo → referencia constante.
-   Evita que el componente Typewriter reciba un nuevo array en cada
+   Evita que el componente HeroTypewriter reciba un nuevo array en cada
    render del Hero (p. ej. cuando cambia `particlesReady`) y vuelva a
    renderizarse innecesariamente. */
 const TYPEWRITER_WORDS: string[] = [...ROTATING_PHRASES, FINAL_TITLE_TEXT];
@@ -156,59 +157,12 @@ const ScrollIndicator: FC<ScrollIndicatorProps> = memo(({ buttonRef, onClick }) 
 ScrollIndicator.displayName = 'ScrollIndicator';
 
 /* ------------------------------------------------------------------ */
-/*  Componente: Título Principal (h1 + Typewriter)                      */
-/*  Aislado y memoizado → se renderiza UNA sola vez al cargar.          */
-/*  No se ve afectado por cambios de estado del Hero (particlesReady,   */
-/*  scroll, IntersectionObserver, etc.). Garantiza cero re-renders del  */
-/*  h1 y estabilidad total del LCP/INP.                                */
-/* ------------------------------------------------------------------ */
-interface HeroTitleProps {
-  onTypewriterDone: () => void;
-}
-
-const HeroTitle: FC<HeroTitleProps> = memo(({ onTypewriterDone }) => {
-  return (
-    <h1
-      style={{
-        margin: '0 auto 1.4rem',
-        maxWidth: '820px',
-        fontFamily: 'var(--ws-font)',
-        fontWeight: 800,
-        fontSize: 'clamp(2.2rem, 5.2vw, 3.4rem)',
-        letterSpacing: '-0.035em',
-        lineHeight: 1.18,
-        color: 'var(--ws-text)',
-        minHeight: '1.15em',
-        textAlign: 'center',
-        textWrap: 'balance',
-        WebkitTextWrap: 'balance',
-        willChange: 'contents'
-      } as CSSProperties}
-    >
-      {/* Texto SSR: primera frase como fallback para LCP. El componente
-          Typewriter lo reemplaza al hidratar con animación fluida. */}
-      <span style={{ display: 'none' }}>{ROTATING_PHRASES[0]}</span>
-      <Typewriter
-        words={TYPEWRITER_WORDS}
-        loop={1}
-        typeSpeed={55}
-        deleteSpeed={30}
-        delaySpeed={900}
-        cursor
-        cursorStyle="|"
-        cursorColor="var(--ws-accent)"
-        onLoopDone={onTypewriterDone}
-      />
-    </h1>
-  );
-});
-
-HeroTitle.displayName = 'HeroTitle';
-
-/* ------------------------------------------------------------------ */
 /*  Componente Hero Principal (Optimizado para INP y Presentation Delay)*/
 /* ------------------------------------------------------------------ */
 const Hero: FC = () => {
+  // Monitor de desarrollo: detecta re-renders, timers/rafs/observers
+  // duplicados y memory leaks. Solo actúa en NODE_ENV !== 'production'.
+  useDevMonitor('Hero');
   const sectionRef = useRef<HTMLElement | null>(null);
   const heroContentRef = useRef<HTMLDivElement | null>(null);
 
@@ -264,7 +218,7 @@ const Hero: FC = () => {
       }
     }, 650);
 
-    // El typewriter (react-simple-typewriter) gestiona su propio motor con
+    // El typewriter (HeroTypewriter + useHeroTypewriter) gestiona su propio motor con
     // requestAnimationFrame → animación totalmente fluida sin bloquear el
     // hilo principal. Al terminar (onLoopDone) revelamos botones/scroll.
 
@@ -290,7 +244,7 @@ const Hero: FC = () => {
   }, []);
 
   // Revelar botones + scroll indicator al terminar el typewriter.
-  // useCallback → referencia estable para que HeroTitle (memo) no se
+  // useCallback → referencia estable para que HeroTypewriter (memo) no se
   // re-renderice si el Hero re-renderiza por otros motivos.
   const handleTypewriterDone = useCallback(() => {
     if (buttonsRef.current) {
@@ -490,10 +444,19 @@ const Hero: FC = () => {
           Código • Cancha • Conciencia
         </span>
 
-        {/* ② TÍTULO PRINCIPAL: Typewriter fluido (react-simple-typewriter)
+        {/* ② TÍTULO PRINCIPAL: HeroTypewriter (Motion + rAF + IO)
             Componente aislado y memoizado → se renderiza UNA sola vez.
-            No re-renderiza por scroll, particlesReady, IO, navbar, etc. */}
-        <HeroTitle onTypewriterDone={handleTypewriterDone} />
+            Motor propio con requestAnimationFrame (sin setState por carácter).
+            Pausa automática al salir del viewport. Cero re-renders del h1. */}
+        <HeroTypewriter
+          words={TYPEWRITER_WORDS}
+          loop={1}
+          typeSpeed={55}
+          deleteSpeed={30}
+          delaySpeed={900}
+          onDone={handleTypewriterDone}
+          viewportRef={sectionRef}
+        />
 
         {/* ③ SUBTÍTULO */}
         <h2
