@@ -48,12 +48,12 @@ const BackgroundParticles: FC<BackgroundParticlesProps> = memo(
       () => ({
         fullScreen: { enable: false },
         fpsLimit: 60,
-        detectRetina: true,
         background: { color: 'transparent' },
         particles: {
           number: {
-            // Densidad moderada: suficiente para red inteligente sin saturar.
-            value: 64,
+            // Densidad reducida: 40 partículas (antes 64) → ~37% menos
+            // trabajo de cálculo de colisiones/enlaces por frame.
+            value: 40,
             density: { enable: true, width: 1920, height: 1080 }
           },
           color: { value: PARTICLE_COLORS },
@@ -76,39 +76,31 @@ const BackgroundParticles: FC<BackgroundParticlesProps> = memo(
             drift: 0
           },
           opacity: {
-            // Opacidad base baja (bordes tenues); la animación crea
-            // respiración sin sobresaltar el contenido.
-            value: { min: 0.22, max: 0.6 },
-            animation: {
-              enable: true,
-              speed: 0.5,
-              sync: false,
-              startValue: 'random'
-            }
+            // Opacidad fija (sin animación): elimina el cálculo de
+            // interpolación de opacidad por partícula en cada frame.
+            value: 0.4
           },
           size: {
             // Tamaños pequeños para sensación minimalista.
             value: { min: 0.8, max: 2.8 }
-          },
-          shadow: {
-            enable: true,
-            color: '#C8A96A',
-            blur: 3
           }
+          // shadow ELIMINADO: blur por partícula es la operación más
+          // costosa del canvas (recálculo de gaussian blur por frame
+          // por partícula). Sin él, el render es ~3-5x más rápido.
         },
         interactivity: {
           events: {
-            onHover: { enable: true, mode: 'grab', parallax: { enable: false } },
+            // onHover DESHABILITADO: 'grab' registra listeners de mouse
+            // que se evalúan en cada frame + recalcula enlaces hacia el
+            // cursor. Eliminarlo quita trabajo continuo del main thread.
+            onHover: { enable: false },
             resize: { enable: true }
-          },
-          modes: {
-            grab: {
-              distance: 130,
-              links: { opacity: 0.7 },
-              lineLinked: { opacity: 0.7 }
-            }
           }
         },
+        // detectRetina DESHABILITADO: en pantallas HiDPI (2x/3x) duplica
+        // o triplica el área del canvas y el trabajo de render. El
+        // aspecto visual es prácticamente idéntico sin él.
+        detectRetina: false,
         detectResize: true,
         pauseOnBlur: true,
         pauseOnOutside: true

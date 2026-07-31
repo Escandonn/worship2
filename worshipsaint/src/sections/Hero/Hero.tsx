@@ -3,6 +3,7 @@ import type { FC, ReactNode, CSSProperties } from 'react';
 import { BackgroundParticles } from '../../components/BackgroundParticles';
 import { SacredSymbol } from '../../components/SacredSymbol';
 import HeroTypewriter from './HeroTypewriter';
+import HeroTitleDesktop from './HeroTitleDesktop';
 import { useDevMonitor } from './useDevMonitor';
 
 /* ------------------------------------------------------------------ */
@@ -165,6 +166,19 @@ const Hero: FC = () => {
   useDevMonitor('Hero');
   const sectionRef = useRef<HTMLElement | null>(null);
   const heroContentRef = useRef<HTMLDivElement | null>(null);
+
+  // Detección de viewport: en desktop (>768px) mostramos un h1 estático
+  // con fade-in (sin máquina de escribir → cero trabajo continuo del
+  // main thread, INP óptimo en PC). En móvil/tablet (≤768px) mantenemos
+  // el HeroTypewriter (máquina de escribir letra por letra).
+  const [isDesktop, setIsDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 769px)');
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   // Diferir partículas: tsparticles inicializa ~64 partículas + red de
   // enlaces sincrónicamente, lo que bloquea el primer paint (INP alto).
@@ -415,8 +429,11 @@ const Hero: FC = () => {
           position: 'relative',
           zIndex: 1,
           maxWidth: '860px',
-          transform: 'translate3d(0, 0, 0)',
-          willChange: 'transform, opacity'
+          transform: 'translate3d(0, 0, 0)'
+          // willChange ELIMINADO: forzaba layers de compositor permanentes
+          // que aumentan el coste de style/layout durante interacciones
+          // de puntero (LoAF). El scroll parallax usa translate3d que ya
+          // promueve a layer solo cuando se anima.
         }}
       >
         {/* ① BADGE */}
@@ -437,26 +454,32 @@ const Hero: FC = () => {
             marginBottom: '1.5rem',
             opacity: 1,
             transform: 'translateY(12px)',
-            transition: 'opacity 500ms ease, transform 500ms ease',
-            willChange: 'transform'
+            transition: 'opacity 500ms ease, transform 500ms ease'
+            // willChange ELIMINADO: animación de entrada one-shot, no
+            // necesita layer de compositor persistente.
           }}
         >
           Código • Cancha • Conciencia
         </span>
 
-        {/* ② TÍTULO PRINCIPAL: HeroTypewriter (Motion + rAF + IO)
-            Componente aislado y memoizado → se renderiza UNA sola vez.
-            Motor propio con requestAnimationFrame (sin setState por carácter).
-            Pausa automática al salir del viewport. Cero re-renders del h1. */}
-        <HeroTypewriter
-          words={TYPEWRITER_WORDS}
-          loop={1}
-          typeSpeed={55}
-          deleteSpeed={30}
-          delaySpeed={900}
-          onDone={handleTypewriterDone}
-          viewportRef={sectionRef}
-        />
+        {/* ② TÍTULO PRINCIPAL
+            Desktop (>768px): h1 estático con fade-in → cero trabajo
+            continuo del main thread, INP óptimo en PC.
+            Móvil/tablet (≤768px): HeroTypewriter (máquina de escribir
+            letra por letra con motor rAF). */}
+        {isDesktop ? (
+          <HeroTitleDesktop text={FINAL_TITLE_TEXT} onDone={handleTypewriterDone} />
+        ) : (
+          <HeroTypewriter
+            words={TYPEWRITER_WORDS}
+            loop={1}
+            typeSpeed={55}
+            deleteSpeed={30}
+            delaySpeed={900}
+            onDone={handleTypewriterDone}
+            viewportRef={sectionRef}
+          />
+        )}
 
         {/* ③ SUBTÍTULO */}
         <h2
@@ -470,8 +493,8 @@ const Hero: FC = () => {
             color: 'var(--ws-text)',
             opacity: 0.9,
             transform: 'translateY(12px)',
-            transition: 'opacity 500ms ease, transform 500ms ease',
-            willChange: 'transform'
+            transition: 'opacity 500ms ease, transform 500ms ease'
+            // willChange ELIMINADO: animación de entrada one-shot.
           }}
         >
           Una franquicia creada para elevar el potencial humano.
@@ -489,8 +512,8 @@ const Hero: FC = () => {
             maxWidth: '680px',
             lineHeight: 1.6,
             transform: 'translateY(12px)',
-            transition: 'opacity 500ms ease, transform 500ms ease',
-            willChange: 'transform'
+            transition: 'opacity 500ms ease, transform 500ms ease'
+            // willChange ELIMINADO: animación de entrada one-shot.
           }}
         >
           Reunimos desarrollo web de estándar global, una tienda e-commerce atemporal y la mística de nuestro club de fútbol en torno a la filosofía de la Gnosis.
@@ -506,8 +529,8 @@ const Hero: FC = () => {
             flexWrap: 'wrap',
             opacity: 0,
             transform: 'scale(0.96) translateY(10px)',
-            transition: 'opacity 500ms ease, transform 500ms ease',
-            willChange: 'opacity, transform'
+            transition: 'opacity 500ms ease, transform 500ms ease'
+            // willChange ELIMINADO: animación de entrada one-shot.
           }}
         >
           <MagneticButton href="#franquicia" variant="primary">

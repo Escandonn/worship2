@@ -68,8 +68,11 @@ const SacredSymbol: FC<SacredSymbolProps> = memo(
       width: '100%',
       height: '100%',
       display: 'block',
-      overflow: 'visible',
-      filter: 'drop-shadow(0 0 9px rgba(200,169,106,0.45))'
+      overflow: 'visible'
+      // filter: drop-shadow ELIMINADO: drop-shadow recalcula el blur
+      // gaussiano en CADA frame de animación (90s rotate + 6s breathe).
+      // Reemplazado por <filter> SVG nativo (feGaussianBlur) que se
+      // computa una sola vez y se cachea como textura.
     };
 
     return (
@@ -79,10 +82,6 @@ const SacredSymbol: FC<SacredSymbolProps> = memo(
             0% { opacity: 0; transform: translate(-50%, -50%) scale(0.94); }
             100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
           }
-          @keyframes wsSymbolFloat {
-            0%, 100% { transform: translate(-50%, -50%) translateY(0); }
-            50% { transform: translate(-50%, -50%) translateY(-5px); }
-          }
           @keyframes wsSymbolRotate {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -91,16 +90,12 @@ const SacredSymbol: FC<SacredSymbolProps> = memo(
             0%, 100% { opacity: 0.34; }
             50% { opacity: 0.46; }
           }
-          @keyframes wsSymbolCircleBreathe {
-            0%, 100% { opacity: 0.36; }
-            50% { opacity: 0.48; }
-          }
-          .ws-symbol-circle-breathe {
-            animation: wsSymbolCircleBreathe 10s ease-in-out infinite;
-          }
-          .ws-symbol-float {
-            animation: wsSymbolFloat 7s ease-in-out infinite;
-          }
+          /* Animaciones reducidas de 4 a 2:
+             - ELIMINADO wsSymbolFloat (7s): transform compuesto que
+               fuerza recálculo de layout en cada frame.
+             - ELIMINADO wsSymbolCircleBreathe (10s): redundante con
+               wsSymbolBreathe, misma propiedad (opacity).
+             Conservadas: rotate (90s, GPU-friendly) + breathe (6s opacity). */
           .ws-symbol-rotate {
             transform-origin: 50% 50%;
             animation: wsSymbolRotate 90s linear infinite;
@@ -109,33 +104,44 @@ const SacredSymbol: FC<SacredSymbolProps> = memo(
             animation: wsSymbolBreathe 6s ease-in-out infinite;
           }
           @media (prefers-reduced-motion: reduce) {
-            .ws-symbol-float,
             .ws-symbol-rotate,
-            .ws-symbol-breathe,
-            .ws-symbol-circle-breathe {
+            .ws-symbol-breathe {
               animation: none !important;
             }
           }
         `}</style>
-        <div className={className ? `ws-symbol-float ${className}` : 'ws-symbol-float'} style={wrapperStyle} aria-hidden="true">
+        <div className={className ? `${className}` : ''} style={wrapperStyle} aria-hidden="true">
           <svg
             viewBox="0 0 100 100"
             style={svgStyle}
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
+            {/* Filtro SVG nativo: glow dorado suave. Se computa UNA vez
+                y se cachea, a diferencia de CSS drop-shadow que recalcula
+                en cada frame de animación. */}
+            <defs>
+              <filter id="ws-symbol-glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="1.2" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
             {/* Círculo fino integrado con la red de partículas:
                 mismo color (#C8A96A), grosor similar a las conexiones,
-                glow dorado suave y respiración sutil de 10s.
+                glow dorado suave y respiración sutil de 6s.
                 vectorEffect non-scaling-stroke => grosor idéntico en móvil. */}
             <circle
-              className="ws-symbol-circle-breathe"
+              className="ws-symbol-breathe"
               cx={CIRCLE_CX}
               cy={CIRCLE_CY}
               r={CIRCLE_R}
               stroke="#C8A96A"
               strokeWidth={1.6}
               vectorEffect="non-scaling-stroke"
+              filter="url(#ws-symbol-glow)"
             />
             {/* Triángulo equilátero inscrito con rotación muy lenta */}
             <polygon
@@ -145,6 +151,7 @@ const SacredSymbol: FC<SacredSymbolProps> = memo(
               strokeWidth={1.5}
               strokeLinejoin="round"
               vectorEffect="non-scaling-stroke"
+              filter="url(#ws-symbol-glow)"
             />
           </svg>
         </div>
