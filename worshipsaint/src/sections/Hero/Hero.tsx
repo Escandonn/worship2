@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, memo } from 'react';
+import React, { useEffect, useRef, useState, useCallback, memo } from 'react';
 import type { FC, ReactNode, CSSProperties } from 'react';
 import { Typewriter } from 'react-simple-typewriter';
 import { BackgroundParticles } from '../../components/BackgroundParticles';
@@ -15,6 +15,12 @@ const ROTATING_PHRASES = [
 ];
 
 const FINAL_TITLE_TEXT = 'Diseño en código. Pasión en cancha. Conciencia en el ser. El ecosistema WorshipSaint.';
+
+/* Array de palabras estable a nivel de módulo → referencia constante.
+   Evita que el componente Typewriter reciba un nuevo array en cada
+   render del Hero (p. ej. cuando cambia `particlesReady`) y vuelva a
+   renderizarse innecesariamente. */
+const TYPEWRITER_WORDS: string[] = [...ROTATING_PHRASES, FINAL_TITLE_TEXT];
 
 /* ------------------------------------------------------------------ */
 /*  Componente: Botón Magnético Premium (Zero React Re-render)          */
@@ -150,6 +156,56 @@ const ScrollIndicator: FC<ScrollIndicatorProps> = memo(({ buttonRef, onClick }) 
 ScrollIndicator.displayName = 'ScrollIndicator';
 
 /* ------------------------------------------------------------------ */
+/*  Componente: Título Principal (h1 + Typewriter)                      */
+/*  Aislado y memoizado → se renderiza UNA sola vez al cargar.          */
+/*  No se ve afectado por cambios de estado del Hero (particlesReady,   */
+/*  scroll, IntersectionObserver, etc.). Garantiza cero re-renders del  */
+/*  h1 y estabilidad total del LCP/INP.                                */
+/* ------------------------------------------------------------------ */
+interface HeroTitleProps {
+  onTypewriterDone: () => void;
+}
+
+const HeroTitle: FC<HeroTitleProps> = memo(({ onTypewriterDone }) => {
+  return (
+    <h1
+      style={{
+        margin: '0 auto 1.4rem',
+        maxWidth: '820px',
+        fontFamily: 'var(--ws-font)',
+        fontWeight: 800,
+        fontSize: 'clamp(2.2rem, 5.2vw, 3.4rem)',
+        letterSpacing: '-0.035em',
+        lineHeight: 1.18,
+        color: 'var(--ws-text)',
+        minHeight: '1.15em',
+        textAlign: 'center',
+        textWrap: 'balance',
+        WebkitTextWrap: 'balance',
+        willChange: 'contents'
+      } as CSSProperties}
+    >
+      {/* Texto SSR: primera frase como fallback para LCP. El componente
+          Typewriter lo reemplaza al hidratar con animación fluida. */}
+      <span style={{ display: 'none' }}>{ROTATING_PHRASES[0]}</span>
+      <Typewriter
+        words={TYPEWRITER_WORDS}
+        loop={1}
+        typeSpeed={55}
+        deleteSpeed={30}
+        delaySpeed={900}
+        cursor
+        cursorStyle="|"
+        cursorColor="var(--ws-accent)"
+        onLoopDone={onTypewriterDone}
+      />
+    </h1>
+  );
+});
+
+HeroTitle.displayName = 'HeroTitle';
+
+/* ------------------------------------------------------------------ */
 /*  Componente Hero Principal (Optimizado para INP y Presentation Delay)*/
 /* ------------------------------------------------------------------ */
 const Hero: FC = () => {
@@ -233,8 +289,10 @@ const Hero: FC = () => {
     };
   }, []);
 
-  // Revelar botones + scroll indicator al terminar el typewriter
-  const handleTypewriterDone = () => {
+  // Revelar botones + scroll indicator al terminar el typewriter.
+  // useCallback → referencia estable para que HeroTitle (memo) no se
+  // re-renderice si el Hero re-renderiza por otros motivos.
+  const handleTypewriterDone = useCallback(() => {
     if (buttonsRef.current) {
       buttonsRef.current.style.opacity = '1';
       buttonsRef.current.style.transform = 'scale(1) translateY(0)';
@@ -243,7 +301,7 @@ const Hero: FC = () => {
       scrollIndicatorRef.current.style.opacity = '0.75';
       scrollIndicatorRef.current.style.transform = 'translateX(-50%) translateY(0)';
     }
-  };
+  }, []);
 
   // 3. Listener de Scroll pasivo rAF
   useEffect(() => {
@@ -272,12 +330,12 @@ const Hero: FC = () => {
   // 4. Partículas: delegadas al componente independiente BackgroundParticles (@tsparticles/react)
   //    — motor slim, IntersectionObserver + Page Visibility API gestionados internamente.
 
-  const handleScrollClick = () => {
+  const handleScrollClick = useCallback(() => {
     const nextSection = document.querySelector('main > section:nth-of-type(2)');
     if (nextSection) {
       nextSection.scrollIntoView({ behavior: 'smooth' });
     }
-  };
+  }, []);
 
   return (
     <section
@@ -403,7 +461,8 @@ const Hero: FC = () => {
           position: 'relative',
           zIndex: 1,
           maxWidth: '860px',
-          transform: 'translate3d(0, 0, 0)'
+          transform: 'translate3d(0, 0, 0)',
+          willChange: 'transform, opacity'
         }}
       >
         {/* ① BADGE */}
@@ -424,44 +483,17 @@ const Hero: FC = () => {
             marginBottom: '1.5rem',
             opacity: 1,
             transform: 'translateY(12px)',
-            transition: 'opacity 500ms ease, transform 500ms ease'
+            transition: 'opacity 500ms ease, transform 500ms ease',
+            willChange: 'transform'
           }}
         >
           Código • Cancha • Conciencia
         </span>
 
-        {/* ② TÍTULO PRINCIPAL: Typewriter fluido (react-simple-typewriter) */}
-        <h1
-          style={{
-            margin: '0 auto 1.4rem',
-            maxWidth: '820px',
-            fontFamily: 'var(--ws-font)',
-            fontWeight: 800,
-            fontSize: 'clamp(2.2rem, 5.2vw, 3.4rem)',
-            letterSpacing: '-0.035em',
-            lineHeight: 1.18,
-            color: 'var(--ws-text)',
-            minHeight: '1.15em',
-            textAlign: 'center',
-            textWrap: 'balance',
-            WebkitTextWrap: 'balance'
-          } as CSSProperties}
-        >
-          {/* Texto SSR: primera frase como fallback para LCP. El componente
-              Typewriter lo reemplaza al hidratar con animación fluida. */}
-          <span style={{ display: 'none' }}>{ROTATING_PHRASES[0]}</span>
-          <Typewriter
-            words={[...ROTATING_PHRASES, FINAL_TITLE_TEXT]}
-            loop={1}
-            typeSpeed={55}
-            deleteSpeed={30}
-            delaySpeed={900}
-            cursor
-            cursorStyle="|"
-            cursorColor="var(--ws-accent)"
-            onLoopDone={handleTypewriterDone}
-          />
-        </h1>
+        {/* ② TÍTULO PRINCIPAL: Typewriter fluido (react-simple-typewriter)
+            Componente aislado y memoizado → se renderiza UNA sola vez.
+            No re-renderiza por scroll, particlesReady, IO, navbar, etc. */}
+        <HeroTitle onTypewriterDone={handleTypewriterDone} />
 
         {/* ③ SUBTÍTULO */}
         <h2
@@ -475,7 +507,8 @@ const Hero: FC = () => {
             color: 'var(--ws-text)',
             opacity: 0.9,
             transform: 'translateY(12px)',
-            transition: 'opacity 500ms ease, transform 500ms ease'
+            transition: 'opacity 500ms ease, transform 500ms ease',
+            willChange: 'transform'
           }}
         >
           Una franquicia creada para elevar el potencial humano.
@@ -493,7 +526,8 @@ const Hero: FC = () => {
             maxWidth: '680px',
             lineHeight: 1.6,
             transform: 'translateY(12px)',
-            transition: 'opacity 500ms ease, transform 500ms ease'
+            transition: 'opacity 500ms ease, transform 500ms ease',
+            willChange: 'transform'
           }}
         >
           Reunimos desarrollo web de estándar global, una tienda e-commerce atemporal y la mística de nuestro club de fútbol en torno a la filosofía de la Gnosis.
@@ -509,7 +543,8 @@ const Hero: FC = () => {
             flexWrap: 'wrap',
             opacity: 0,
             transform: 'scale(0.96) translateY(10px)',
-            transition: 'opacity 500ms ease, transform 500ms ease'
+            transition: 'opacity 500ms ease, transform 500ms ease',
+            willChange: 'opacity, transform'
           }}
         >
           <MagneticButton href="#franquicia" variant="primary">
