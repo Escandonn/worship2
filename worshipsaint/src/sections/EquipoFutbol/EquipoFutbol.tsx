@@ -4,24 +4,71 @@ import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import { useGesture } from '@use-gesture/react';
 import { Parallax, ParallaxProvider } from 'react-scroll-parallax';
+import { FaInstagram, FaWhatsapp } from 'react-icons/fa';
 import Section from '../Section';
 
 /* ------------------------------------------------------------------ */
-/* Datos del equipo (sin imágenes reales → gradientes dorados premium) */
+/* Datos del equipo — Integrantes reales de WorshipSaint             */
+/* Estructura premium: foto, nombre, profesión, especialidad,         */
+/* descripción y enlaces sociales (Instagram / WhatsApp).             */
 /* ------------------------------------------------------------------ */
-interface Jugador {
+interface Integrante {
   id: number;
   nombre: string;
-  rol: string;
-  numero: string;
-  grad: string;
+  cargo: string;          // Rol corto mostrado en la fase triángulo
+  profesion: string;      // Profesión completa mostrada en la card
+  especialidad: string;   // Especialidad destacada
+  descripcion: string;   // Texto descriptivo
+  instagram: string;     // URL de Instagram
+  whatsapp: string;      // URL de WhatsApp
+  foto: string;           // Ruta de la imagen (assets)
+  grad: string;           // Degradado de respaldo (placeholder)
 }
 
-const JUGADORES: Jugador[] = [
-  { id: 1, nombre: 'Saint', rol: 'Delantero', numero: '#10', grad: 'linear-gradient(135deg, #E9D9B8 0%, #C8A96A 60%, #8a6d3b 100%)' },
-  { id: 2, nombre: 'Saint', rol: 'Extremo', numero: '#7', grad: 'linear-gradient(135deg, #F0E4C8 0%, #D6C3A5 55%, #9c7f4e 100%)' },
-  { id: 3, nombre: 'Saint', rol: 'Defensa', numero: '#5', grad: 'linear-gradient(135deg, #EFE3C2 0%, #C8A96A 50%, #6f5530 100%)' }
+const INTEGRANTES: Integrante[] = [
+  {
+    id: 1,
+    nombre: 'Integrante 1',
+    cargo: 'Preparación Física',
+    profesion: 'Licenciado en Educación Física',
+    especialidad: 'Preparación Física',
+    descripcion:
+      'Especialista en rendimiento físico y acondicionamiento deportivo. Diseña programas personalizados para potenciar la resistencia, fuerza y agilidad de cada atleta.',
+    instagram: 'https://instagram.com/worshipsaint',
+    whatsapp: 'https://wa.me/00000000000',
+    foto: '/equipo/integrante-1.jpg',
+    grad: 'linear-gradient(135deg, #E9D9B8 0%, #C8A96A 60%, #8a6d3b 100%)'
+  },
+  {
+    id: 2,
+    nombre: 'Integrante 2',
+    cargo: 'Desarrollo Técnico',
+    profesion: 'Licenciado en Educación Física',
+    especialidad: 'Desarrollo Técnico',
+    descripcion:
+      'Enfocado en el desarrollo técnico y táctico del jugador. Perfecciona movimientos, control de balón y toma de decisiones para elevar el nivel competitivo.',
+    instagram: 'https://instagram.com/worshipsaint',
+    whatsapp: 'https://wa.me/00000000000',
+    foto: '/equipo/integrante-2.jpg',
+    grad: 'linear-gradient(135deg, #F0E4C8 0%, #D6C3A5 55%, #9c7f4e 100%)'
+  },
+  {
+    id: 3,
+    nombre: 'Alejandro Escandón',
+    cargo: 'Tecnología & Datos',
+    profesion: 'Ingeniero de Software · Full Stack Developer',
+    especialidad: 'Tecnología, análisis de datos, automatización e IA',
+    descripcion:
+      'Lidera la transformación digital del equipo: análisis de datos deportivos, automatización de procesos e integración de inteligencia artificial para optimizar el rendimiento.',
+    instagram: 'https://instagram.com/worshipsaint',
+    whatsapp: 'https://wa.me/00000000000',
+    foto: '/equipo/integrante-3.jpg',
+    grad: 'linear-gradient(135deg, #EFE3C2 0%, #C8A96A 50%, #6f5530 100%)'
+  }
 ];
+
+/* Alias de compatibilidad para preservar la lógica existente */
+const JUGADORES = INTEGRANTES;
 
 /* ------------------------------------------------------------------ */
 /* Fases de la secuencia cinematográfica                              */
@@ -289,8 +336,8 @@ const EquipoFutbol: FC = () => {
   return (
     <Section
       id="equipo-futbol"
-      title="Equipo de Fútbol"
-      subtitle="Una alineación que representa disciplina, estilo y pasión por el juego."
+      title="Nuestro Equipo"
+      subtitle="Talento humano que combina disciplina deportiva e innovación tecnológica."
       variant="muted"
     >
       <ParallaxProvider>
@@ -487,6 +534,7 @@ const EquipoFutbol: FC = () => {
                   boxShadow: '0 18px 50px rgba(200,169,106,0.35), 0 0 30px rgba(200,169,106,0.25)'
                 }}
               >
+                {/* Foto circular con borde dorado */}
                 <div
                   ref={(el) => { fotoRefs.current[0] = el; }}
                   style={{
@@ -494,15 +542,32 @@ const EquipoFutbol: FC = () => {
                     height: isDesktop ? 'clamp(128px, 22vw, 188px)' : 'clamp(96px, 17vw, 140px)',
                     borderRadius: '50%',
                     margin: '0 auto 0.6rem',
-                    background: JUGADORES[protagonista].grad,
-                    boxShadow: '0 10px 30px rgba(200,169,106,0.4)'
+                    border: '2px solid rgba(200,169,106,0.85)',
+                    boxShadow: '0 10px 30px rgba(200,169,106,0.4)',
+                    overflow: 'hidden',
+                    position: 'relative',
+                    background: JUGADORES[protagonista].grad
                   }}
-                />
+                >
+                  <img
+                    src={JUGADORES[protagonista].foto}
+                    alt={`Foto de ${JUGADORES[protagonista].nombre}, ${JUGADORES[protagonista].cargo}`}
+                    loading="lazy"
+                    decoding="async"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      display: 'block'
+                    }}
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                  />
+                </div>
                 <h3 style={{ margin: 0, fontFamily: 'var(--ws-font)', fontWeight: 700, color: 'var(--ws-text)', fontSize: 'clamp(1.05rem, 2.2vw, 1.35rem)' }}>
-                  {JUGADORES[protagonista].nombre} {JUGADORES[protagonista].numero}
+                  {JUGADORES[protagonista].nombre}
                 </h3>
                 <p style={{ margin: '0.3rem 0 0', color: 'var(--ws-muted)', fontFamily: 'var(--ws-font)', fontSize: '0.9rem' }}>
-                  {JUGADORES[protagonista].rol}
+                  {JUGADORES[protagonista].cargo}
                 </p>
               </div>
             </div>
@@ -521,125 +586,258 @@ const EquipoFutbol: FC = () => {
                     width: isDesktop ? 'clamp(88px, 15vw, 128px)' : 'clamp(72px, 13vw, 104px)',
                     height: isDesktop ? 'clamp(88px, 15vw, 128px)' : 'clamp(72px, 13vw, 104px)',
                     borderRadius: '50%',
-                    background: j.grad,
+                    border: '2px solid rgba(200,169,106,0.7)',
                     boxShadow: '0 8px 24px rgba(200,169,106,0.25)',
-                    justifySelf: isLeft ? 'start' : 'end'
+                    justifySelf: isLeft ? 'start' : 'end',
+                    overflow: 'hidden',
+                    position: 'relative',
+                    background: j.grad
                   }}
-                />
+                >
+                  <img
+                    src={j.foto}
+                    alt={`Foto de ${j.nombre}, ${j.cargo}`}
+                    loading="lazy"
+                    decoding="async"
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      display: 'block'
+                    }}
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                  />
+                </div>
               );
             })}
           </div>
         </motion.div>
 
         {/* ---------------------------------------------------------- */}
-        {/* ESCENA 2 — Fila de miniaturas + imagen protagonista        */}
+        {/* ESCENA 2 — Fila de cards premium con info completa          */}
         {/* SIEMPRE MONTADA. Aparece por opacity cuando mostrarFila.    */}
         {/* Permanece visible permanentemente (presentationCompleted). */}
+        {/* Cards premium: glassmorphism, foto, profesión, especialidad,*/}
+        {/* descripción y botones de Instagram / WhatsApp.              */}
         {/* ---------------------------------------------------------- */}
         <motion.div
           animate={{ opacity: visFila, y: visFila ? 0 : 40, filter: visFila ? 'blur(0px)' : 'blur(10px)' }}
           transition={{ duration: 0.8, ease: easeCubic }}
           style={{ position: 'relative', zIndex: 3, pointerEvents: visFila ? 'auto' : 'none' }}
         >
-          {/* Imagen protagonista */}
+          {/* Grid de cards premium — 3 columnas en desktop, apiladas en móvil */}
           <div
             style={{
-              display: 'flex',
-              justifyContent: 'center',
-              marginBottom: 'clamp(1.2rem, 3.2vw, 2rem)'
-            }}
-          >
-            <Parallax speed={-8} style={{ width: 'min(90%, 440px)' }}>
-              <div {...bindHover()} style={{ width: '100%' }}>
-                <motion.div
-                  onClick={onMainClick}
-                  animate={pop ? { scale: [1, 1.05, 1], rotate: [0, 1, -1, 0] } : {}}
-                  transition={{ duration: 0.6, ease: easeCubic }}
-                  style={{
-                    rotateX: tiltX,
-                    rotateY: tiltY,
-                    transformStyle: 'preserve-3d',
-                    width: '100%',
-                    aspectRatio: '4 / 5',
-                    borderRadius: 'var(--ws-radius-card)',
-                    overflow: 'hidden',
-                    border: '1px solid rgba(200,169,106,0.5)',
-                    boxShadow: pop
-                      ? '0 0 50px rgba(200,169,106,0.55), 0 20px 60px rgba(200,169,106,0.35)'
-                      : '0 18px 50px rgba(200,169,106,0.3)',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    background: JUGADORES[activo].grad,
-                    willChange: 'transform, box-shadow'
-                  }}
-                  aria-label={`Imagen principal de ${JUGADORES[activo].nombre} ${JUGADORES[activo].numero}`}
-                >
-                  {/* Overlay de info — crossfade por animate, sin key dinámica */}
-                  <div
-                    style={{
-                      position: 'absolute',
-                      inset: 0,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'flex-end',
-                      padding: '1.5rem',
-                      background: 'linear-gradient(180deg, transparent 40%, rgba(44,33,24,0.55) 100%)'
-                    }}
-                  >
-                    <div style={{ textAlign: 'center', color: '#fff' }}>
-                      <div style={{ fontFamily: 'var(--ws-font)', fontWeight: 700, fontSize: 'clamp(1.2rem, 3vw, 1.6rem)' }}>
-                        {JUGADORES[activo].nombre} {JUGADORES[activo].numero}
-                      </div>
-                      <div style={{ fontFamily: 'var(--ws-font)', opacity: 0.85, fontSize: '0.95rem' }}>
-                        {JUGADORES[activo].rol}
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            </Parallax>
-          </div>
-
-          {/* Miniaturas */}
-          <div
-            style={{
-              display: 'flex',
-              gap: 'clamp(0.6rem, 1.6vw, 1.2rem)',
-              justifyContent: 'center',
-              flexWrap: 'wrap'
+              display: 'grid',
+              gridTemplateColumns: isDesktop
+                ? 'repeat(3, minmax(0, 1fr))'
+                : 'minmax(0, 1fr)',
+              gap: 'clamp(1rem, 2.4vw, 1.8rem)',
+              maxWidth: isDesktop ? 'clamp(720px, 92vw, 1080px)' : 'clamp(280px, 92vw, 460px)',
+              margin: '0 auto',
+              justifyItems: 'stretch'
             }}
           >
             {JUGADORES.map((j, i) => {
               const esActivo = i === activo;
               return (
-                <motion.button
+                <motion.article
                   key={j.id}
-                  type="button"
-                  onClick={() => setActivo(i)}
-                  whileHover={{ scale: 1.08, y: -4 }}
-                  whileTap={{ scale: 0.94 }}
-                  animate={{
-                    scale: esActivo ? 1.08 : 1,
-                    y: esActivo ? -4 : 0,
-                    boxShadow: esActivo
-                      ? '0 0 0 3px rgba(200,169,106,0.9), 0 12px 30px rgba(200,169,106,0.4)'
-                      : '0 6px 18px rgba(200,169,106,0.18)'
-                  }}
+                  initial={{ opacity: 0, y: 28, scale: 0.96 }}
+                  animate={mostrarFila ? {
+                    opacity: 1,
+                    y: 0,
+                    scale: 1,
+                    transition: {
+                      duration: 0.6,
+                      delay: 0.1 + i * 0.14,
+                      ease: easeCubic
+                    }
+                  } : {}}
+                  whileHover={isDesktop ? { y: -6, scale: 1.02 } : {}}
                   transition={{ duration: 0.4, ease: easeCubic }}
-                  aria-label={`Seleccionar ${j.nombre} ${j.numero}`}
-                  aria-pressed={esActivo}
+                  onMouseEnter={() => setActivo(i)}
+                  aria-label={`Tarjeta de ${j.nombre}, ${j.profesion}`}
                   style={{
-                    width: 'clamp(54px, 12vw, 74px)',
-                    height: 'clamp(54px, 12vw, 74px)',
-                    borderRadius: '50%',
-                    border: esActivo ? '2px solid rgba(200,169,106,0.9)' : 'none',
-                    padding: 0,
-                    cursor: 'pointer',
-                    background: j.grad,
-                    willChange: 'transform, box-shadow'
+                    ...glassCard,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    padding: 'clamp(1.1rem, 2.4vw, 1.6rem)',
+                    borderRadius: '20px',
+                    borderColor: esActivo
+                      ? 'rgba(200,169,106,0.85)'
+                      : 'rgba(200,169,106,0.35)',
+                    boxShadow: esActivo
+                      ? '0 0 0 1px rgba(200,169,106,0.5), 0 22px 55px rgba(200,169,106,0.28), 0 0 40px rgba(200,169,106,0.18)'
+                      : 'var(--ws-shadow-card)',
+                    willChange: 'transform, box-shadow, opacity',
+                    cursor: 'default'
                   }}
-                />
+                >
+                  {/* Foto — circular en desktop, ligeramente redondeada */}
+                  <div
+                    style={{
+                      width: isDesktop ? 'clamp(150px, 18vw, 200px)' : 'clamp(130px, 40vw, 170px)',
+                      height: isDesktop ? 'clamp(150px, 18vw, 200px)' : 'clamp(130px, 40vw, 170px)',
+                      borderRadius: isDesktop ? '50%' : '20px',
+                      margin: '0 auto clamp(0.9rem, 2vw, 1.2rem)',
+                      border: '2px solid rgba(200,169,106,0.7)',
+                      boxShadow: '0 12px 30px rgba(200,169,106,0.3)',
+                      overflow: 'hidden',
+                      position: 'relative',
+                      background: j.grad,
+                      flexShrink: 0
+                    }}
+                  >
+                    <img
+                      src={j.foto}
+                      alt={`Foto de ${j.nombre}, ${j.profesion}`}
+                      loading="lazy"
+                      decoding="async"
+                      style={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        display: 'block'
+                      }}
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  </div>
+
+                  {/* Nombre */}
+                  <h3
+                    style={{
+                      margin: '0 0 0.25rem',
+                      fontFamily: 'var(--ws-font)',
+                      fontWeight: 700,
+                      color: 'var(--ws-text)',
+                      fontSize: 'clamp(1.05rem, 2vw, 1.3rem)',
+                      textAlign: 'center',
+                      lineHeight: 1.2
+                    }}
+                  >
+                    {j.nombre}
+                  </h3>
+
+                  {/* Profesión */}
+                  <p
+                    style={{
+                      margin: '0 0 0.5rem',
+                      fontFamily: 'var(--ws-font)',
+                      fontWeight: 600,
+                      color: 'var(--ws-accent)',
+                      fontSize: 'clamp(0.85rem, 1.6vw, 0.98rem)',
+                      textAlign: 'center',
+                      lineHeight: 1.3
+                    }}
+                  >
+                    {j.profesion}
+                  </p>
+
+                  {/* Especialidad */}
+                  <p
+                    style={{
+                      margin: '0 0 0.75rem',
+                      fontFamily: 'var(--ws-font)',
+                      fontWeight: 600,
+                      color: 'var(--ws-muted)',
+                      fontSize: 'clamp(0.78rem, 1.4vw, 0.88rem)',
+                      textAlign: 'center',
+                      letterSpacing: '0.01em',
+                      lineHeight: 1.3
+                    }}
+                  >
+                    {j.especialidad}
+                  </p>
+
+                  {/* Descripción */}
+                  <p
+                    style={{
+                      margin: '0 0 1.1rem',
+                      fontFamily: 'var(--ws-font)',
+                      color: 'var(--ws-text)',
+                      opacity: 0.82,
+                      fontSize: 'clamp(0.82rem, 1.5vw, 0.92rem)',
+                      lineHeight: 1.6,
+                      textAlign: 'center',
+                      flexGrow: 1
+                    }}
+                  >
+                    {j.descripcion}
+                  </p>
+
+                  {/* Botones sociales — Instagram + WhatsApp */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '0.6rem',
+                      justifyContent: 'center',
+                      marginTop: 'auto'
+                    }}
+                  >
+                    <motion.a
+                      href={j.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Instagram de ${j.nombre}`}
+                      whileHover={{ scale: 1.08, y: -2 }}
+                      whileTap={{ scale: 0.94 }}
+                      transition={{ duration: 0.25, ease: easeCubic }}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.4rem',
+                        padding: '0.55rem 1rem',
+                        borderRadius: 'var(--ws-radius-btn)',
+                        fontFamily: 'var(--ws-font)',
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        color: '#fff',
+                        textDecoration: 'none',
+                        background: 'linear-gradient(135deg, #C8A96A 0%, #8a6d3b 100%)',
+                        boxShadow: '0 6px 18px rgba(200,169,106,0.3)',
+                        willChange: 'transform',
+                        border: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <FaInstagram aria-hidden />
+                      <span>Instagram</span>
+                    </motion.a>
+
+                    <motion.a
+                      href={j.whatsapp}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`WhatsApp de ${j.nombre}`}
+                      whileHover={{ scale: 1.08, y: -2 }}
+                      whileTap={{ scale: 0.94 }}
+                      transition={{ duration: 0.25, ease: easeCubic }}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.4rem',
+                        padding: '0.55rem 1rem',
+                        borderRadius: 'var(--ws-radius-btn)',
+                        fontFamily: 'var(--ws-font)',
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        color: '#fff',
+                        textDecoration: 'none',
+                        background: 'linear-gradient(135deg, #25D366 0%, #128C7E 100%)',
+                        boxShadow: '0 6px 18px rgba(37,211,102,0.3)',
+                        willChange: 'transform',
+                        border: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <FaWhatsapp aria-hidden />
+                      <span>WhatsApp</span>
+                    </motion.a>
+                  </div>
+                </motion.article>
               );
             })}
           </div>
