@@ -6,6 +6,9 @@ import { useGesture } from '@use-gesture/react';
 import { Parallax, ParallaxProvider } from 'react-scroll-parallax';
 import { FaInstagram, FaWhatsapp } from 'react-icons/fa';
 import Section from '../Section';
+import cofunder1 from '../../assets/cofunder1.jpg';
+import cofunder2 from '../../assets/cofunder2.jpg';
+import cofunder3 from '../../assets/cofunder3.png';
 
 /* ------------------------------------------------------------------ */
 /* Datos del equipo — Integrantes reales de WorshipSaint             */
@@ -36,7 +39,7 @@ const INTEGRANTES: Integrante[] = [
       'Especialista en rendimiento físico y acondicionamiento deportivo. Diseña programas personalizados para potenciar la resistencia, fuerza y agilidad de cada atleta.',
     instagram: 'https://instagram.com/worshipsaint',
     whatsapp: 'https://wa.me/00000000000',
-    foto: '/equipo/integrante-1.jpg',
+    foto: cofunder1.src,
     grad: 'linear-gradient(135deg, #E9D9B8 0%, #C8A96A 60%, #8a6d3b 100%)'
   },
   {
@@ -49,7 +52,7 @@ const INTEGRANTES: Integrante[] = [
       'Enfocado en el desarrollo técnico y táctico del jugador. Perfecciona movimientos, control de balón y toma de decisiones para elevar el nivel competitivo.',
     instagram: 'https://instagram.com/worshipsaint',
     whatsapp: 'https://wa.me/00000000000',
-    foto: '/equipo/integrante-2.jpg',
+    foto: cofunder2.src,
     grad: 'linear-gradient(135deg, #F0E4C8 0%, #D6C3A5 55%, #9c7f4e 100%)'
   },
   {
@@ -62,7 +65,7 @@ const INTEGRANTES: Integrante[] = [
       'Lidera la transformación digital del equipo: análisis de datos deportivos, automatización de procesos e integración de inteligencia artificial para optimizar el rendimiento.',
     instagram: 'https://instagram.com/worshipsaint',
     whatsapp: 'https://wa.me/00000000000',
-    foto: '/equipo/integrante-3.jpg',
+    foto: cofunder3.src,
     grad: 'linear-gradient(135deg, #EFE3C2 0%, #C8A96A 50%, #6f5530 100%)'
   }
 ];
