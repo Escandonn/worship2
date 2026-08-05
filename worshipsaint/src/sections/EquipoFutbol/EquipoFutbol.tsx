@@ -37,8 +37,8 @@ const INTEGRANTES: Integrante[] = [
     especialidad: 'Preparación Física',
     descripcion:
       'Especialista en rendimiento físico y acondicionamiento deportivo. Diseña programas personalizados para potenciar la resistencia, fuerza y agilidad de cada atleta.',
-    instagram: 'https://instagram.com/worshipsaint',
-    whatsapp: 'https://wa.me/00000000000',
+    instagram: 'https://www.instagram.com/escandon__2?igsh=MXFwbHJxMnM1MTU0NQ==',
+    whatsapp: 'https://wa.me/3172474295',
     foto: cofunder1.src,
     grad: 'linear-gradient(135deg, #E9D9B8 0%, #C8A96A 60%, #8a6d3b 100%)'
   },
@@ -49,9 +49,9 @@ const INTEGRANTES: Integrante[] = [
     profesion: 'Licenciado en Educación Física',
     especialidad: 'Desarrollo Técnico',
     descripcion:
-      'Enfocado en el desarrollo técnico y táctico del jugador. Perfecciona movimientos, control de balón y toma de decisiones para elevar el nivel competitivo.',
-    instagram: 'https://instagram.com/worshipsaint',
-    whatsapp: 'https://wa.me/00000000000',
+      'Enfocado en el desarrollo técnico del jugador. Perfecciona movimientos, control de balón y toma de decisiones para elevar el nivel competitivo.',
+    instagram: 'https://www.instagram.com/escandon__2?igsh=MXFwbHJxMnM1MTU0NQ==',
+    whatsapp: 'https://wa.me/3172474295',
     foto: cofunder2.src,
     grad: 'linear-gradient(135deg, #F0E4C8 0%, #D6C3A5 55%, #9c7f4e 100%)'
   },
@@ -63,8 +63,8 @@ const INTEGRANTES: Integrante[] = [
     especialidad: 'Tecnología, análisis de datos, automatización e IA',
     descripcion:
       'Lidera la transformación digital del equipo: análisis de datos deportivos, automatización de procesos e integración de inteligencia artificial para optimizar el rendimiento.',
-    instagram: 'https://instagram.com/worshipsaint',
-    whatsapp: 'https://wa.me/00000000000',
+    instagram: 'https://www.instagram.com/escandon__2?igsh=MXFwbHJxMnM1MTU0NQ==',
+    whatsapp: 'https://wa.me/3172474295',
     foto: cofunder3.src,
     grad: 'linear-gradient(135deg, #EFE3C2 0%, #C8A96A 50%, #6f5530 100%)'
   }
