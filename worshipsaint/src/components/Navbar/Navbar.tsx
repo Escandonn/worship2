@@ -46,6 +46,30 @@ const Navbar: FC = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  const handleRouteNavigation = (routeId: string) => {
+    setMenuOpen(false);
+    setActiveId(routeId);
+
+    const target = document.getElementById(routeId);
+    if (!target) {
+      window.location.hash = routeId;
+      return;
+    }
+
+    window.location.hash = routeId;
+
+    window.setTimeout(() => {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 60);
+
+    if (routeId === 'tienda') {
+      window.dispatchEvent(new CustomEvent('ws:replay-tienda'));
+    }
+    if (routeId === 'equipo-futbol') {
+      window.dispatchEvent(new CustomEvent('ws:replay-equipo'));
+    }
+  };
+
   // Scroll Spy: observa qué sección está visible.
   useEffect(() => {
     const sections = NAV_ROUTES.map((r) => document.getElementById(r.id)).filter(
@@ -68,6 +92,7 @@ const Navbar: FC = () => {
   }, []);
 
   return (
+    <>
     <header
       style={{
         position: 'sticky',
@@ -107,16 +132,7 @@ const Navbar: FC = () => {
               key={route.id}
               {...route}
               isActive={activeId === route.id}
-              onClick={() => {
-                // Disparar replay de la animación cinematográfica al hacer
-                // clic en el enlace de navegación correspondiente.
-                if (route.id === 'tienda') {
-                  window.dispatchEvent(new CustomEvent('ws:replay-tienda'));
-                }
-                if (route.id === 'equipo-futbol') {
-                  window.dispatchEvent(new CustomEvent('ws:replay-equipo'));
-                }
-              }}
+              onClick={() => handleRouteNavigation(route.id)}
             />
           ))}
         </ul>
@@ -148,15 +164,6 @@ const Navbar: FC = () => {
         </svg>
       </button>
 
-      {isMobile && (
-        <MobileMenu
-          routes={NAV_ROUTES}
-          activeId={activeId}
-          isOpen={menuOpen}
-          onClose={() => setMenuOpen(false)}
-        />
-      )}
-
       <style>{`
         @media (max-width: 1023px) {
           .ws-nav-desktop { display: none !important; }
@@ -164,6 +171,15 @@ const Navbar: FC = () => {
         }
       `}</style>
     </header>
+
+    <MobileMenu
+      routes={NAV_ROUTES}
+      activeId={activeId}
+      isOpen={menuOpen}
+      onClose={() => setMenuOpen(false)}
+      onNavigate={handleRouteNavigation}
+    />
+    </>
   );
 };
 

@@ -1,11 +1,11 @@
-import type { FC } from 'react';
+import type { FC, MouseEvent } from 'react';
 import type { NavRoute } from './navigation';
 
 interface NavItemProps extends NavRoute {
   /** Indica si esta sección es la actualmente visible (Scroll Spy). */
   isActive: boolean;
   /** Callback al hacer clic (permite cerrar el menú móvil, etc.). */
-  onClick?: () => void;
+  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 }
 
 /**
@@ -14,11 +14,16 @@ interface NavItemProps extends NavRoute {
  * accesibles. El indicador activo se anima con un subrayado dorado.
  */
 const NavItem: FC<NavItemProps> = ({ id, label, isActive, onClick }) => {
+  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    onClick?.(event);
+  };
+
   return (
     <li style={{ listStyle: 'none' }}>
       <a
         href={`#${id}`}
-        onClick={onClick}
+        onClick={handleClick}
         aria-current={isActive ? 'page' : undefined}
         style={{
           position: 'relative',

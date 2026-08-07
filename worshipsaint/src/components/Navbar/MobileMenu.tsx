@@ -8,6 +8,7 @@ interface MobileMenuProps {
   activeId: string;
   isOpen: boolean;
   onClose: () => void;
+  onNavigate: (routeId: string) => void;
 }
 
 /**
@@ -17,7 +18,7 @@ interface MobileMenuProps {
  * Gestiona el bloqueo del scroll del body mientras está abierto y el cierre
  * con la tecla Escape para accesibilidad por teclado.
  */
-const MobileMenu: FC<MobileMenuProps> = ({ routes, activeId, isOpen, onClose }) => {
+const MobileMenu: FC<MobileMenuProps> = ({ routes, activeId, isOpen, onClose, onNavigate }) => {
   // Cerrar con Escape y bloquear scroll del body.
   useEffect(() => {
     if (!isOpen) return;
@@ -46,7 +47,7 @@ const MobileMenu: FC<MobileMenuProps> = ({ routes, activeId, isOpen, onClose }) 
         style={{
           position: 'fixed',
           inset: 0,
-          zIndex: 90,
+          zIndex: 100,
           backgroundColor: 'rgba(44,33,24,0.35)',
           backdropFilter: 'blur(6px)',
           opacity: isOpen ? 1 : 0,
@@ -65,17 +66,20 @@ const MobileMenu: FC<MobileMenuProps> = ({ routes, activeId, isOpen, onClose }) 
           position: 'fixed',
           top: 0,
           right: 0,
-          height: '100dvh',
-          width: 'min(82vw, 360px)',
-          zIndex: 100,
+          bottom: 0,
+          width: 'min(84vw, 360px)',
+          zIndex: 110,
           display: 'flex',
           flexDirection: 'column',
-          backgroundColor: 'var(--ws-bg)',
+          backgroundColor: 'rgba(248,246,242,0.97)',
           borderLeft: '1px solid rgba(200,169,106,0.25)',
           boxShadow: '-20px 0 60px rgba(44,33,24,0.18)',
           transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
           transition: 'transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-          padding: '1.25rem 1.5rem 2rem'
+          padding: '1.25rem 1.5rem 2rem',
+          overflowY: 'auto',
+          backdropFilter: 'blur(18px)',
+          WebkitBackdropFilter: 'blur(18px)'
         }}
       >
         <div
@@ -126,17 +130,7 @@ const MobileMenu: FC<MobileMenuProps> = ({ routes, activeId, isOpen, onClose }) 
                 <NavItem
                   {...route}
                   isActive={activeId === route.id}
-                  onClick={() => {
-                    onClose();
-                    // Disparar replay de la animación cinematográfica al
-                    // hacer clic en el enlace correspondiente.
-                    if (route.id === 'tienda') {
-                      window.dispatchEvent(new CustomEvent('ws:replay-tienda'));
-                    }
-                    if (route.id === 'equipo-futbol') {
-                      window.dispatchEvent(new CustomEvent('ws:replay-equipo'));
-                    }
-                  }}
+                  onClick={() => onNavigate(route.id)}
                 />
               </div>
             ))}
