@@ -352,7 +352,7 @@ const EquipoFutbol: FC = () => {
         style={{
           position: 'relative',
           width: '100%',
-          minHeight: '440px',
+          minHeight: isDesktop ? '560px' : '440px',
           contentVisibility: 'visible',
           containIntrinsicSize: 'none'
         }}
@@ -401,8 +401,9 @@ const EquipoFutbol: FC = () => {
               position: 'relative',
               display: 'grid',
               gridTemplateColumns: '1fr 1fr',
-              gap: isDesktop ? 'clamp(1.2rem, 4vw, 3.2rem)' : 'clamp(0.6rem, 2vw, 1.6rem)',
-              maxWidth: isDesktop ? 'clamp(480px, 70vw, 760px)' : 'clamp(288px, 88vw, 576px)',
+              gap: isDesktop ? 'clamp(1.6rem, 5vw, 4rem)' : 'clamp(0.6rem, 2vw, 1.6rem)',
+              rowGap: isDesktop ? 'clamp(2.4rem, 6vw, 4.8rem)' : 'clamp(0.6rem, 2vw, 1.6rem)',
+              maxWidth: isDesktop ? 'clamp(560px, 82vw, 920px)' : 'clamp(288px, 88vw, 576px)',
               margin: '0 auto',
               justifyItems: 'center',
               padding: 'clamp(0.4rem, 1.6vw, 0.8rem) 0'
@@ -530,8 +531,8 @@ const EquipoFutbol: FC = () => {
               <div
                 style={{
                   ...glassCard,
-                  width: isDesktop ? 'clamp(260px, 40vw, 384px)' : 'clamp(200px, 34vw, 296px)',
-                  padding: 'clamp(0.85rem, 2.6vw, 1.25rem)',
+                  width: isDesktop ? 'clamp(320px, 48vw, 460px)' : 'clamp(220px, 38vw, 336px)',
+                  padding: 'clamp(1rem, 3vw, 1.5rem)',
                   textAlign: 'center',
                   borderColor: 'rgba(200,169,106,0.7)',
                   boxShadow: '0 18px 50px rgba(200,169,106,0.35), 0 0 30px rgba(200,169,106,0.25)'
@@ -541,10 +542,10 @@ const EquipoFutbol: FC = () => {
                 <div
                   ref={(el) => { fotoRefs.current[0] = el; }}
                   style={{
-                    width: isDesktop ? 'clamp(128px, 22vw, 188px)' : 'clamp(96px, 17vw, 140px)',
-                    height: isDesktop ? 'clamp(128px, 22vw, 188px)' : 'clamp(96px, 17vw, 140px)',
+                    width: isDesktop ? 'clamp(160px, 28vw, 232px)' : 'clamp(108px, 19vw, 160px)',
+                    height: isDesktop ? 'clamp(160px, 28vw, 232px)' : 'clamp(108px, 19vw, 160px)',
                     borderRadius: '50%',
-                    margin: '0 auto 0.6rem',
+                    margin: '0 auto 0.7rem',
                     border: '2px solid rgba(200,169,106,0.85)',
                     boxShadow: '0 10px 30px rgba(200,169,106,0.4)',
                     overflow: 'hidden',
@@ -586,8 +587,8 @@ const EquipoFutbol: FC = () => {
                   key={j.id}
                   ref={(el) => { fotoRefs.current[idx] = el; }}
                   style={{
-                    width: isDesktop ? 'clamp(88px, 15vw, 128px)' : 'clamp(72px, 13vw, 104px)',
-                    height: isDesktop ? 'clamp(88px, 15vw, 128px)' : 'clamp(72px, 13vw, 104px)',
+                    width: isDesktop ? 'clamp(120px, 20vw, 176px)' : 'clamp(80px, 14vw, 116px)',
+                    height: isDesktop ? 'clamp(120px, 20vw, 176px)' : 'clamp(80px, 14vw, 116px)',
                     borderRadius: '50%',
                     border: '2px solid rgba(200,169,106,0.7)',
                     boxShadow: '0 8px 24px rgba(200,169,106,0.25)',
@@ -635,8 +636,8 @@ const EquipoFutbol: FC = () => {
               gridTemplateColumns: isDesktop
                 ? 'repeat(3, minmax(0, 1fr))'
                 : 'minmax(0, 1fr)',
-              gap: 'clamp(1rem, 2.4vw, 1.8rem)',
-              maxWidth: isDesktop ? 'clamp(720px, 92vw, 1080px)' : 'clamp(280px, 92vw, 460px)',
+              gap: 'clamp(1.2rem, 2.8vw, 2.2rem)',
+              maxWidth: isDesktop ? 'clamp(820px, 95vw, 1240px)' : 'clamp(280px, 92vw, 460px)',
               margin: '0 auto',
               justifyItems: 'stretch'
             }}
@@ -680,8 +681,8 @@ const EquipoFutbol: FC = () => {
                   {/* Foto — circular en desktop, ligeramente redondeada */}
                   <div
                     style={{
-                      width: isDesktop ? 'clamp(150px, 18vw, 200px)' : 'clamp(130px, 40vw, 170px)',
-                      height: isDesktop ? 'clamp(150px, 18vw, 200px)' : 'clamp(130px, 40vw, 170px)',
+                      width: isDesktop ? 'clamp(180px, 22vw, 240px)' : 'clamp(140px, 42vw, 180px)',
+                      height: isDesktop ? 'clamp(180px, 22vw, 240px)' : 'clamp(140px, 42vw, 180px)',
                       borderRadius: isDesktop ? '50%' : '20px',
                       margin: '0 auto clamp(0.9rem, 2vw, 1.2rem)',
                       border: '2px solid rgba(200,169,106,0.7)',
