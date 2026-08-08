@@ -1,8 +1,8 @@
 import type { FC, MouseEvent } from 'react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Section from '../Section';
-import gorra1 from '../../assets/gorra.jpg';
-import gorra2 from '../../assets/gorra2.jpg';
+import gorra1 from '../../assets/gorranegra.png';
+import gorra2 from '../../assets/gorrablanca.png';
 
 const imgSrc1 = typeof gorra1 === 'string' ? gorra1 : (gorra1 as any).src;
 const imgSrc2 = typeof gorra2 === 'string' ? gorra2 : (gorra2 as any).src;
@@ -86,6 +86,30 @@ const CapCard: FC<CapCardProps> = ({
         willChange: animateDetails ? 'auto' : 'transform, opacity'
       }}
     >
+      {/* Etiqueta AGOTADAS que sobresale del card */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '-14px',
+          right: '-12px',
+          zIndex: 10,
+          padding: '0.4rem 1rem',
+          borderRadius: '999px',
+          background: 'linear-gradient(135deg, #c8a96a, #8a6d3b)',
+          color: '#fff',
+          fontFamily: 'var(--ws-font)',
+          fontWeight: 800,
+          fontSize: '0.72rem',
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          boxShadow: '0 6px 18px rgba(44,33,24,0.28)',
+          opacity: animateDetails ? 1 : 0,
+          transform: animateDetails ? 'rotate(6deg) scale(1)' : 'rotate(6deg) scale(0.6)',
+          transition: 'opacity 500ms ease 200ms, transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1) 200ms'
+        }}
+      >
+        Agotadas
+      </div>
       {/* Contenedor visual de la gorra con descenso 3D desde el Hero */}
       <div
         ref={imgContainerRef}
@@ -203,7 +227,7 @@ const CapCard: FC<CapCardProps> = ({
             (e.currentTarget as HTMLElement).style.boxShadow = 'var(--ws-shadow-btn)';
           }}
         >
-          Adquirir Ahora
+          Agotadas sus gorras
         </button>
       </div>
     </article>
