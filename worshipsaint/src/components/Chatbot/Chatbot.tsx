@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FC, KeyboardEvent } from 'react';
 import { chatbotService } from '../../services/chatbotService';
+import logo from '../../assets/logo.png';
 
 interface ChatMessage {
   id: number;
@@ -133,28 +134,66 @@ const Chatbot: FC = () => {
   return (
     <>
       {!isOpen && (
-        <button
-          type="button"
-          onClick={() => setIsOpen(true)}
+        <div
           style={{
             position: 'fixed',
-            right: '1.25rem',
-            bottom: '1.25rem',
+            right: '1.5rem',
+            bottom: '1.5rem',
             zIndex: 210,
-            width: '58px',
-            height: '58px',
-            borderRadius: '999px',
-            border: 'none',
-            background: 'linear-gradient(135deg, #c8a96a, #d6c3a5)',
-            color: '#2c2118',
-            fontSize: '1.6rem',
-            cursor: 'pointer',
-            boxShadow: '0 16px 35px rgba(200,169,106,0.35)'
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '0.6rem'
           }}
-          aria-label="Abrir chat"
         >
-          💬
-        </button>
+          <span
+            style={{
+              fontFamily: 'var(--ws-font)',
+              fontSize: '0.95rem',
+              fontWeight: 600,
+              color: '#2c2118',
+              background: 'rgba(248,246,242,0.92)',
+              padding: '0.4rem 0.9rem',
+              borderRadius: '999px',
+              border: '1px solid rgba(200,169,106,0.35)',
+              boxShadow: '0 8px 24px rgba(44,33,24,0.12)',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            Habla conmigo
+          </span>
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            style={{
+              width: '88px',
+              height: '88px',
+              borderRadius: '999px',
+              border: '2px solid rgba(200,169,106,0.45)',
+              background: 'linear-gradient(135deg, #c8a96a, #d6c3a5)',
+              cursor: 'pointer',
+              boxShadow: '0 16px 40px rgba(200,169,106,0.4)',
+              padding: 0,
+              overflow: 'hidden',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'transform 0.2s ease'
+            }}
+            aria-label="Abrir chat"
+          >
+            <img
+              src={logo.src}
+              alt="WorshipSaint"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                borderRadius: '999px'
+              }}
+            />
+          </button>
+        </div>
       )}
 
       {isOpen && (
