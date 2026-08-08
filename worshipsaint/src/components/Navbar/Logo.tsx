@@ -1,4 +1,5 @@
 import type { FC } from 'react';
+import logo from '../../assets/logo.png';
 
 /**
  * Logotipo de WorshipSaint — estilo premium cálido.
@@ -20,23 +21,17 @@ const Logo: FC<{ className?: string }> = ({ className }) => {
         textDecoration: 'none'
       }}
     >
-      <svg
-        width="30"
-        height="30"
-        viewBox="0 0 30 30"
-        fill="none"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <circle cx="15" cy="15" r="14" stroke="var(--ws-accent)" strokeWidth="1.5" />
-        <path
-          d="M10 20V10l5 6 5-6v10"
-          stroke="var(--ws-accent)"
-          strokeWidth="1.75"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
+      <img
+        src={logo.src}
+        alt="WorshipSaint"
+        style={{
+          width: '34px',
+          height: '34px',
+          borderRadius: '999px',
+          objectFit: 'cover',
+          flexShrink: 0
+        }}
+      />
       <span>
         Worship<span style={{ color: 'var(--ws-accent)' }}>Saint</span>
       </span>

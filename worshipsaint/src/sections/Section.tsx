@@ -76,8 +76,8 @@ const Section: FC<SectionProps> = ({ id, title, subtitle, children, variant = 'd
           style={{
             margin: 0,
             fontFamily: 'var(--ws-font)',
-            fontWeight: 700,
-            fontSize: 'clamp(2rem, 5vw, 3.5rem)',
+            fontWeight: 800,
+            fontSize: 'clamp(2.75rem, 8vw, 5.5rem)',
             letterSpacing: '-0.03em',
             lineHeight: 1.05,
             color: 'var(--ws-text)'
@@ -88,11 +88,11 @@ const Section: FC<SectionProps> = ({ id, title, subtitle, children, variant = 'd
         {subtitle && (
           <p
             style={{
-              marginTop: '1rem',
+              marginTop: '1.25rem',
               fontFamily: 'var(--ws-font)',
-              fontSize: 'clamp(1rem, 2vw, 1.25rem)',
+              fontSize: 'clamp(1.1rem, 2.4vw, 1.5rem)',
               color: 'var(--ws-muted)',
-              maxWidth: '640px',
+              maxWidth: '720px',
               marginLeft: 'auto',
               marginRight: 'auto'
             }}

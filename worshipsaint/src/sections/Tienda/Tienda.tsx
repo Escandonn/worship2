@@ -11,7 +11,7 @@ const productos = [
   {
     id: 'left-cap',
     nombre: 'Gorra WorshipSaint — Black Edition',
-    tag: 'Edición Premium Atemporal',
+    tag: 'Colección Exclusiva',
     precio: '$45',
     imagen: imgSrc1,
     flyAnimation: 'wsDescendHeroCapLeft'
@@ -19,7 +19,7 @@ const productos = [
   {
     id: 'right-cap',
     nombre: 'Gorra WorshipSaint — Crown Edition',
-    tag: 'Edición Exclusiva de Autor',
+    tag: 'Edición Limitada',
     precio: '$45',
     imagen: imgSrc2,
     flyAnimation: 'wsDescendHeroCapRight'
@@ -181,14 +181,15 @@ const CapCard: FC<CapCardProps> = ({
         <button
           style={{
             width: '100%',
-            padding: '0.85rem 1.5rem',
+            padding: '1rem 1.5rem',
             borderRadius: 'var(--ws-radius-btn)',
             border: 'none',
             background: 'var(--ws-gradient-btn)',
             color: 'var(--ws-text)',
             fontFamily: 'var(--ws-font)',
-            fontWeight: 600,
-            fontSize: '0.98rem',
+            fontWeight: 700,
+            fontSize: '1.1rem',
+            letterSpacing: '0.02em',
             cursor: 'pointer',
             boxShadow: 'var(--ws-shadow-btn)',
             transition: 'transform 250ms ease, boxShadow 250ms ease'
@@ -202,7 +203,7 @@ const CapCard: FC<CapCardProps> = ({
             (e.currentTarget as HTMLElement).style.boxShadow = 'var(--ws-shadow-btn)';
           }}
         >
-          Comprar Gorra
+          Adquirir Ahora
         </button>
       </div>
     </article>
@@ -315,7 +316,7 @@ const Tienda: FC = () => {
     <Section
       id="tienda"
       title="Tienda"
-      subtitle="Edición limitada de gorras premium con materiales seleccionados y acabados de autor."
+      subtitle="Lleva contigo el símbolo. Gorras de edición limitada, materiales premium y acabados de autor."
     >
       {/* Keyframes CSS Inline optimizados para GPU sin blur en vivo */}
       <style>{`
