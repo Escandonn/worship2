@@ -79,8 +79,8 @@ const JUGADORES = INTEGRANTES;
 type Fase = 'idle' | 'triangulo' | 'rotando' | 'fila' | 'interactivo';
 
 const ROTACIONES = 3;
-const INTERVALO_ROT = 1700;   // Card protagonista: ~1.7s (dinámico pero elegante)
-const TRANS_JUG = 600;        // Transición entre jugadores: 600ms
+const INTERVALO_ROT = 1100;   // Card protagonista: ~1.1s para un ritmo más ágil
+const TRANS_JUG = 380;        // Transición entre jugadores: 380ms
 const easeCubic = [0.65, 0, 0.35, 1] as const;
 
 const glassCard: CSSProperties = {
@@ -253,7 +253,7 @@ const EquipoFutbol: FC = () => {
       rot += 1;
       if (rot < ROTACIONES) {
         setProtagonista((p) => (p + 1) % JUGADORES.length);
-        window.setTimeout(rotar, INTERVALO_ROT);
+        window.setTimeout(rotar, TRANS_JUG);
       } else {
         // Última card visible ~1.7s, luego transición elegante a fila
         window.setTimeout(() => {
@@ -652,13 +652,13 @@ const EquipoFutbol: FC = () => {
                     y: 0,
                     scale: 1,
                     transition: {
-                      duration: 0.6,
-                      delay: 0.1 + i * 0.14,
+                      duration: 0.35,
+                      delay: 0.04 + i * 0.06,
                       ease: easeCubic
                     }
                   } : {}}
                   whileHover={isDesktop ? { y: -6, scale: 1.02 } : {}}
-                  transition={{ duration: 0.4, ease: easeCubic }}
+                  transition={{ duration: 0.25, ease: easeCubic }}
                   onMouseEnter={() => setActivo(i)}
                   aria-label={`Tarjeta de ${j.nombre}, ${j.profesion}`}
                   style={{
