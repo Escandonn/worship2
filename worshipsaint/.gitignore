@@ -1,6 +1,9 @@
 # build output
 dist/
 
+# Vercel build output (se regenera en cada deploy)
+.vercel/output/
+
 # generated types
 .astro/
 

@@ -10,7 +10,7 @@
 /*   - Se usa solo si Web Speech API no está disponible.              */
 /*                                                                    */
 /* Configuración por variables de entorno (opcional):                */
-/*   PUBLIC_TTS_VOICE  → voz preferida (default: primera voz es-ES)  */
+/*   PUBLIC_TTS_VOICE  → voz preferida (default: es-CO-GonzaloNeural) */
 /*   PUBLIC_TTS_RATE   → velocidad 0.5–2.0 (default: 1.0)            */
 /*   PUBLIC_TTS_PITCH  → tono 0–2 (default: 1.0)                     */
 /* ------------------------------------------------------------------ */
@@ -132,7 +132,7 @@ class WebSpeechTTS implements TextToSpeechService {
   private voicesPromise: Promise<SpeechSynthesisVoice[]> | null = null;
 
   constructor(
-    defaultVoice = import.meta.env.PUBLIC_TTS_VOICE ?? 'es-ES-ElviraNeural',
+    defaultVoice = import.meta.env.PUBLIC_TTS_VOICE ?? 'es-CO-GonzaloNeural',
     defaultRate = import.meta.env.PUBLIC_TTS_RATE ?? '1.0',
     defaultPitch = import.meta.env.PUBLIC_TTS_PITCH ?? '1.0'
   ) {
