@@ -46,6 +46,11 @@ const Chatbot: FC = () => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   // Bandera para saber si la transcripción vino del micrófono (auto-enviar)
   const fromVoiceRef = useRef(false);
+  // Ref espejo de responseMode para leer siempre el valor actual en handleSend
+  const responseModeRef = useRef<'text' | 'voice'>('text');
+  useEffect(() => {
+    responseModeRef.current = responseMode;
+  }, [responseMode]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -64,6 +69,10 @@ const Chatbot: FC = () => {
 
   /** Detiene cualquier reproducción de audio en curso. */
   const stopSpeaking = useCallback(() => {
+    // Detener Web Speech API si está activa
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.src = '';
@@ -78,22 +87,56 @@ const Chatbot: FC = () => {
     stopSpeaking();
     setIsSpeaking(true);
     try {
+      console.log('[Chatbot] Solicitando síntesis de voz...');
       const audioUrl = await textToSpeechService.synthesize(text);
       if (!audioUrl) {
+        console.error('[Chatbot] synthesize() devolvió URL vacía — revisa la consola para errores de la API.');
         setIsSpeaking(false);
         return;
       }
+
+      // Web Speech API: el audio se reproduce directamente vía speechSynthesis.
+      // El marcador 'speechsynthesis:playing' indica que no hay URL de audio real.
+      if (audioUrl === 'speechsynthesis:playing') {
+        console.log('[Chatbot] Reproduciendo vía Web Speech API.');
+        // Detectar fin de reproducción con un poller (speechSynthesis no tiene onended global).
+        const synth = window.speechSynthesis;
+        const checkEnd = () => {
+          if (!synth.speaking) {
+            console.log('[Chatbot] Web Speech API: reproducción finalizada.');
+            setIsSpeaking(false);
+            return;
+          }
+          window.requestAnimationFrame(checkEnd);
+        };
+        // Iniciar el poller en el siguiente frame
+        window.requestAnimationFrame(checkEnd);
+        return;
+      }
+
+      // Fallback FreeTTS: URL de blob reproducible en un <audio>.
+      console.log('[Chatbot] URL de audio recibida:', audioUrl);
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
       audio.onended = () => {
+        console.log('[Chatbot] Reproducción finalizada.');
         setIsSpeaking(false);
         URL.revokeObjectURL(audioUrl);
       };
-      audio.onerror = () => {
+      audio.onerror = (e) => {
+        console.error('[Chatbot] Error en elemento <audio>:', e, audio.error);
         setIsSpeaking(false);
         URL.revokeObjectURL(audioUrl);
       };
-      await audio.play();
+      // Intentar reproducir; el navegador puede bloquear el autoplay.
+      try {
+        await audio.play();
+        console.log('[Chatbot] Reproducción iniciada correctamente.');
+      } catch (playErr) {
+        console.warn('[Chatbot] play() rechazado por el navegador:', playErr);
+        // Reintento tras interacción: el usuario verá el indicador y puede tocar "Reproducir"
+        setIsSpeaking(false);
+      }
     } catch (err) {
       console.error('[Chatbot] Error al reproducir voz:', err);
       setIsSpeaking(false);
@@ -130,7 +173,7 @@ const Chatbot: FC = () => {
       ]);
 
       // Si el modo voz está activo, sintetizar y reproducir la respuesta
-      if (responseMode === 'voice') {
+      if (responseModeRef.current === 'voice') {
         void speakResponse(answer);
       }
     } catch {
