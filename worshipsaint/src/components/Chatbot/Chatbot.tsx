@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FC, KeyboardEvent } from 'react';
 import { chatbotService } from '../../services/chatbotService';
+import { textToSpeechService } from '../../services/textToSpeechService';
+import VoiceRecorder from '../VoiceRecorder';
 import logo from '../../assets/logo.png';
 
 interface ChatMessage {
@@ -37,7 +39,13 @@ const Chatbot: FC = () => {
   });
   const [draft, setDraft] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  // Modo de respuesta: 'text' muestra texto, 'voice' sintetiza y reproduce audio
+  const [responseMode, setResponseMode] = useState<'text' | 'voice'>('text');
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const endRef = useRef<HTMLDivElement | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  // Bandera para saber si la transcripción vino del micrófono (auto-enviar)
+  const fromVoiceRef = useRef(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -54,8 +62,46 @@ const Chatbot: FC = () => {
     return window.innerWidth < 768;
   }, [isOpen, isMinimized, isFullscreen]);
 
-  const handleSend = async () => {
-    const trimmed = draft.trim();
+  /** Detiene cualquier reproducción de audio en curso. */
+  const stopSpeaking = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+      audioRef.current = null;
+    }
+    setIsSpeaking(false);
+  }, []);
+
+  /** Sintetiza texto a voz y lo reproduce. */
+  const speakResponse = useCallback(async (text: string) => {
+    if (!text.trim()) return;
+    stopSpeaking();
+    setIsSpeaking(true);
+    try {
+      const audioUrl = await textToSpeechService.synthesize(text);
+      if (!audioUrl) {
+        setIsSpeaking(false);
+        return;
+      }
+      const audio = new Audio(audioUrl);
+      audioRef.current = audio;
+      audio.onended = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+      audio.onerror = () => {
+        setIsSpeaking(false);
+        URL.revokeObjectURL(audioUrl);
+      };
+      await audio.play();
+    } catch (err) {
+      console.error('[Chatbot] Error al reproducir voz:', err);
+      setIsSpeaking(false);
+    }
+  }, [stopSpeaking]);
+
+  const handleSend = async (overrideText?: string) => {
+    const trimmed = (overrideText ?? draft).trim();
     if (!trimmed || isLoading) return;
 
     const userMessage: ChatMessage = {
@@ -82,6 +128,11 @@ const Chatbot: FC = () => {
           content: answer
         }
       ]);
+
+      // Si el modo voz está activo, sintetizar y reproducir la respuesta
+      if (responseMode === 'voice') {
+        void speakResponse(answer);
+      }
     } catch {
       setMessages((prev) => [
         ...prev,
@@ -93,6 +144,7 @@ const Chatbot: FC = () => {
       ]);
     } finally {
       setIsLoading(false);
+      fromVoiceRef.current = false;
     }
   };
 
@@ -102,6 +154,19 @@ const Chatbot: FC = () => {
       void handleSend();
     }
   };
+
+  /**
+   * Recibe el texto transcrito desde el VoiceRecorder (API de Groq Whisper).
+   * Lo visualiza en consola y, al pausar el micrófono, envía automáticamente
+   * la pregunta al bot. La respuesta llega como texto o audio según el modo.
+   */
+  const handleTranscription = useCallback((text: string) => {
+    console.log('%c[Chatbot] Audio transcrito:', 'color:#C8A96A;font-weight:700;', text);
+    fromVoiceRef.current = true;
+    // Auto-enviar la pregunta al pausar el micrófono
+    void handleSend(text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const panelStyle = isMobile
     ? {
@@ -215,7 +280,44 @@ const Chatbot: FC = () => {
               <div style={{ fontSize: '0.8rem', opacity: 0.85 }}>Asistente de soporte</div>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.4rem' }}>
+            <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  stopSpeaking();
+                  setResponseMode((prev) => (prev === 'text' ? 'voice' : 'text'));
+                }}
+                style={{
+                  ...buttonStyle,
+                  width: 'auto',
+                  padding: '0 0.7rem',
+                  height: '32px',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  gap: '0.3rem',
+                  background:
+                    responseMode === 'voice'
+                      ? 'linear-gradient(135deg, #c8a96a, #d6c3a5)'
+                      : 'rgba(255,255,255,0.12)',
+                  color: responseMode === 'voice' ? '#2c2118' : '#fff',
+                  border:
+                    responseMode === 'voice'
+                      ? '1px solid rgba(200,169,106,0.6)'
+                      : '1px solid rgba(255,255,255,0.18)'
+                }}
+                aria-label={
+                  responseMode === 'voice'
+                    ? 'Modo voz activado. Cambiar a texto'
+                    : 'Modo texto activado. Cambiar a voz'
+                }
+                title={
+                  responseMode === 'voice'
+                    ? 'Respuestas en voz (clic para cambiar a texto)'
+                    : 'Respuestas en texto (clic para cambiar a voz)'
+                }
+              >
+                {responseMode === 'voice' ? '🔊 Voz' : '💬 Texto'}
+              </button>
               <button
                 type="button"
                 onClick={() => setIsMinimized((prev) => !prev)}
@@ -298,6 +400,59 @@ const Chatbot: FC = () => {
                 <div ref={endRef} />
               </div>
 
+              {isSpeaking && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.6rem',
+                    padding: '0.55rem 0.9rem',
+                    margin: '0 0.9rem',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, rgba(200,169,106,0.18), rgba(214,195,165,0.18))',
+                    border: '1px solid rgba(200,169,106,0.35)',
+                    fontFamily: 'var(--ws-font)',
+                    fontSize: '0.82rem',
+                    color: '#2c2118',
+                    flexShrink: 0
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: '14px',
+                        height: '14px',
+                        border: '2px solid rgba(200,169,106,0.6)',
+                        borderTopColor: '#c8a96a',
+                        borderRadius: '50%',
+                        animation: 'ws-spin 0.8s linear infinite'
+                      }}
+                    />
+                    Reproduciendo respuesta en voz…
+                  </span>
+                  <button
+                    type="button"
+                    onClick={stopSpeaking}
+                    style={{
+                      border: '1px solid rgba(44,33,24,0.2)',
+                      borderRadius: '999px',
+                      background: '#fff',
+                      color: '#2c2118',
+                      padding: '0.3rem 0.7rem',
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontFamily: 'var(--ws-font)'
+                    }}
+                    aria-label="Detener reproducción de audio"
+                  >
+                    ⏹ Detener
+                  </button>
+                </div>
+              )}
+
               <div
                 style={{
                   display: 'flex',
@@ -312,7 +467,7 @@ const Chatbot: FC = () => {
                   value={draft}
                   onChange={(event) => setDraft(event.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder="Escribe tu mensaje..."
+                  placeholder="Escribe o graba tu mensaje..."
                   style={{
                     flex: 1,
                     border: '1px solid rgba(44,33,24,0.12)',
@@ -323,6 +478,7 @@ const Chatbot: FC = () => {
                     background: '#fff'
                   }}
                 />
+                <VoiceRecorder size={40} onTranscription={handleTranscription} />
                 <button
                   type="button"
                   onClick={() => {
