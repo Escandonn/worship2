@@ -17,7 +17,7 @@ interface TextToSpeechService {
   getVoicesByLocale(locale: string): Promise<any[]>;
 }
 
-class ApiTTSService implements TextToSpeechService {
+class ExternalTTSService implements TextToSpeechService {
   private defaultVoice = 'Kore';
   private queue: Promise<TTSResult> | null = null;
 
@@ -26,9 +26,7 @@ class ApiTTSService implements TextToSpeechService {
     return result.url;
   }
 
-  async synthesizeDetailed(text: string, options?: TTSOptions): Promise<TTSResult> {
-    const voice = options?.voice ?? this.defaultVoice;
-
+  async synthesizeDetailed(text: string, _options?: TTSOptions): Promise<TTSResult> {
     if (!text.trim()) {
       return { url: '', fileId: '', sizeBytes: 0 };
     }
@@ -41,11 +39,11 @@ class ApiTTSService implements TextToSpeechService {
       }
     }
 
-    this.queue = this.doRequest(text, voice);
+    this.queue = this.doRequest(text);
     return this.queue;
   }
 
-  private async doRequest(text: string, voice: string): Promise<TTSResult> {
+  private async doRequest(text: string): Promise<TTSResult> {
     const maxAttempts = 2;
     let attempt = 0;
     let lastError: Error | null = null;
@@ -53,10 +51,10 @@ class ApiTTSService implements TextToSpeechService {
     while (attempt < maxAttempts) {
       attempt++;
       try {
-        const response = await fetch('/api/tts', {
+        const response = await fetch('https://api-voz-python-vercel.vercel.app/api/tts/', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text, voice })
+          body: JSON.stringify({ text })
         });
 
         if (response.status === 429) {
@@ -67,8 +65,8 @@ class ApiTTSService implements TextToSpeechService {
         }
 
         if (!response.ok) {
-          const err = await response.json().catch(() => ({ error: 'Error desconocido' }));
-          throw new Error(err.error || `HTTP ${response.status}`);
+          const err = await response.text().catch(() => 'Error desconocido');
+          throw new Error(`HTTP ${response.status}: ${err}`);
         }
 
         const blob = await response.blob();
@@ -92,22 +90,16 @@ class ApiTTSService implements TextToSpeechService {
   }
 
   async downloadAudio(_fileId: string): Promise<Blob> {
-    throw new Error('downloadAudio no es compatible con la API de Gemini TTS.');
+    throw new Error('downloadAudio no es compatible con la API de TTS externa.');
   }
 
   async downloadSubtitles(_fileId: string): Promise<string> {
-    throw new Error('downloadSubtitles no es compatible con la API de Gemini TTS.');
+    throw new Error('downloadSubtitles no es compatible con la API de TTS externa.');
   }
 
   async getVoices(): Promise<any[]> {
     return [
-      { ShortName: 'Zephyr', Gender: 'Male', Locale: 'es-CO', LocaleName: 'Español (Colombia)' },
-      { ShortName: 'Puck', Gender: 'Male', Locale: 'es-CO', LocaleName: 'Español (Colombia)' },
-      { ShortName: 'Kore', Gender: 'Female', Locale: 'es-CO', LocaleName: 'Español (Colombia)' },
-      { ShortName: 'Charon', Gender: 'Male', Locale: 'es-CO', LocaleName: 'Español (Colombia)' },
-      { ShortName: 'Fenrir', Gender: 'Male', Locale: 'es-CO', LocaleName: 'Español (Colombia)' },
-      { ShortName: 'Aoede', Gender: 'Female', Locale: 'es-CO', LocaleName: 'Español (Colombia)' },
-      { ShortName: 'Leda', Gender: 'Female', Locale: 'es-CO', LocaleName: 'Español (Colombia)' }
+      { ShortName: 'Kore', Gender: 'Female', Locale: 'es-CO', LocaleName: 'Español (Colombia)' }
     ];
   }
 
@@ -116,5 +108,5 @@ class ApiTTSService implements TextToSpeechService {
   }
 }
 
-export const textToSpeechService: TextToSpeechService = new ApiTTSService();
+export const textToSpeechService: TextToSpeechService = new ExternalTTSService();
 export type { TTSOptions, TTSResult, TextToSpeechService };
