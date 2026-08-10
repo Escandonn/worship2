@@ -4,7 +4,7 @@ export const prerender = false;
 
 const GEMINI_API_KEY = import.meta.env.GEMINI_API_KEY;
 const GEMINI_TTS_MODEL = 'gemini-3.1-flash-tts-preview';
-const GEMINI_TTS_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/interactions';
+const GEMINI_TTS_ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
@@ -30,17 +30,24 @@ export const POST: APIRoute = async ({ request }) => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: GEMINI_TTS_MODEL,
-        input: `Lee en español colombiano, natural, claro, profesional. Texto: ${text}`,
-        response_format: {
-          type: 'audio'
-        },
-        generation_config: {
-          speech_config: [
-            {
-              voice: voice
+        contents: [
+          {
+            parts: [
+              {
+                text: `Lee exactamente el siguiente texto en español colombiano.\n\nHabla de forma natural, clara y agradable.\nUtiliza un ritmo moderado.\nHaz pausas naturales.\nUtiliza una voz cálida y profesional.\n\nTexto:\n\n${text}`
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          responseModalities: ['AUDIO'],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: {
+                voiceName: voice
+              }
             }
-          ]
+          }
         }
       })
     });
@@ -55,18 +62,19 @@ export const POST: APIRoute = async ({ request }) => {
 
     const data = await response.json();
 
-    const audioContent = data.steps?.[0]?.content?.find(
-      (item: { mime_type?: string; data?: string }) => item.mime_type === 'audio/l16'
-    );
+    const inlineData = data.candidates?.[0]?.content?.parts?.find(
+      (part: any) => part.inlineData?.mimeType?.startsWith('audio/')
+    )?.inlineData;
 
-    if (!audioContent?.data) {
+    if (!inlineData?.data) {
+      console.error('[TTS] Respuesta sin audio:', JSON.stringify(data).slice(0, 500));
       return new Response(
         JSON.stringify({ error: 'Gemini respondió correctamente, pero no se encontró el audio.' }),
         { status: 502, headers: { 'Content-Type': 'application/json' } }
       );
     }
 
-    const pcmData = base64ToUint8Array(audioContent.data);
+    const pcmData = base64ToUint8Array(inlineData.data);
     const wavBlob = buildWavBlob(pcmData);
 
     return new Response(wavBlob, {
