@@ -69,10 +69,6 @@ const Chatbot: FC = () => {
 
   /** Detiene cualquier reproducción de audio en curso. */
   const stopSpeaking = useCallback(() => {
-    // Detener Web Speech API si está activa
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.src = '';
@@ -95,26 +91,6 @@ const Chatbot: FC = () => {
         return;
       }
 
-      // Web Speech API: el audio se reproduce directamente vía speechSynthesis.
-      // El marcador 'speechsynthesis:playing' indica que no hay URL de audio real.
-      if (audioUrl === 'speechsynthesis:playing') {
-        console.log('[Chatbot] Reproduciendo vía Web Speech API.');
-        // Detectar fin de reproducción con un poller (speechSynthesis no tiene onended global).
-        const synth = window.speechSynthesis;
-        const checkEnd = () => {
-          if (!synth.speaking) {
-            console.log('[Chatbot] Web Speech API: reproducción finalizada.');
-            setIsSpeaking(false);
-            return;
-          }
-          window.requestAnimationFrame(checkEnd);
-        };
-        // Iniciar el poller en el siguiente frame
-        window.requestAnimationFrame(checkEnd);
-        return;
-      }
-
-      // Fallback FreeTTS: URL de blob reproducible en un <audio>.
       console.log('[Chatbot] URL de audio recibida:', audioUrl);
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
@@ -128,13 +104,11 @@ const Chatbot: FC = () => {
         setIsSpeaking(false);
         URL.revokeObjectURL(audioUrl);
       };
-      // Intentar reproducir; el navegador puede bloquear el autoplay.
       try {
         await audio.play();
         console.log('[Chatbot] Reproducción iniciada correctamente.');
       } catch (playErr) {
         console.warn('[Chatbot] play() rechazado por el navegador:', playErr);
-        // Reintento tras interacción: el usuario verá el indicador y puede tocar "Reproducir"
         setIsSpeaking(false);
       }
     } catch (err) {
