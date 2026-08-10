@@ -17,7 +17,7 @@ class NgrokChatbotService implements ChatbotService {
     apiKey = import.meta.env.PUBLIC_CHATBOT_API_KEY || import.meta.env.PUBLIC_CHATBOT_URL || '',
     baseUrl = import.meta.env.PUBLIC_CHATBOT_BASE_URL || 'https://api.groq.com/openai/v1/chat/completions',
     model = import.meta.env.PUBLIC_CHATBOT_MODEL || 'llama-3.3-70b-versatile',
-    systemPrompt = import.meta.env.PUBLIC_CHATBOT_SYSTEM_PROMPT || 'Eres asistente de WorshipSaint. Responde en español. Muy breve: 1-3 frases cortas. NUNCA cortes la respuesta a la mitad. Completa siempre la última frase. Sin explicaciones largas.'
+    systemPrompt = import.meta.env.PUBLIC_CHATBOT_SYSTEM_PROMPT || 'Eres asistente de WorshipSaint. Responde en español. Máximo 2 frases cortas. Completa siempre la última frase. Sin listas, sin explicaciones largas.'
   ) {
     this.apiKey = apiKey;
     this.baseUrl = baseUrl;
@@ -50,7 +50,7 @@ class NgrokChatbotService implements ChatbotService {
           model: this.model,
           messages,
           temperature: 0.8,
-          max_completion_tokens: 150,
+          max_completion_tokens: 220,
           top_p: 1,
           stream: false
         })
@@ -61,7 +61,9 @@ class NgrokChatbotService implements ChatbotService {
       }
 
       const data = await response.json();
-      return data.choices?.[0]?.message?.content ?? data.reply ?? data.message ?? data.output ?? 'Gracias por tu mensaje.';
+      const raw = data.choices?.[0]?.message?.content ?? data.reply ?? data.message ?? data.output ?? '';
+      const cleaned = raw.replace(/\s+/g, ' ').trim();
+      return cleaned || 'Gracias por tu mensaje.';
     } catch (error) {
       console.error('Chatbot service error:', error);
       return 'Lo siento, no pude conectar con el servicio en este momento.';

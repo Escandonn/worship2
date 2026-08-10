@@ -134,22 +134,22 @@ const Chatbot: FC = () => {
 
     try {
       const history = messages
-        .slice(-8)
+        .slice(-4)
         .map((message) => ({ role: message.role, content: message.content }));
 
       const answer = await chatbotService.sendMessage(trimmed, history);
+      const cleanAnswer = answer.replace(/\s+/g, ' ').trim();
       setMessages((prev) => [
         ...prev,
         {
           id: Date.now() + 1,
           role: 'assistant',
-          content: answer
+          content: cleanAnswer
         }
       ]);
 
-      // Si el modo voz está activo, sintetizar y reproducir la respuesta
       if (responseModeRef.current === 'voice') {
-        void speakResponse(answer);
+        void speakResponse(cleanAnswer);
       }
     } catch {
       setMessages((prev) => [
