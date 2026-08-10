@@ -104,6 +104,7 @@ const Chatbot: FC = () => {
         setIsSpeaking(false);
         URL.revokeObjectURL(audioUrl);
       };
+      audio.load();
       try {
         await audio.play();
         console.log('[Chatbot] Reproducción iniciada correctamente.');

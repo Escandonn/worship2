@@ -31,7 +31,7 @@ export const POST: APIRoute = async ({ request }) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: GEMINI_TTS_MODEL,
-        input: `Lee exactamente el siguiente texto en español colombiano. Habla de forma natural, clara y agradable. Utiliza un ritmo moderado. Haz pausas naturales. Utiliza una voz cálida y profesional.\n\nTexto:\n\n${text}`,
+        input: `Lee en español colombiano, natural, claro, profesional. Texto: ${text}`,
         response_format: {
           type: 'audio'
         },
