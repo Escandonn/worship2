@@ -12,6 +12,8 @@ interface SectionProps {
   children?: ReactNode;
   /** Variante de acento visual. */
   variant?: 'default' | 'accent' | 'muted';
+  /** Estilos adicionales para la sección. */
+  style?: CSSProperties;
 }
 
 const VARIANTS: Record<NonNullable<SectionProps['variant']>, CSSProperties> = {
@@ -24,7 +26,7 @@ const VARIANTS: Record<NonNullable<SectionProps['variant']>, CSSProperties> = {
  * Contenedor base de sección optimizado para Presentation Delay e INP.
  * Sin filtros de blur en contenedores de pantalla completa.
  */
-const Section: FC<SectionProps> = ({ id, title, subtitle, children, variant = 'default' }) => {
+const Section: FC<SectionProps> = ({ id, title, subtitle, children, variant = 'default', style }) => {
   const sectionRef = useRef<HTMLElement | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [animationFinished, setAnimationFinished] = useState(false);
@@ -68,7 +70,8 @@ const Section: FC<SectionProps> = ({ id, title, subtitle, children, variant = 'd
         contain: 'layout style paint',
         contentVisibility: id === 'hero' ? 'visible' : 'auto',
         containIntrinsicSize: '100vh',
-        ...VARIANTS[variant]
+        ...VARIANTS[variant],
+        ...style
       } as CSSProperties}
     >
       <div style={{ maxWidth: '1100px', width: '100%', textAlign: 'center' }}>

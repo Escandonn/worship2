@@ -320,7 +320,7 @@ const Hero: FC = () => {
         padding: 'clamp(5rem, 10vh, 8rem) clamp(1.25rem, 5vw, 4rem)',
         scrollMarginTop: '72px',
         overflow: 'hidden',
-        background: 'linear-gradient(135deg, #F8F6F2 0%, #ECE5DA 45%, #D6C3A5 100%)',
+        background: 'linear-gradient(135deg, #F8F6F2 0%, #ECE5DA 40%, #D6C3A5 75%, #E8E0D4 100%)',
         contain: 'layout style'
       }}
     >

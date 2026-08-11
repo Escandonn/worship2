@@ -341,6 +341,9 @@ const Tienda: FC = () => {
       id="tienda"
       title="Tienda"
       subtitle="Lleva contigo el símbolo. Gorras de edición limitada, materiales premium y acabados de autor."
+      style={{
+        background: 'linear-gradient(180deg, rgba(214,195,165,0.35) 0%, rgba(248,246,242,0.95) 18%, #F8F6F2 100%)'
+      }}
     >
       {/* Keyframes CSS Inline optimizados para GPU sin blur en vivo */}
       <style>{`
