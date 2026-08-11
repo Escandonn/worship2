@@ -19,6 +19,8 @@ const initialMessages: ChatMessage[] = [
   }
 ];
 
+type MessageAction = 'none' | 'voice' | 'text' | 'both';
+
 const Chatbot: FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);

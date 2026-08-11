@@ -62,7 +62,6 @@ const HeroTitleDesktop: FC<HeroTitleDesktopProps> = memo(({ text, onDone }) => {
     minHeight: '1.15em',
     textAlign: 'center',
     textWrap: 'balance',
-    WebkitTextWrap: 'balance',
     // Estado inicial de la animación de entrada
     opacity: '0',
     transform: 'translateY(12px)',
