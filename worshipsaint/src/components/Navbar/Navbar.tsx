@@ -51,16 +51,9 @@ const Navbar: FC = () => {
     setActiveId(routeId);
 
     const target = document.getElementById(routeId);
-    if (!target) {
-      window.location.hash = routeId;
-      return;
-    }
+    if (!target) return;
 
-    window.location.hash = routeId;
-
-    window.setTimeout(() => {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 60);
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
     if (routeId === 'tienda') {
       window.dispatchEvent(new CustomEvent('ws:replay-tienda'));
@@ -68,6 +61,12 @@ const Navbar: FC = () => {
     if (routeId === 'equipo-futbol') {
       window.dispatchEvent(new CustomEvent('ws:replay-equipo'));
     }
+  };
+
+  const handleLogoClick = () => {
+    const target = document.getElementById('hero');
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   // Scroll Spy: observa qué sección está visible.
@@ -112,9 +111,20 @@ const Navbar: FC = () => {
         transition: 'background-color 0.4s ease-in-out, box-shadow 0.4s ease-in-out, border-color 0.4s ease-in-out, backdrop-filter 0.4s ease-in-out'
       }}
     >
-      <a href="#hero" aria-label="WorshipSaint — inicio" style={{ textDecoration: 'none' }}>
+      <button
+        type="button"
+        onClick={handleLogoClick}
+        aria-label="WorshipSaint — inicio"
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          cursor: 'pointer',
+          textDecoration: 'none'
+        }}
+      >
         <Logo />
-      </a>
+      </button>
 
       {/* Navegación escritorio */}
       <nav aria-label="Navegación principal" className="ws-nav-desktop">

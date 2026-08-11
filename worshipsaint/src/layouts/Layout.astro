@@ -16,6 +16,16 @@ const {
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<link rel="icon" type="image/png" href="/assets/logo.png" />
+		<script>
+      if (window.location.hash) {
+        const id = window.location.hash.replace('#', '');
+        const target = document.getElementById(id);
+        if (target) {
+          target.scrollIntoView({ behavior: 'instant', block: 'start' });
+        }
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    </script>
 		<meta name="generator" content={Astro.generator} />
 		<meta name="description" content={description} />
 

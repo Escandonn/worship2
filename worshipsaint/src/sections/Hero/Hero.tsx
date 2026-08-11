@@ -28,14 +28,15 @@ const TYPEWRITER_WORDS: string[] = [...ROTATING_PHRASES, FINAL_TITLE_TEXT];
 /*  Componente: Botón Magnético Premium (Zero React Re-render)          */
 /* ------------------------------------------------------------------ */
 interface MagneticButtonProps {
-  href: string;
+  href?: string;
   variant: 'primary' | 'secondary';
   children: ReactNode;
   style?: CSSProperties;
+  onClick?: () => void;
 }
 
-const MagneticButton: FC<MagneticButtonProps> = memo(({ href, variant, children, style }) => {
-  const btnRef = useRef<HTMLAnchorElement | null>(null);
+const MagneticButton: FC<MagneticButtonProps> = memo(({ href, variant, children, style, onClick }) => {
+  const btnRef = useRef<HTMLAnchorElement | HTMLButtonElement | null>(null);
   const isPrimary = variant === 'primary';
 
   const handleMouseEnter = () => {
@@ -54,30 +55,47 @@ const MagneticButton: FC<MagneticButtonProps> = memo(({ href, variant, children,
       : 'var(--ws-shadow-card)';
   };
 
+  const sharedStyle: CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '0.95rem 2.2rem',
+    borderRadius: 'var(--ws-radius-btn)',
+    background: isPrimary ? 'var(--ws-gradient-btn)' : 'var(--ws-gradient-btn-secondary)',
+    color: 'var(--ws-text)',
+    border: isPrimary ? 'none' : '1px solid rgba(44,33,24,0.12)',
+    fontFamily: 'var(--ws-font)',
+    fontWeight: 600,
+    fontSize: '1rem',
+    textDecoration: 'none',
+    boxShadow: isPrimary ? 'var(--ws-shadow-btn)' : 'var(--ws-shadow-card)',
+    transform: 'translateY(0) scale(1)',
+    transition: 'transform 250ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 250ms ease',
+    ...style
+  };
+
+  if (onClick) {
+    return (
+      <button
+        ref={btnRef as React.Ref<HTMLButtonElement>}
+        type="button"
+        onClick={onClick}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        style={sharedStyle}
+      >
+        {children}
+      </button>
+    );
+  }
+
   return (
     <a
-      ref={btnRef}
+      ref={btnRef as React.Ref<HTMLAnchorElement>}
       href={href}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '0.95rem 2.2rem',
-        borderRadius: 'var(--ws-radius-btn)',
-        background: isPrimary ? 'var(--ws-gradient-btn)' : 'var(--ws-gradient-btn-secondary)',
-        color: 'var(--ws-text)',
-        border: isPrimary ? 'none' : '1px solid rgba(44,33,24,0.12)',
-        fontFamily: 'var(--ws-font)',
-        fontWeight: 600,
-        fontSize: '1rem',
-        textDecoration: 'none',
-        boxShadow: isPrimary ? 'var(--ws-shadow-btn)' : 'var(--ws-shadow-card)',
-        transform: 'translateY(0) scale(1)',
-        transition: 'transform 250ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 250ms ease',
-        ...style
-      }}
+      style={sharedStyle}
     >
       {children}
     </a>
@@ -302,6 +320,13 @@ const Hero: FC = () => {
     const nextSection = document.querySelector('main > section:nth-of-type(2)');
     if (nextSection) {
       nextSection.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
+
+  const handleNavigateToServices = useCallback(() => {
+    const target = document.getElementById('servicios');
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, []);
 
@@ -533,11 +558,11 @@ const Hero: FC = () => {
             // willChange ELIMINADO: animación de entrada one-shot.
           }}
         >
-          <MagneticButton href="#franquicia" variant="primary">
+          <MagneticButton variant="primary" onClick={handleNavigateToServices}>
             Explorar WorshipSaint
           </MagneticButton>
 
-          <MagneticButton href="#servicios" variant="secondary">
+          <MagneticButton variant="secondary" onClick={handleNavigateToServices}>
             Iniciar Proyecto Web
           </MagneticButton>
         </div>

@@ -5,7 +5,7 @@ interface NavItemProps extends NavRoute {
   /** Indica si esta sección es la actualmente visible (Scroll Spy). */
   isActive: boolean;
   /** Callback al hacer clic (permite cerrar el menú móvil, etc.). */
-  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
+  onClick?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 }
 
 /**
@@ -14,15 +14,15 @@ interface NavItemProps extends NavRoute {
  * accesibles. El indicador activo se anima con un subrayado dorado.
  */
 const NavItem: FC<NavItemProps> = ({ id, label, isActive, onClick }) => {
-  const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     onClick?.(event);
   };
 
   return (
     <li style={{ listStyle: 'none' }}>
-      <a
-        href={`#${id}`}
+      <button
+        type="button"
         onClick={handleClick}
         aria-current={isActive ? 'page' : undefined}
         style={{
@@ -37,7 +37,10 @@ const NavItem: FC<NavItemProps> = ({ id, label, isActive, onClick }) => {
           color: isActive ? 'var(--ws-accent)' : 'var(--ws-text)',
           opacity: isActive ? 1 : 0.75,
           textDecoration: 'none',
-          transition: 'var(--ws-transition)'
+          transition: 'var(--ws-transition)',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer'
         }}
       >
         {label}
@@ -54,7 +57,7 @@ const NavItem: FC<NavItemProps> = ({ id, label, isActive, onClick }) => {
             transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
         />
-      </a>
+      </button>
     </li>
   );
 };

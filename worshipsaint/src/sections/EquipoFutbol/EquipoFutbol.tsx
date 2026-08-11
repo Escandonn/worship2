@@ -981,8 +981,14 @@ const EquipoFutbol: FC = () => {
         >
           Nuestro equipo refleja los valores que impulsan cada proyecto: pasión, constancia, colaboración y crecimiento. Dentro y fuera del campo construimos una comunidad que comparte una misma visión y una misma identidad.
         </p>
-        <motion.a
-          href="#sobre-nosotros"
+        <motion.button
+          type="button"
+          onClick={() => {
+            const target = document.getElementById('sobre-nosotros');
+            if (target) {
+              target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+          }}
           whileHover={{ scale: 1.04, y: -2 }}
           whileTap={{ scale: 0.97 }}
           transition={{ duration: 0.3, ease: easeCubic }}
@@ -999,11 +1005,13 @@ const EquipoFutbol: FC = () => {
             borderRadius: 'var(--ws-radius-btn)',
             background: 'var(--ws-gradient-btn, linear-gradient(135deg, #C8A96A 0%, #8a6d3b 100%))',
             boxShadow: 'var(--ws-shadow-btn)',
-            willChange: 'transform'
+            willChange: 'transform',
+            border: 'none',
+            cursor: 'pointer'
           }}
         >
           Conoce nuestra historia
-        </motion.a>
+        </motion.button>
       </motion.section>
       </ParallaxProvider>
     </Section>
