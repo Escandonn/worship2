@@ -31,9 +31,9 @@ interface Integrante {
 const INTEGRANTES: Integrante[] = [
   {
     id: 1,
-    nombre: 'Integrante 1',
+    nombre: 'Santiago Gomez ',
     cargo: 'Preparación Física',
-    profesion: 'Licenciado en Educación Física',
+    profesion: 'Licenciado enEducación Física',
     especialidad: 'Preparación Física',
     descripcion:
       'Especialista en rendimiento físico y acondicionamiento deportivo. Diseña programas personalizados para potenciar la resistencia, fuerza y agilidad de cada atleta.',
@@ -44,7 +44,7 @@ const INTEGRANTES: Integrante[] = [
   },
   {
     id: 2,
-    nombre: 'Integrante 2',
+    nombre: 'Esteban Chavez',
     cargo: 'Desarrollo Técnico',
     profesion: 'Licenciado en Educación Física',
     especialidad: 'Desarrollo Técnico',
