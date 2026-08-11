@@ -11,13 +11,11 @@ interface ChatMessage {
   content: string;
 }
 
-const STORAGE_KEY = 'worship-chat-history';
-
 const initialMessages: ChatMessage[] = [
   {
     id: 1,
     role: 'assistant',
-    content: 'Hola, soy WorshipBot. Soy tu asistente de WorshipSaint. Puedo hablarte sobre la marca, su propuesta, su filosofía y el mundo que queremos construir. ¿Qué te gustaría saber?'
+    content: 'Hola, soy WorshipBot. Puedes escribirme o hablarme. También puedes escuchar mis respuestas.'
   }
 ];
 
@@ -25,38 +23,19 @@ const Chatbot: FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    if (typeof window === 'undefined') return initialMessages;
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return initialMessages;
-
-    try {
-      const parsed = JSON.parse(raw) as ChatMessage[];
-      return parsed.length > 0 ? parsed : initialMessages;
-    } catch {
-      return initialMessages;
-    }
-  });
+  const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [draft, setDraft] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  // Modo de respuesta: 'text' muestra texto, 'voice' sintetiza y reproduce audio
   const [responseMode, setResponseMode] = useState<'text' | 'voice'>('text');
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [speakingMessageId, setSpeakingMessageId] = useState<number | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  // Bandera para saber si la transcripción vino del micrófono (auto-enviar)
   const fromVoiceRef = useRef(false);
-  // Ref espejo de responseMode para leer siempre el valor actual en handleSend
   const responseModeRef = useRef<'text' | 'voice'>('text');
   useEffect(() => {
     responseModeRef.current = responseMode;
   }, [responseMode]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-    }
-  }, [messages]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -67,7 +46,6 @@ const Chatbot: FC = () => {
     return window.innerWidth < 768;
   }, [isOpen, isMinimized, isFullscreen]);
 
-  /** Detiene cualquier reproducción de audio en curso. */
   const stopSpeaking = useCallback(() => {
     if (audioRef.current) {
       audioRef.current.pause();
@@ -75,33 +53,33 @@ const Chatbot: FC = () => {
       audioRef.current = null;
     }
     setIsSpeaking(false);
+    setSpeakingMessageId(null);
   }, []);
 
-  /** Sintetiza texto a voz y lo reproduce. */
-  const speakResponse = useCallback(async (text: string) => {
+  const playText = useCallback(async (text: string, messageId: number) => {
     if (!text.trim()) return;
     stopSpeaking();
+    setSpeakingMessageId(messageId);
     setIsSpeaking(true);
     try {
       console.log('[Chatbot] Solicitando síntesis de voz...');
       const audioUrl = await textToSpeechService.synthesize(text);
       if (!audioUrl) {
-        console.error('[Chatbot] synthesize() devolvió URL vacía — revisa la consola para errores de la API.');
-        setIsSpeaking(false);
+        console.error('[Chatbot] synthesize() devolvió URL vacía.');
+        stopSpeaking();
         return;
       }
 
-      console.log('[Chatbot] URL de audio recibida:', audioUrl);
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
       audio.onended = () => {
         console.log('[Chatbot] Reproducción finalizada.');
-        setIsSpeaking(false);
+        stopSpeaking();
         URL.revokeObjectURL(audioUrl);
       };
       audio.onerror = (e) => {
         console.error('[Chatbot] Error en elemento <audio>:', e, audio.error);
-        setIsSpeaking(false);
+        stopSpeaking();
         URL.revokeObjectURL(audioUrl);
       };
       audio.load();
@@ -110,13 +88,25 @@ const Chatbot: FC = () => {
         console.log('[Chatbot] Reproducción iniciada correctamente.');
       } catch (playErr) {
         console.warn('[Chatbot] play() rechazado por el navegador:', playErr);
-        setIsSpeaking(false);
+        stopSpeaking();
       }
     } catch (err) {
       console.error('[Chatbot] Error al reproducir voz:', err);
-      setIsSpeaking(false);
+      stopSpeaking();
     }
   }, [stopSpeaking]);
+
+  const handleAction = useCallback((action: MessageAction, messageId: number, text: string) => {
+    if (action === 'voice' || action === 'both') {
+      void playText(text, messageId);
+    }
+    if (action === 'text' || action === 'both') {
+      setResponseMode('text');
+    }
+    if (action === 'voice') {
+      setResponseMode('voice');
+    }
+  }, [playText]);
 
   const handleSend = async (overrideText?: string) => {
     const trimmed = (overrideText ?? draft).trim();
@@ -139,17 +129,18 @@ const Chatbot: FC = () => {
 
       const answer = await chatbotService.sendMessage(trimmed, history);
       const cleanAnswer = answer.replace(/\s+/g, ' ').trim();
+      const assistantMessageId = Date.now() + 1;
       setMessages((prev) => [
         ...prev,
         {
-          id: Date.now() + 1,
+          id: assistantMessageId,
           role: 'assistant',
           content: cleanAnswer
         }
       ]);
 
       if (responseModeRef.current === 'voice') {
-        void speakResponse(cleanAnswer);
+        void playText(cleanAnswer, assistantMessageId);
       }
     } catch {
       setMessages((prev) => [
@@ -173,18 +164,11 @@ const Chatbot: FC = () => {
     }
   };
 
-  /**
-   * Recibe el texto transcrito desde el VoiceRecorder (API de Groq Whisper).
-   * Lo visualiza en consola y, al pausar el micrófono, envía automáticamente
-   * la pregunta al bot. La respuesta llega como texto o audio según el modo.
-   */
   const handleTranscription = useCallback((text: string) => {
     console.log('%c[Chatbot] Audio transcrito:', 'color:#C8A96A;font-weight:700;', text);
     fromVoiceRef.current = true;
-    // Auto-enviar la pregunta al pausar el micrófono
     void handleSend(text);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [handleSend]);
 
   const panelStyle = isMobile
     ? {
@@ -295,7 +279,20 @@ const Chatbot: FC = () => {
           >
             <div>
               <div style={{ fontWeight: 700, fontSize: isMobile ? '1rem' : '1.05rem' }}>WorshipBot</div>
-              <div style={{ fontSize: '0.8rem', opacity: 0.85 }}>Asistente de soporte</div>
+              <div style={{ fontSize: '0.8rem', opacity: 0.85, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                Asistente de soporte
+                <span
+                  style={{
+                    display: 'inline-block',
+                    width: '7px',
+                    height: '7px',
+                    borderRadius: '50%',
+                    background: responseMode === 'voice' ? '#c8a96a' : '#6b7280',
+                    boxShadow: responseMode === 'voice' ? '0 0 8px rgba(200,169,106,0.6)' : 'none'
+                  }}
+                />
+                {responseMode === 'voice' ? 'Voz activa' : 'Texto activo'}
+              </div>
             </div>
 
             <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
@@ -398,6 +395,45 @@ const Chatbot: FC = () => {
                     }}
                   >
                     {message.content}
+                    {message.role === 'assistant' && (
+                      <>
+                        <div
+                          style={{
+                            marginTop: '0.6rem',
+                            paddingTop: '0.55rem',
+                            borderTop: '1px solid rgba(44,33,24,0.08)',
+                            display: 'flex',
+                            gap: '0.4rem',
+                            flexWrap: 'wrap'
+                          }}
+                        >
+                          <ActionButton
+                            label="Voz"
+                            icon="🔊"
+                            active={speakingMessageId === message.id}
+                            title={speakingMessageId === message.id ? 'Reproduciendo...' : 'Escuchar respuesta'}
+                            onClick={() => handleAction('voice', message.id, message.content)}
+                            compact={isMobile}
+                          />
+                          <ActionButton
+                            label="Texto"
+                            icon="Aa"
+                            active={responseMode === 'text'}
+                            title="Mostrar como texto"
+                            onClick={() => handleAction('text', message.id, message.content)}
+                            compact={isMobile}
+                          />
+                          <ActionButton
+                            label="Ambos"
+                            icon="🔊Aa"
+                            active={false}
+                            title="Escuchar y ver respuesta"
+                            onClick={() => handleAction('both', message.id, message.content)}
+                            compact={isMobile}
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
                 {isLoading && (
@@ -409,118 +445,192 @@ const Chatbot: FC = () => {
                       background: '#fff',
                       color: '#7a674d',
                       fontStyle: 'italic',
-                      fontFamily: 'var(--ws-font)'
+                      fontFamily: 'var(--ws-font)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
                     }}
                   >
-                    Escribiendo...
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: '10px',
+                        height: '10px',
+                        border: '2px solid rgba(200,169,106,0.6)',
+                        borderTopColor: '#c8a96a',
+                        borderRadius: '50%',
+                        animation: 'ws-spin 0.7s linear infinite'
+                      }}
+                    />
+                    {responseMode === 'voice' ? 'Preparando audio…' : 'Escribiendo…'}
                   </div>
                 )}
                 <div ref={endRef} />
               </div>
 
-              {isSpeaking && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '0.6rem',
-                    padding: '0.55rem 0.9rem',
-                    margin: '0 0.9rem',
-                    borderRadius: '12px',
-                    background: 'linear-gradient(135deg, rgba(200,169,106,0.18), rgba(214,195,165,0.18))',
-                    border: '1px solid rgba(200,169,106,0.35)',
-                    fontFamily: 'var(--ws-font)',
-                    fontSize: '0.82rem',
-                    color: '#2c2118',
-                    flexShrink: 0
-                  }}
-                >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        width: '14px',
-                        height: '14px',
-                        border: '2px solid rgba(200,169,106,0.6)',
-                        borderTopColor: '#c8a96a',
-                        borderRadius: '50%',
-                        animation: 'ws-spin 0.8s linear infinite'
-                      }}
-                    />
-                    Reproduciendo respuesta en voz…
-                  </span>
-                  <button
-                    type="button"
-                    onClick={stopSpeaking}
-                    style={{
-                      border: '1px solid rgba(44,33,24,0.2)',
-                      borderRadius: '999px',
-                      background: '#fff',
-                      color: '#2c2118',
-                      padding: '0.3rem 0.7rem',
-                      fontSize: '0.78rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      fontFamily: 'var(--ws-font)'
-                    }}
-                    aria-label="Detener reproducción de audio"
-                  >
-                    ⏹ Detener
-                  </button>
-                </div>
-              )}
-
               <div
                 style={{
-                  display: 'flex',
-                  gap: '0.6rem',
                   padding: isMobile ? '0.8rem 0.9rem 1rem' : '0.9rem 1rem',
                   borderTop: '1px solid rgba(44,33,24,0.08)',
                   background: 'rgba(248,246,242,0.95)',
                   flexShrink: 0
                 }}
               >
-                <input
-                  value={draft}
-                  onChange={(event) => setDraft(event.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Escribe o graba tu mensaje..."
+                <div
                   style={{
-                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    background: '#fff',
                     border: '1px solid rgba(44,33,24,0.12)',
                     borderRadius: '999px',
-                    padding: '0.8rem 1rem',
-                    outline: 'none',
-                    fontFamily: 'var(--ws-font)',
-                    background: '#fff'
-                  }}
-                />
-                <VoiceRecorder size={40} onTranscription={handleTranscription} />
-                <button
-                  type="button"
-                  onClick={() => {
-                    void handleSend();
-                  }}
-                  style={{
-                    border: 'none',
-                    borderRadius: '999px',
-                    padding: '0.8rem 1rem',
-                    background: 'linear-gradient(135deg, #c8a96a, #d6c3a5)',
-                    color: '#2c2118',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    fontFamily: 'var(--ws-font)'
+                    padding: '0.35rem 0.5rem',
+                    boxShadow: '0 2px 8px rgba(44,33,24,0.04)'
                   }}
                 >
-                  Enviar
-                </button>
+                  <input
+                    value={draft}
+                    onChange={(event) => setDraft(event.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={responseMode === 'voice' ? 'Escribe o mantén presionado el micrófono…' : 'Escribe tu mensaje…'}
+                    disabled={isLoading || isSpeaking}
+                    style={{
+                      flex: 1,
+                      border: 'none',
+                      borderRadius: '999px',
+                      padding: '0.7rem 0.9rem',
+                      outline: 'none',
+                      fontFamily: 'var(--ws-font)',
+                      background: 'transparent',
+                      color: '#2c2118',
+                      opacity: (isLoading || isSpeaking) ? 0.7 : 1
+                    }}
+                  />
+
+                  <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                    <VoiceRecorder size={36} onTranscription={handleTranscription} />
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void handleSend();
+                      }}
+                      disabled={isLoading || isSpeaking}
+                      style={{
+                        border: 'none',
+                        borderRadius: '999px',
+                        padding: '0.65rem 1rem',
+                        background: 'linear-gradient(135deg, #c8a96a, #d6c3a5)',
+                        color: '#2c2118',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        fontFamily: 'var(--ws-font)',
+                        opacity: (isLoading || isSpeaking) ? 0.6 : 1
+                      }}
+                    >
+                      {isLoading ? (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.4rem'
+                          }}
+                        >
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              width: '12px',
+                              height: '12px',
+                              border: '2px solid rgba(44,33,24,0.25)',
+                              borderTopColor: '#2c2118',
+                              borderRadius: '50%',
+                              animation: 'ws-spin 0.7s linear infinite'
+                            }}
+                          />
+                          {responseMode === 'voice' ? 'Grabando audio…' : 'Enviando…'}
+                        </span>
+                      ) : (
+                        'Enviar'
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {(isLoading || isSpeaking) && (
+                  <div
+                    style={{
+                      marginTop: '0.55rem',
+                      padding: '0.45rem 0.75rem',
+                      borderRadius: '999px',
+                      background: 'rgba(200,169,106,0.12)',
+                      border: '1px solid rgba(200,169,106,0.25)',
+                      fontFamily: 'var(--ws-font)',
+                      fontSize: '0.78rem',
+                      color: '#2c2118',
+                      textAlign: 'center'
+                    }}
+                  >
+                    {isLoading
+                      ? responseMode === 'voice'
+                        ? 'WorshipBot está preparando la respuesta…'
+                        : 'WorshipBot está escribiendo…'
+                      : 'Escucha la respuesta de WorshipBot…'}
+                  </div>
+                )}
               </div>
             </>
           )}
         </div>
       )}
     </>
+  );
+};
+
+const ActionButton: FC<{
+  label: string;
+  icon: string;
+  active: boolean;
+  title: string;
+  onClick: () => void;
+  compact?: boolean;
+}> = ({ label, icon, active, title, onClick, compact }) => {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      title={title}
+      aria-label={title}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.3rem',
+        padding: compact ? '0.2rem 0.4rem' : '0.25rem 0.55rem',
+        borderRadius: '999px',
+        border: active
+          ? '1px solid rgba(200,169,106,0.6)'
+          : '1px solid rgba(44,33,24,0.1)',
+        background: active
+          ? 'linear-gradient(135deg, rgba(200,169,106,0.18), rgba(214,195,165,0.18))'
+          : hovered
+            ? 'rgba(44,33,24,0.04)'
+            : 'transparent',
+        color: active ? '#2c2118' : '#7a674d',
+        fontSize: compact ? '0.7rem' : '0.78rem',
+        fontWeight: active ? 700 : 500,
+        cursor: 'pointer',
+        fontFamily: 'var(--ws-font)',
+        transition: 'all 0.15s ease',
+        transform: hovered ? 'translateY(-1px)' : 'none',
+        boxShadow: active ? '0 2px 8px rgba(200,169,106,0.15)' : 'none'
+      }}
+    >
+      <span style={{ fontSize: compact ? '0.75rem' : '0.85rem' }}>{icon}</span>
+      {!compact && <span>{label}</span>}
+    </button>
   );
 };
 
