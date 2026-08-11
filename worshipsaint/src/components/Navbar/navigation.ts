@@ -12,7 +12,7 @@ export interface NavRoute {
 }
 
 export const NAV_ROUTES: readonly NavRoute[] = [
-  { id: 'tienda', label: 'Tienda' },
+  { id: 'tienda', label: ' e-commerce' },
   { id: 'equipo-futbol', label: 'Equipo de Fútbol' },
   { id: 'servicios', label: 'Servicios' },
   { id: 'sobre-nosotros', label: 'Sobre Nosotros' },

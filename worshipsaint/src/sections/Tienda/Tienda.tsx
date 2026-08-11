@@ -339,8 +339,8 @@ const Tienda: FC = () => {
   return (
     <Section
       id="tienda"
-      title="Tienda"
-      subtitle="Lleva contigo el símbolo. Gorras de edición limitada, materiales premium y acabados de autor."
+      title=" e-commerce"
+      subtitle="La experiencia de compra premium. Diseño exclusivo, materiales de autor y la mística WorshipSaint en cada pieza."
       style={{
         background: 'linear-gradient(180deg, rgba(214,195,165,0.35) 0%, rgba(248,246,242,0.95) 18%, #F8F6F2 100%)'
       }}
