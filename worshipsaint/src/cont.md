@@ -1,581 +1,524 @@
-Claro. Te dejo un **README/prompt listo para darle a otra IA de desarrollo**. Está diseñado para que la IA **no toque nada fuera del botón**, pero deje preparada la arquitectura para Firebase/Google sin implementar todavía la lógica de autenticación.
+Claro. El problema que señalas es principalmente de **proporción y responsive del nuevo botón**. Este README/prompt le indica a la IA que ajuste **solo ese botón**, tomando como referencia las dos capturas.
 
 ````md
-# CAMBIO VISUAL — BOTÓN "REGÍSTRATE CON GOOGLE"
+# AJUSTE RESPONSIVE — BOTÓN "REGÍSTRATE CON GOOGLE"
 
-## ROL
+## OBJETIVO
 
-Actúa como Senior Frontend Developer + UX/UI Designer.
-
-Debes realizar una modificación MUY específica sobre el proyecto existente.
-
----
-
-# ⚠️ REGLA PRINCIPAL
-
-NO modificar ninguna funcionalidad existente.
-
-NO modificar la lógica actual.
-
-NO modificar otros botones.
-
-NO modificar el navbar.
-
-NO modificar textos existentes.
-
-NO modificar animaciones existentes.
-
-NO modificar responsive existente.
-
-NO modificar colores globales.
-
-NO modificar componentes que no estén directamente relacionados con este cambio.
-
-NO agregar Firebase todavía como dependencia funcional.
-
-NO ejecutar autenticación todavía.
-
-NO crear lógica de login.
-
-NO conectar Google todavía.
-
-El objetivo de esta tarea es:
-
-1. Crear visualmente un nuevo botón.
-2. Preparar la estructura para un futuro registro con Google.
-3. Crear los servicios necesarios de forma preparada.
-4. Dejar un archivo de configuración preparado para Firebase.
-5. Crear documentación README.
-6. No activar todavía ninguna lógica de autenticación.
-
----
-
-# 1. BOTÓN "REGÍSTRATE CON GOOGLE"
-
-Agregar un nuevo botón con el texto:
-
-**Regístrate con Google**
-
-El botón debe integrarse visualmente con el diseño actual de WorshipSaint.
-
-## Diseño actual
-
-La interfaz utiliza:
-
-- Fondo crema / beige.
-- Tonos dorados.
-- Negro/marrón oscuro para textos.
-- Bordes redondeados.
-- Diseño elegante.
-- Estética premium.
-- Sensación espiritual/tecnológica.
-- Elementos geométricos sutiles.
-- Sombras muy suaves.
-- Mucho espacio visual.
-- Diseño minimalista.
-
-El nuevo botón debe parecer parte natural de esta interfaz.
-
----
-
-# 2. ESTILO DEL BOTÓN
-
-Crear un botón premium que diga:
+Corregir únicamente el tamaño, anchura y comportamiento responsive del botón:
 
 > Regístrate con Google
 
-Debe tener:
+El botón ya existe y visualmente funciona.
 
-- Nuevo color diferente al resto de botones existentes.
-- Apariencia elegante.
-- Bordes redondeados.
-- Efecto hover suave.
-- Transición de aproximadamente 200–300ms.
-- Sombra muy sutil.
-- Pequeño efecto de elevación al pasar el mouse.
-- Efecto visual al hacer click.
-- Buen contraste.
-- Tipografía consistente con el sitio.
+NO crear otro botón.
 
-El color debe estar inspirado en la identidad actual pero diferenciarse claramente.
+NO modificar su lógica.
 
-NO utilizar colores extremadamente saturados.
+NO modificar Firebase.
 
-NO utilizar un diseño genérico de botón azul de Google.
+NO modificar el resto de la página.
 
-La intención es que parezca un botón propio de WorshipSaint.
+NO modificar los botones:
 
----
+- Explorar WorshipSaint
+- Iniciar Proyecto Web
 
-# 3. ICONO DE GOOGLE
+NO modificar navbar.
 
-El botón debe incluir el icono de Google.
+NO modificar hero.
 
-Estructura visual aproximada:
+NO modificar textos.
 
-[ Google ] Regístrate con Google
+NO modificar fondos.
 
-El icono debe estar correctamente alineado verticalmente.
+NO modificar animaciones existentes.
 
-El texto debe permanecer centrado.
-
-El botón debe funcionar correctamente en:
-
-- Desktop
-- Tablet
-- Mobile
+NO modificar el botón "Habla conmigo".
 
 ---
 
-# 4. EFECTOS
+# 1. PROBLEMA ACTUAL
 
-Agregar únicamente efectos relacionados con este botón.
-
-### Hover
-
-Cuando el usuario coloque el mouse:
-
-- Elevación ligera.
-- Cambio de tono.
-- Sombra ligeramente mayor.
-- Transición suave.
-
-### Active
-
-Al hacer click:
-
-- Pequeña reducción de escala.
-- Sensación de interacción.
-
-### Focus
-
-Agregar un estado `:focus-visible` accesible.
-
-No modificar los estilos de focus del resto del proyecto.
-
----
-
-# 5. UBICACIÓN
-
-Ubicar el botón donde tenga sentido dentro del flujo visual actual de registro.
-
-IMPORTANTE:
-
-No mover otros elementos innecesariamente.
-
-No cambiar el layout existente.
-
-No modificar el hero.
-
-No modificar el navbar.
-
-No modificar los botones existentes.
-
-El nuevo botón debe agregarse de forma independiente.
-
----
-
-# 6. NUEVA CARPETA DE REGISTRO
-
-Crear una carpeta específica para el futuro sistema de registro.
-
-Por ejemplo:
+Actualmente el botón:
 
 ```text
-src/
-├── registro/
-│   ├── components/
-│   │   └── GoogleRegisterButton.jsx
-│   │
-│   ├── services/
-│   │   └── googleRegisterService.js
-│   │
-│   ├── config/
-│   │   └── firebaseConfig.js
-│   │
-│   └── README.md
+Regístrate con Google
 ````
 
-IMPORTANTE:
+ocupa demasiado espacio horizontal.
 
-Adaptar la ubicación a la arquitectura REAL del proyecto.
+En Desktop:
 
-NO crear una arquitectura paralela si el proyecto ya tiene una estructura establecida.
+* El botón es excesivamente ancho.
+* Parece una barra horizontal.
+* No mantiene la misma proporción visual que los botones principales.
 
-Primero analizar la estructura actual.
+En Mobile:
+
+* También ocupa demasiado ancho.
+* Se extiende casi de lado a lado.
+* Visualmente domina demasiado la parte inferior del hero.
+* Debe tener una anchura mucho más controlada.
 
 ---
 
-# 7. COMPONENTE
+# 2. DESKTOP
 
-Crear un componente independiente:
+En versión Desktop reducir considerablemente la anchura.
+
+Actualmente visualmente se aproxima a:
+
+```text
+┌──────────────────────────────────────────────────────────────┐
+│              Google   Regístrate con Google                  │
+└──────────────────────────────────────────────────────────────┘
+```
+
+Debe convertirse en algo más compacto:
+
+```text
+        ┌────────────────────────────────┐
+        │  Google  Regístrate con Google │
+        └────────────────────────────────┘
+```
+
+## Anchura recomendada
+
+Utilizar una anchura controlada, aproximadamente:
+
+```css
+width: 320px;
+max-width: 100%;
+```
+
+Puede utilizarse:
+
+```css
+width: min(320px, 90%);
+```
+
+si esto encaja mejor con la arquitectura actual.
+
+NO utilizar:
+
+```css
+width: 100%;
+```
+
+en Desktop.
+
+NO utilizar una anchura basada en todo el contenedor del hero.
+
+---
+
+# 3. MOBILE
+
+En Mobile debe reducirse todavía más.
+
+El botón debe adaptarse al ancho de la pantalla sin convertirse en una barra gigante.
+
+Objetivo visual:
+
+```text
+     ┌──────────────────────────────┐
+     │ Google  Regístrate con Google│
+     └──────────────────────────────┘
+```
+
+No:
+
+```text
+┌──────────────────────────────────────┐
+│       Google Regístrate con Google   │
+└──────────────────────────────────────┘
+```
+
+## Mobile
+
+Usar una anchura aproximada:
+
+```css
+width: min(300px, 82vw);
+```
+
+o una solución equivalente basada en el sistema responsive existente.
+
+El botón debe conservar:
+
+* margen lateral.
+* espacio alrededor.
+* proporción visual.
+* buena legibilidad.
+
+---
+
+# 4. ALTURA
+
+No modificar innecesariamente la altura actual.
+
+Debe mantenerse compacto.
+
+Recomendación:
+
+```css
+min-height: 52px;
+```
+
+o adaptar la altura al diseño existente.
+
+En mobile puede utilizarse:
+
+```css
+min-height: 52px;
+```
+
+El objetivo es que sea cómodo para tocar con el dedo.
+
+---
+
+# 5. POSICIÓN
+
+Mantener el botón debajo de:
+
+```text
+Explorar WorshipSaint
+Iniciar Proyecto Web
+```
+
+No cambiar la estructura vertical existente.
+
+Debe permanecer centrado horizontalmente.
+
+Ejemplo:
+
+```text
+        Explorar WorshipSaint
+
+        Iniciar Proyecto Web
+
+        Regístrate con Google
+```
+
+No mover:
+
+```text
+SCROLL
+```
+
+ni modificar su funcionamiento.
+
+---
+
+# 6. ESPACIADO
+
+El botón debe tener una separación visual adecuada respecto a:
+
+```text
+Iniciar Proyecto Web
+```
+
+Evitar que quede pegado.
+
+Usar el sistema de spacing existente.
+
+Si actualmente existe:
+
+```css
+gap
+margin
+padding
+```
+
+reutilizarlo antes de crear nuevos valores.
+
+---
+
+# 7. RESPONSIVE
+
+Crear únicamente los ajustes necesarios para:
+
+### Desktop
+
+```text
+>= 1024px
+```
+
+Botón:
+
+```css
+width: 320px;
+max-width: 100%;
+```
+
+### Tablet
+
+```text
+768px - 1023px
+```
+
+Botón:
+
+```css
+width: 300px;
+max-width: 90%;
+```
+
+### Mobile
+
+```text
+< 768px
+```
+
+Botón:
+
+```css
+width: min(300px, 82vw);
+max-width: 100%;
+```
+
+Los valores anteriores son referencias.
+
+Si el proyecto ya tiene breakpoints establecidos, UTILIZAR LOS BREAKPOINTS EXISTENTES.
+
+NO crear un sistema responsive paralelo.
+
+---
+
+# 8. IMPORTANTE — NO MODIFICAR EL CONTENEDOR PADRE
+
+No solucionar el problema cambiando:
+
+```text
+hero
+hero-content
+container
+buttons-container
+section
+```
+
+si eso afecta otros elementos.
+
+La corrección debe aplicarse preferiblemente directamente al componente:
 
 ```text
 GoogleRegisterButton
 ```
 
-Responsabilidad:
+o a su clase específica.
 
-ÚNICAMENTE representar el botón y dejar preparado el punto de integración.
+Por ejemplo:
 
-Por ahora NO debe ejecutar Firebase.
-
-Ejemplo conceptual:
-
-```jsx
-<GoogleRegisterButton />
+```css
+.google-register-button {
+    width: min(320px, 90%);
+}
 ```
 
-El componente debe estar preparado para posteriormente recibir una función:
+Y mediante media queries:
 
-```jsx
-<GoogleRegisterButton onRegister={...} />
+```css
+@media (max-width: 768px) {
+    .google-register-button {
+        width: min(300px, 82vw);
+    }
+}
 ```
 
-Pero NO implementar todavía la autenticación.
+Adaptar la sintaxis al proyecto.
 
 ---
 
-# 8. SERVICIO DE REGISTRO
+# 9. NO USAR
 
-Crear:
+No utilizar:
+
+```css
+width: 100%;
+```
+
+para el botón.
+
+No utilizar:
+
+```css
+flex: 1;
+```
+
+No hacer que ocupe todo el ancho del contenedor.
+
+No modificar el ancho de:
 
 ```text
-googleRegisterService.js
+Explorar WorshipSaint
+Iniciar Proyecto Web
 ```
 
-Este archivo debe quedar preparado para posteriormente implementar:
-
-```text
-registerWithGoogle()
-```
-
-La función puede quedar como placeholder documentado.
-
-Ejemplo conceptual:
-
-```js
-export const registerWithGoogle = async () => {
-  // TODO:
-  // Implementar autenticación mediante Firebase Authentication
-};
-```
-
-IMPORTANTE:
-
-No realizar ninguna llamada real.
-
-No solicitar popup.
-
-No redireccionar.
-
-No guardar usuarios.
-
-No escribir en Firestore.
-
-No agregar lógica adicional.
+No modificar el ancho del hero.
 
 ---
 
-# 9. FIREBASE CONFIG
+# 10. ICONO GOOGLE
 
-Crear un archivo preparado para recibir las credenciales:
+Mantener el icono actual de Google.
 
-```text
-firebaseConfig.js
+No cambiarlo.
+
+No aumentar innecesariamente su tamaño.
+
+Debe permanecer aproximadamente:
+
+```css
+width: 20px;
+height: 20px;
 ```
 
-Debe utilizar variables de entorno.
-
-NUNCA escribir una API key real directamente en el código.
+El icono y el texto deben permanecer centrados como grupo.
 
 Ejemplo:
 
-```js
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-};
-
-export default firebaseConfig;
+```text
+        [ G ]  Regístrate con Google
 ```
-
-Adaptar `import.meta.env` a la tecnología REAL del proyecto.
-
-Si el proyecto utiliza otra estrategia de variables de entorno, respetarla.
 
 ---
 
-# 10. ARCHIVO .ENV.EXAMPLE
+# 11. TEXTO
 
-Crear:
+Mantener exactamente:
 
-```text
-.env.example
-```
+> Regístrate con Google
 
-Con:
+No cambiar a:
 
-```env
-VITE_FIREBASE_API_KEY=
-VITE_FIREBASE_AUTH_DOMAIN=
-VITE_FIREBASE_PROJECT_ID=
-VITE_FIREBASE_STORAGE_BUCKET=
-VITE_FIREBASE_MESSAGING_SENDER_ID=
-VITE_FIREBASE_APP_ID=
-```
+* Registrarse con Google
+* Crear cuenta con Google
+* Continuar con Google
+* Google Login
 
-NO colocar valores reales.
+Debe permanecer:
+
+**Regístrate con Google**
 
 ---
 
-# 11. IMPORTANTE SOBRE FIREBASE
+# 12. RESPONSIVE VISUAL
 
-El futuro registro con Google deberá utilizar:
+Validar especialmente las siguientes resoluciones:
 
-### Firebase Authentication
-
-para:
+### Desktop
 
 ```text
-Google Login/Register
+1920x1080
+1440x900
+1366x768
 ```
 
-Y posteriormente, si se requiere almacenar información adicional del usuario:
-
-### Cloud Firestore
-
-para:
+### Tablet
 
 ```text
-usuarios
-perfil
-fecha de registro
-datos adicionales
-etc.
+1024x768
+768x1024
 ```
 
-NO confundir:
+### Mobile
 
 ```text
-Firebase API Key
+390x844
+375x812
+360x800
 ```
-
-con:
-
-```text
-Firestore Database
-```
-
-La API key únicamente forma parte de la configuración del proyecto Firebase.
 
 ---
 
-# 12. NO IMPLEMENTAR TODAVÍA
+# 13. CRITERIO VISUAL
 
-En esta tarea NO implementar:
+El botón debe sentirse como:
 
-* Firebase Authentication.
-* Google Provider.
-* `signInWithPopup`.
-* `signInWithRedirect`.
-* Firestore.
-* creación de documentos.
-* persistencia de usuarios.
-* manejo de sesiones.
-* logout.
-* recuperación de contraseña.
-* protección de rutas.
-* contexto de autenticación.
-* estados globales.
-* cookies.
-* JWT.
-* backend.
-* API.
+**un tercer CTA compacto**
 
-Todo eso queda para una segunda etapa.
+y NO como:
+
+**una barra de navegación o contenedor de pantalla completa.**
+
+Jerarquía:
+
+```text
+┌─────────────────────────────┐
+│   Explorar WorshipSaint     │
+└─────────────────────────────┘
+
+┌─────────────────────────────┐
+│   Iniciar Proyecto Web      │
+└─────────────────────────────┘
+
+        ┌───────────────────────┐
+        │ G Regístrate con Google│
+        └───────────────────────┘
+```
+
+El tercer botón debe tener una presencia visual menor que los CTA principales.
 
 ---
 
-# 13. DOCUMENTACIÓN
+# 14. REGLA DE NO REGRESIÓN
 
-Crear:
+Después del cambio verificar:
 
-```text
-registro/README.md
-```
-
-Debe explicar:
-
-## Registro con Google — WorshipSaint
-
-### Objetivo
-
-Preparar la arquitectura para implementar posteriormente el registro mediante Google utilizando Firebase Authentication.
-
-### Estado actual
-
-```text
-UI: LISTA
-Componente: LISTO
-Servicio: PREPARADO
-Firebase: CONFIGURACIÓN PREPARADA
-Google Authentication: NO ACTIVADA
-Firestore: NO ACTIVADO
-```
-
-### Estructura
-
-Explicar cada archivo.
-
-### Variables de entorno
-
-Explicar cómo posteriormente se agregarán las credenciales.
-
-### Firebase
-
-Explicar que posteriormente se deberá:
-
-1. Crear proyecto Firebase.
-2. Registrar aplicación Web.
-3. Obtener configuración.
-4. Configurar variables `.env`.
-5. Activar Authentication.
-6. Activar proveedor Google.
-7. Configurar Firestore si se requiere almacenar perfiles.
+* Desktop correcto.
+* Mobile correcto.
+* Tablet correcto.
+* Botón centrado.
+* Texto centrado.
+* Icono centrado.
+* No overflow horizontal.
+* No scroll horizontal.
+* No afecta al hero.
+* No afecta al navbar.
+* No afecta "Habla conmigo".
+* No afecta "Explorar WorshipSaint".
+* No afecta "Iniciar Proyecto Web".
+* No afecta el fondo.
+* No afecta las animaciones.
+* No afecta el responsive existente.
 
 ---
 
-# 14. README PRINCIPAL
+# 15. CAMBIAR ÚNICAMENTE
 
-Crear además:
+La modificación debe limitarse a:
 
 ```text
-README_REGISTRO_GOOGLE.md
+GoogleRegisterButton
 ```
 
-Este archivo debe documentar exclusivamente esta funcionalidad.
+y sus estilos específicos.
 
-Debe incluir:
-
-* Objetivo.
-* Alcance.
-* Archivos creados.
-* Qué está implementado.
-* Qué NO está implementado.
-* Configuración futura de Firebase.
-* Configuración futura de Google.
-* Configuración futura de Firestore.
-* Variables de entorno.
-* Próximos pasos.
+No modificar ningún otro componente salvo que sea absolutamente necesario para integrar correctamente el botón.
 
 ---
 
-# 15. SEGURIDAD
+# RESULTADO FINAL
 
-Nunca:
+El botón debe pasar de ser una barra:
 
 ```text
-hardcodear API keys
+┌───────────────────────────────────────────────────────────┐
+│                 Regístrate con Google                     │
+└───────────────────────────────────────────────────────────┘
 ```
 
-Nunca:
+a un botón compacto y premium:
 
 ```text
-subir .env
+          ┌──────────────────────────────┐
+          │  G  Regístrate con Google    │
+          └──────────────────────────────┘
 ```
 
-Agregar o verificar que `.gitignore` incluya:
+Debe verse correctamente tanto en **PC como en móvil**, manteniendo exactamente el diseño actual del resto de WorshipSaint.
 
-```text
-.env
-.env.local
-.env.*.local
 ```
 
-NO modificar otras reglas del `.gitignore` si ya existen.
-
----
-
-# 16. REGLA DE NO REGRESIÓN
-
-Antes de finalizar:
-
-Verificar que:
-
-* La página sigue funcionando.
-* Los botones existentes funcionan.
-* El navbar funciona.
-* Las animaciones funcionan.
-* El responsive funciona.
-* El hero no cambió.
-* Los estilos existentes no fueron alterados.
-* No existen errores de consola.
-* No existen imports rotos.
-* No se agregaron dependencias innecesarias.
-
----
-
-# 17. RESULTADO ESPERADO
-
-El usuario debe visualizar un nuevo botón:
-
-```text
-      [ Google ]  Regístrate con Google
+**Punto clave:** en tu captura de PC yo lo dejaría alrededor de **320 px**, y en móvil alrededor de **82vw con máximo de 300 px**. Así deja de parecer una barra y pasa a funcionar visualmente como un tercer CTA.
 ```
-
-con una estética:
-
-**Premium + WorshipSaint + Dorado + Minimalista + Moderna**
-
-El botón debe estar completamente integrado visualmente, pero:
-
-> NO debe ejecutar todavía ningún proceso de autenticación.
-
-La arquitectura debe quedar preparada para que posteriormente solamente sea necesario conectar Firebase Authentication.
-
----
-
-# REGLA FINAL
-
-Si para realizar esta tarea necesitas modificar archivos que no están relacionados con:
-
-```text
-Botón
-Registro
-Servicio de registro
-Configuración Firebase
-Variables de entorno
-Documentación
-```
-
-NO los modifiques.
-
-Prioridad absoluta:
-
-**Cambiar únicamente lo solicitado y no afectar absolutamente nada más del proyecto.**
-
-````
-
-### Estructura final que debería dejar la IA
-
-```text
-src/
-└── registro/
-    ├── components/
-    │   └── GoogleRegisterButton.jsx
-    ├── services/
-    │   └── googleRegisterService.js
-    ├── config/
-    │   └── firebaseConfig.js
-    └── README.md
-
-.env.example
-README_REGISTRO_GOOGLE.md
-````
-
-**Importante:** para el futuro registro, la pieza que autentica con Google será **Firebase Authentication**; Firestore se usaría después para guardar el perfil/datos adicionales. La API key de Firebase debe quedar en variables de entorno, no escrita directamente en el código.
