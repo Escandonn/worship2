@@ -8,17 +8,16 @@ const { onClick } = Astro.props;
 
 <div class="agendar-demo-wrapper">
   <span class="agendar-demo-label">Agendar Demo</span>
-  <button
-    type="button"
+  <a
+    href="/registro"
     class="agendar-demo-button"
-    onClick={() => {
+    aria-label="Regístrate con Google"
+    onclick={(e) => {
       if (onClick) {
+        e.preventDefault();
         onClick();
-      } else {
-        window.location.href = '/registro';
       }
     }}
-    aria-label="Regístrate con Google"
   >
     <svg
       width="20"
@@ -45,7 +44,7 @@ const { onClick } = Astro.props;
       />
     </svg>
     Regístrate con Google
-  </button>
+  </a>
 </div>
 
 <style>
@@ -95,6 +94,8 @@ const { onClick } = Astro.props;
     cursor: pointer;
     box-shadow: var(--ws-shadow-card);
     transition: transform 250ms ease, box-shadow 250ms ease;
+    text-decoration: none;
+    text-align: center;
   }
 
   .agendar-demo-button:hover {
