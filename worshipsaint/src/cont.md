@@ -1,524 +1,257 @@
-Claro. El problema que señalas es principalmente de **proporción y responsive del nuevo botón**. Este README/prompt le indica a la IA que ajuste **solo ese botón**, tomando como referencia las dos capturas.
+# Prompt `.md` — Ajuste exclusivo del botón Google en móvil
 
 ````md
 # AJUSTE RESPONSIVE — BOTÓN "REGÍSTRATE CON GOOGLE"
 
-## OBJETIVO
+## Objetivo
 
-Corregir únicamente el tamaño, anchura y comportamiento responsive del botón:
+Realizar **únicamente un ajuste visual en la versión móvil** de la interfaz mostrada.
 
-> Regístrate con Google
+En dispositivos móviles:
 
-El botón ya existe y visualmente funciona.
-
-NO crear otro botón.
-
-NO modificar su lógica.
-
-NO modificar Firebase.
-
-NO modificar el resto de la página.
-
-NO modificar los botones:
-
-- Explorar WorshipSaint
-- Iniciar Proyecto Web
-
-NO modificar navbar.
-
-NO modificar hero.
-
-NO modificar textos.
-
-NO modificar fondos.
-
-NO modificar animaciones existentes.
-
-NO modificar el botón "Habla conmigo".
+1. Eliminar/ocultar visualmente el botón:
+   **"Explorar WorshipSaint"**
+2. Dar mayor protagonismo visual al botón:
+   **"Regístrate con Google"**
+3. Mantener exactamente igual el resto de la interfaz, diseño, colores, fondos, tipografías, animaciones y lógica existente.
 
 ---
 
-# 1. PROBLEMA ACTUAL
+## RESTRICCIÓN PRINCIPAL
 
-Actualmente el botón:
+⚠️ **NO modificar ningún otro aspecto del proyecto.**
+
+La modificación debe limitarse exclusivamente al comportamiento visual responsive de estos botones.
+
+### NO modificar:
+
+- Colores globales.
+- Fondos.
+- Gradientes.
+- Tipografías.
+- Tamaños de títulos.
+- Textos existentes.
+- Animaciones.
+- Navbar.
+- Hero.
+- Footer.
+- Chat.
+- Iconos.
+- Espaciados generales.
+- Layout de escritorio.
+- Lógica de autenticación.
+- Firebase.
+- Google Authentication.
+- Eventos `onClick`.
+- Funciones JavaScript/React.
+- APIs.
+- Rutas.
+- Componentes no relacionados.
+- Dependencias.
+- Estructura del proyecto.
+- Configuración de build.
+- Variables de entorno.
+- Otros archivos que no sean estrictamente necesarios.
+
+**No crear lógica adicional.**
+
+---
+
+# COMPORTAMIENTO EN MÓVIL
+
+Utilizar exclusivamente estilos responsive para conseguir el resultado.
+
+En pantallas móviles:
+
+### 1. Ocultar
+
+Ocultar:
+
+```text
+Explorar WorshipSaint
+````
+
+El botón no debe ocupar espacio visual en el layout móvil.
+
+### 2. Priorizar Google
+
+El botón:
 
 ```text
 Regístrate con Google
-````
+```
 
-ocupa demasiado espacio horizontal.
+debe adquirir mayor protagonismo visual.
 
-En Desktop:
+Debe mantenerse integrado con el diseño actual de WorshipSaint.
 
-* El botón es excesivamente ancho.
-* Parece una barra horizontal.
-* No mantiene la misma proporción visual que los botones principales.
-
-En Mobile:
-
-* También ocupa demasiado ancho.
-* Se extiende casi de lado a lado.
-* Visualmente domina demasiado la parte inferior del hero.
-* Debe tener una anchura mucho más controlada.
+El objetivo visual es que sea claramente una de las acciones principales de la pantalla móvil.
 
 ---
 
-# 2. DESKTOP
+# ESTILO DEL BOTÓN GOOGLE
 
-En versión Desktop reducir considerablemente la anchura.
+Partir del botón existente.
 
-Actualmente visualmente se aproxima a:
+**No rediseñarlo desde cero.**
 
-```text
-┌──────────────────────────────────────────────────────────────┐
-│              Google   Regístrate con Google                  │
-└──────────────────────────────────────────────────────────────┘
-```
+Modificar únicamente los estilos necesarios para darle mayor prioridad visual en móvil.
 
-Debe convertirse en algo más compacto:
+Debe conservar:
 
-```text
-        ┌────────────────────────────────┐
-        │  Google  Regístrate con Google │
-        └────────────────────────────────┘
-```
+* Icono de Google.
+* Texto "Regístrate con Google".
+* Funcionalidad actual.
+* Evento actual.
+* Integración actual.
+* Posición dentro de la estructura existente.
 
-## Anchura recomendada
+Puede ajustarse únicamente:
 
-Utilizar una anchura controlada, aproximadamente:
+* Ancho.
+* Altura.
+* Fondo.
+* Contraste.
+* Border.
+* Border-radius.
+* Sombra.
+* Peso visual.
 
-```css
-width: 320px;
-max-width: 100%;
-```
+El nuevo estilo debe ser coherente con la estética existente mostrada en la captura.
 
-Puede utilizarse:
+### Importante
 
-```css
-width: min(320px, 90%);
-```
+No introducir colores completamente nuevos que rompan la paleta existente.
 
-si esto encaja mejor con la arquitectura actual.
-
-NO utilizar:
-
-```css
-width: 100%;
-```
-
-en Desktop.
-
-NO utilizar una anchura basada en todo el contenedor del hero.
+El botón debe destacar utilizando la **misma identidad visual actual**, pero con mayor contraste/prioridad.
 
 ---
 
-# 3. MOBILE
+# RESPONSIVE
 
-En Mobile debe reducirse todavía más.
+Aplicar el cambio exclusivamente mediante breakpoint móvil.
 
-El botón debe adaptarse al ancho de la pantalla sin convertirse en una barra gigante.
-
-Objetivo visual:
-
-```text
-     ┌──────────────────────────────┐
-     │ Google  Regístrate con Google│
-     └──────────────────────────────┘
-```
-
-No:
-
-```text
-┌──────────────────────────────────────┐
-│       Google Regístrate con Google   │
-└──────────────────────────────────────┘
-```
-
-## Mobile
-
-Usar una anchura aproximada:
-
-```css
-width: min(300px, 82vw);
-```
-
-o una solución equivalente basada en el sistema responsive existente.
-
-El botón debe conservar:
-
-* margen lateral.
-* espacio alrededor.
-* proporción visual.
-* buena legibilidad.
-
----
-
-# 4. ALTURA
-
-No modificar innecesariamente la altura actual.
-
-Debe mantenerse compacto.
-
-Recomendación:
-
-```css
-min-height: 52px;
-```
-
-o adaptar la altura al diseño existente.
-
-En mobile puede utilizarse:
-
-```css
-min-height: 52px;
-```
-
-El objetivo es que sea cómodo para tocar con el dedo.
-
----
-
-# 5. POSICIÓN
-
-Mantener el botón debajo de:
-
-```text
-Explorar WorshipSaint
-Iniciar Proyecto Web
-```
-
-No cambiar la estructura vertical existente.
-
-Debe permanecer centrado horizontalmente.
-
-Ejemplo:
-
-```text
-        Explorar WorshipSaint
-
-        Iniciar Proyecto Web
-
-        Regístrate con Google
-```
-
-No mover:
-
-```text
-SCROLL
-```
-
-ni modificar su funcionamiento.
-
----
-
-# 6. ESPACIADO
-
-El botón debe tener una separación visual adecuada respecto a:
-
-```text
-Iniciar Proyecto Web
-```
-
-Evitar que quede pegado.
-
-Usar el sistema de spacing existente.
-
-Si actualmente existe:
-
-```css
-gap
-margin
-padding
-```
-
-reutilizarlo antes de crear nuevos valores.
-
----
-
-# 7. RESPONSIVE
-
-Crear únicamente los ajustes necesarios para:
-
-### Desktop
-
-```text
->= 1024px
-```
-
-Botón:
-
-```css
-width: 320px;
-max-width: 100%;
-```
-
-### Tablet
-
-```text
-768px - 1023px
-```
-
-Botón:
-
-```css
-width: 300px;
-max-width: 90%;
-```
-
-### Mobile
-
-```text
-< 768px
-```
-
-Botón:
-
-```css
-width: min(300px, 82vw);
-max-width: 100%;
-```
-
-Los valores anteriores son referencias.
-
-Si el proyecto ya tiene breakpoints establecidos, UTILIZAR LOS BREAKPOINTS EXISTENTES.
-
-NO crear un sistema responsive paralelo.
-
----
-
-# 8. IMPORTANTE — NO MODIFICAR EL CONTENEDOR PADRE
-
-No solucionar el problema cambiando:
-
-```text
-hero
-hero-content
-container
-buttons-container
-section
-```
-
-si eso afecta otros elementos.
-
-La corrección debe aplicarse preferiblemente directamente al componente:
-
-```text
-GoogleRegisterButton
-```
-
-o a su clase específica.
-
-Por ejemplo:
-
-```css
-.google-register-button {
-    width: min(320px, 90%);
-}
-```
-
-Y mediante media queries:
+Ejemplo conceptual:
 
 ```css
 @media (max-width: 768px) {
-    .google-register-button {
-        width: min(300px, 82vw);
-    }
+    /* únicamente ajustes del botón Google */
 }
 ```
 
-Adaptar la sintaxis al proyecto.
+El breakpoint puede adaptarse al sistema responsive que ya utiliza el proyecto.
+
+**No crear un nuevo sistema responsive.**
 
 ---
 
-# 9. NO USAR
+# ESCRITORIO
 
-No utilizar:
+En desktop:
 
-```css
-width: 100%;
-```
+**NO CAMBIAR NADA.**
 
-para el botón.
-
-No utilizar:
-
-```css
-flex: 1;
-```
-
-No hacer que ocupe todo el ancho del contenedor.
-
-No modificar el ancho de:
+El botón:
 
 ```text
 Explorar WorshipSaint
-Iniciar Proyecto Web
 ```
 
-No modificar el ancho del hero.
+debe permanecer visible exactamente como está actualmente.
 
----
-
-# 10. ICONO GOOGLE
-
-Mantener el icono actual de Google.
-
-No cambiarlo.
-
-No aumentar innecesariamente su tamaño.
-
-Debe permanecer aproximadamente:
-
-```css
-width: 20px;
-height: 20px;
-```
-
-El icono y el texto deben permanecer centrados como grupo.
-
-Ejemplo:
+El botón:
 
 ```text
-        [ G ]  Regístrate con Google
+Regístrate con Google
 ```
 
----
-
-# 11. TEXTO
-
-Mantener exactamente:
-
-> Regístrate con Google
-
-No cambiar a:
-
-* Registrarse con Google
-* Crear cuenta con Google
-* Continuar con Google
-* Google Login
-
-Debe permanecer:
-
-**Regístrate con Google**
+debe conservar su apariencia actual en desktop.
 
 ---
 
-# 12. RESPONSIVE VISUAL
+# MOBILE — RESULTADO ESPERADO
 
-Validar especialmente las siguientes resoluciones:
+La jerarquía visual debe quedar aproximadamente así:
+
+```text
+        [ contenido existente ]
+
+        [ Iniciar Proyecto Web ]
+
+              SCROLL
+
+   [  REGÍSTRATE CON GOOGLE  ]
+```
+
+El botón:
+
+```text
+Explorar WorshipSaint
+```
+
+NO debe aparecer en móvil.
+
+El botón Google debe tener suficiente presencia visual para que el usuario lo identifique fácilmente como acción principal.
+
+---
+
+# REGLA DE NO REGRESIÓN
+
+Antes de modificar:
+
+1. Identificar exactamente dónde se renderizan ambos botones.
+2. Identificar sus clases actuales.
+3. Identificar qué estilos existentes los controlan.
+4. Modificar únicamente lo estrictamente necesario.
+5. No duplicar componentes.
+6. No crear nuevas funciones.
+7. No modificar la lógica existente.
+
+Después de modificar:
+
+* Verificar desktop.
+* Verificar móvil.
+* Confirmar que Google sigue ejecutando exactamente la misma acción.
+* Confirmar que "Explorar WorshipSaint" sigue funcionando en desktop.
+* Confirmar que ningún otro elemento visual fue alterado.
+
+---
+
+# ARCHIVOS
+
+Modificar **únicamente el archivo o archivos estrictamente necesarios** para conseguir este cambio.
+
+No realizar refactorizaciones.
+
+No limpiar código no relacionado.
+
+No cambiar nombres de clases existentes si no es necesario.
+
+No crear archivos adicionales.
+
+---
+
+# CRITERIO FINAL
+
+La implementación será considerada correcta únicamente si:
 
 ### Desktop
 
 ```text
-1920x1080
-1440x900
-1366x768
-```
-
-### Tablet
-
-```text
-1024x768
-768x1024
+Explorar WorshipSaint     → visible
+Regístrate con Google      → sin cambios funcionales ni visuales relevantes
 ```
 
 ### Mobile
 
 ```text
-390x844
-375x812
-360x800
+Explorar WorshipSaint     → oculto
+Regístrate con Google      → visualmente priorizado
 ```
 
----
+Todo lo demás debe permanecer exactamente igual.
 
-# 13. CRITERIO VISUAL
-
-El botón debe sentirse como:
-
-**un tercer CTA compacto**
-
-y NO como:
-
-**una barra de navegación o contenedor de pantalla completa.**
-
-Jerarquía:
-
-```text
-┌─────────────────────────────┐
-│   Explorar WorshipSaint     │
-└─────────────────────────────┘
-
-┌─────────────────────────────┐
-│   Iniciar Proyecto Web      │
-└─────────────────────────────┘
-
-        ┌───────────────────────┐
-        │ G Regístrate con Google│
-        └───────────────────────┘
-```
-
-El tercer botón debe tener una presencia visual menor que los CTA principales.
-
----
-
-# 14. REGLA DE NO REGRESIÓN
-
-Después del cambio verificar:
-
-* Desktop correcto.
-* Mobile correcto.
-* Tablet correcto.
-* Botón centrado.
-* Texto centrado.
-* Icono centrado.
-* No overflow horizontal.
-* No scroll horizontal.
-* No afecta al hero.
-* No afecta al navbar.
-* No afecta "Habla conmigo".
-* No afecta "Explorar WorshipSaint".
-* No afecta "Iniciar Proyecto Web".
-* No afecta el fondo.
-* No afecta las animaciones.
-* No afecta el responsive existente.
-
----
-
-# 15. CAMBIAR ÚNICAMENTE
-
-La modificación debe limitarse a:
-
-```text
-GoogleRegisterButton
-```
-
-y sus estilos específicos.
-
-No modificar ningún otro componente salvo que sea absolutamente necesario para integrar correctamente el botón.
-
----
-
-# RESULTADO FINAL
-
-El botón debe pasar de ser una barra:
-
-```text
-┌───────────────────────────────────────────────────────────┐
-│                 Regístrate con Google                     │
-└───────────────────────────────────────────────────────────┘
-```
-
-a un botón compacto y premium:
-
-```text
-          ┌──────────────────────────────┐
-          │  G  Regístrate con Google    │
-          └──────────────────────────────┘
-```
-
-Debe verse correctamente tanto en **PC como en móvil**, manteniendo exactamente el diseño actual del resto de WorshipSaint.
+**IMPORTANTE: esto es un cambio exclusivamente visual/responsive. NO agregar lógica, autenticación, Firebase, eventos ni funcionalidades nuevas.**
 
 ```
-
-**Punto clave:** en tu captura de PC yo lo dejaría alrededor de **320 px**, y en móvil alrededor de **82vw con máximo de 300 px**. Así deja de parecer una barra y pasa a funcionar visualmente como un tercer CTA.
 ```
