@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback, memo } from 'react';
 import type { FC, ReactNode, CSSProperties } from 'react';
 import { BackgroundParticles } from '../../components/BackgroundParticles';
 import { SacredSymbol } from '../../components/SacredSymbol';
-import GoogleRegisterButton from '../../registro/components/GoogleRegisterButton';
+import GoogleRegisterButton from '../../components/GoogleRegisterButton';
 import HeroTypewriter from './HeroTypewriter';
 import HeroTitleDesktop from './HeroTitleDesktop';
 import { useDevMonitor } from './useDevMonitor';
