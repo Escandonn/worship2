@@ -11,7 +11,13 @@ const { onClick } = Astro.props;
   <button
     type="button"
     class="agendar-demo-button"
-    onClick={onClick}
+    onClick={() => {
+      if (onClick) {
+        onClick();
+      } else {
+        window.location.href = '/registro';
+      }
+    }}
     aria-label="Regístrate con Google"
   >
     <svg

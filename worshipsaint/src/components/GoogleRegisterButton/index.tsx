@@ -69,7 +69,11 @@ const GOOGLE_BUTTON_STYLES = `
 const GoogleRegisterButton: FC<GoogleRegisterButtonProps> = ({ onRegister, label = 'Regístrate con Google' }) => {
   const handleClick = () => {
     console.log('[GoogleRegisterButton] Clic en registro con Google.');
-    onRegister?.();
+    if (onRegister) {
+      onRegister();
+    } else {
+      window.location.href = '/registro';
+    }
   };
 
   return (
