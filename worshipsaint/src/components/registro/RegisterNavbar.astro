@@ -11,9 +11,11 @@ import logo from '../../assets/logo.png';
     right: 0,
     zIndex: 50,
     display: 'flex',
+    flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '1rem 1.5rem',
+    justifyContent: 'center',
+    gap: '0.6rem',
+    padding: '1.25rem 1.5rem 0.9rem',
     background: 'rgba(248,246,242,0.92)',
     backdropFilter: 'blur(12px)',
     WebkitBackdropFilter: 'blur(12px)',
@@ -34,10 +36,14 @@ import logo from '../../assets/logo.png';
     <span
       style={{
         fontFamily: 'var(--ws-font)',
-        fontWeight: 700,
-        fontSize: '1rem',
-        color: 'var(--ws-text)'
+        fontWeight: 800,
+        fontSize: '1.05rem',
+        color: 'var(--ws-text)',
+        letterSpacing: '0.02em',
+        transition: 'color 300ms ease'
       }}
+      onmouseover="this.style.color='var(--ws-accent)'"
+      onmouseout="this.style.color='var(--ws-text)'"
     >
       WorshipSaint
     </span>
@@ -48,11 +54,11 @@ import logo from '../../assets/logo.png';
     style={{
       fontFamily: 'var(--ws-font)',
       fontWeight: 600,
-      fontSize: '0.9rem',
+      fontSize: '0.85rem',
       color: 'var(--ws-text)',
       textDecoration: 'none',
       position: 'relative',
-      padding: '0.25rem 0'
+      padding: '0.2rem 0'
     }}
     onmouseover="this.style.color='var(--ws-accent)'"
     onmouseout="this.style.color='var(--ws-text)'"

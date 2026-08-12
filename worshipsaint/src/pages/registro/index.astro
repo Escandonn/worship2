@@ -3,7 +3,6 @@ import Layout from '../../layouts/Layout.astro';
 import RegisterNavbar from '../../components/registro/RegisterNavbar.astro';
 import RegisterForm from '../../components/registro/RegisterForm.tsx';
 import ParticleBackground from '../../components/registro/ParticleBackground.tsx';
-import GoogleRegisterButton from '../../components/GoogleRegisterButton';
 ---
 
 <Layout>
@@ -51,7 +50,7 @@ import GoogleRegisterButton from '../../components/GoogleRegisterButton';
             color: 'var(--ws-accent)'
           }}
         >
-          Bienvenido al ecosistema
+          Agenda tu demo
         </span>
         <h1
           style={{
@@ -63,7 +62,7 @@ import GoogleRegisterButton from '../../components/GoogleRegisterButton';
             lineHeight: 1.15
           }}
         >
-          Forma parte de WorshipSaint.
+          Mantente al tanto del ecosistema WorshipSaint.
         </h1>
         <p
           style={{
@@ -74,54 +73,18 @@ import GoogleRegisterButton from '../../components/GoogleRegisterButton';
             lineHeight: 1.5
           }}
         >
-          Crea tu cuenta y descubre una nueva forma de conectar con nuestro ecosistema.
+          Agenda una demo y forma parte de la evolución tecnológica, espiritual y deportiva que estamos construyendo.
         </p>
       </div>
 
       <RegisterForm />
-
-      <div
-        style={{
-          width: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.8rem',
-          color: 'var(--ws-muted)',
-          fontFamily: 'var(--ws-font)',
-          fontSize: '0.85rem'
-        }}
-      >
-        <span style={{ flex: 1, height: '1px', background: 'rgba(44,33,24,0.12)' }}></span>
-        <span>o</span>
-        <span style={{ flex: 1, height: '1px', background: 'rgba(44,33,24,0.12)' }}></span>
-      </div>
-
-      <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-        <GoogleRegisterButton onRegister={() => console.log('[Registro] Google pendiente de Firebase.')} />
-      </div>
-
-      <p
-        style={{
-          fontFamily: 'var(--ws-font)',
-          fontSize: '0.85rem',
-          color: 'var(--ws-muted)',
-          textAlign: 'center',
-          margin: 0
-        }}
-      >
-        ¿Ya tienes una cuenta?
-        <a
-          href="/"
-          style={{
-            marginLeft: '0.35rem',
-            color: 'var(--ws-accent)',
-            fontWeight: 700,
-            textDecoration: 'none'
-          }}
-        >
-          Iniciar sesión
-        </a>
-      </p>
     </div>
   </main>
+
+  <style>
+    /* Ocultar botón flotante de demo en la página de registro */
+    .agendar-demo-wrapper {
+      display: none !important;
+    }
+  </style>
 </Layout>
