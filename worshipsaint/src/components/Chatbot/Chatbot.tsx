@@ -77,8 +77,8 @@ const Chatbot: FC = () => {
 
       const stopBeforeEnd = () => {
         if (!Number.isFinite(audio.duration)) return;
-        if (audio.duration <= 2) return;
-        const playbackLimit = audio.duration - 2;
+        if (audio.duration <= 2.8) return;
+        const playbackLimit = audio.duration - 2.8;
         if (audio.currentTime >= playbackLimit) {
           audio.pause();
           audio.currentTime = 0;
@@ -87,8 +87,8 @@ const Chatbot: FC = () => {
 
       const preventSeekingBeyondLimit = () => {
         if (!Number.isFinite(audio.duration)) return;
-        if (audio.duration <= 2) return;
-        const playbackLimit = audio.duration - 2;
+        if (audio.duration <= 2.8) return;
+        const playbackLimit = audio.duration - 2.8;
         if (audio.currentTime > playbackLimit) {
           audio.currentTime = playbackLimit;
         }

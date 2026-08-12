@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Modificar el reproductor de audio existente en **React** para que, cuando reciba un archivo o URL `.mp3`, el usuario pueda escuchar el audio normalmente **excepto los últimos 2 segundos**.
+Modificar el reproductor de audio existente en **React** para que, cuando reciba un archivo o URL `.mp3`, el usuario pueda escuchar el audio normalmente **excepto los últimos 2.8 segundos**.
 
 ### Regla principal
 
@@ -15,11 +15,11 @@ Si el audio dura:
 el usuario solamente debe poder escuchar:
 
 ```text
-0s ───────────────── 8s | 9s | 10s
-        REPRODUCIR        ❌    ❌
+0s ──────────────── 7.2s | 8s | 9s | 10s
+       REPRODUCIR        ❌    ❌    ❌
 ```
 
-Los últimos **2 segundos no deben reproducirse**.
+Los últimos **2.8 segundos no deben reproducirse**.
 
 ---
 
@@ -90,7 +90,7 @@ el límite de reproducción será:
 Cuando `currentTime` llegue a aproximadamente `13 segundos`:
 
 1. Detener reproducción.
-2. No permitir continuar hacia los últimos 2 segundos.
+2. No permitir continuar hacia los últimos 2.8 segundos.
 3. Mantener el resto del funcionamiento actual.
 4. No modificar físicamente el archivo MP3.
 
@@ -137,10 +137,9 @@ export default function AudioPlayer({ audioUrl }) {
     const stopBeforeEnd = () => {
       if (!Number.isFinite(audio.duration)) return;
 
-      // No aplicar la lógica a audios de 2 segundos o menos
-      if (audio.duration <= 2) return;
-
-      const playbackLimit = audio.duration - 2;
+      // No aplicar la lógica a audios de 2.8 segundos o menos
+      if (audio.duration <= 2.8) return;
+      const playbackLimit = audio.duration - 2.8;
 
       if (audio.currentTime >= playbackLimit) {
         audio.pause();
@@ -186,7 +185,7 @@ El MP3 original debe permanecer intacto.
 
 # Evitar errores con audios cortos
 
-Debe existir protección para audios cuya duración sea menor o igual a 2 segundos.
+Debe existir protección para audios cuya duración sea menor o igual a 2.8 segundos.
 
 Ejemplo:
 
@@ -259,7 +258,7 @@ Audio C
 Cada nuevo audio debe recalcular automáticamente su duración y aplicar nuevamente:
 
 ```text
-duración - 2 segundos
+duración - 2.8 segundos
 ```
 
 No utilizar una duración fija.
