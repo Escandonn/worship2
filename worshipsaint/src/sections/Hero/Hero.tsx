@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback, memo } from 'react';
 import type { FC, ReactNode, CSSProperties } from 'react';
 import { BackgroundParticles } from '../../components/BackgroundParticles';
 import { SacredSymbol } from '../../components/SacredSymbol';
+import GoogleRegisterButton from '../../registro/components/GoogleRegisterButton';
 import HeroTypewriter from './HeroTypewriter';
 import HeroTitleDesktop from './HeroTitleDesktop';
 import { useDevMonitor } from './useDevMonitor';
@@ -565,6 +566,17 @@ const Hero: FC = () => {
           <MagneticButton variant="secondary" onClick={handleNavigateToServices}>
             Iniciar Proyecto Web
           </MagneticButton>
+
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              justifyContent: 'center',
+              marginTop: '0.5rem'
+            }}
+          >
+            <GoogleRegisterButton />
+          </div>
         </div>
       </div>
 
