@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import type { FC } from 'react';
 import type { NavRoute } from './navigation';
 import NavItem from './NavItem';
+import GoogleRegisterButton from '../GoogleRegisterButton';
 
 interface MobileMenuProps {
   routes: readonly NavRoute[];
@@ -136,6 +137,10 @@ const MobileMenu: FC<MobileMenuProps> = ({ routes, activeId, isOpen, onClose, on
             ))}
           </ul>
         </nav>
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1.5rem' }}>
+          <GoogleRegisterButton />
+        </div>
       </aside>
 
       <style>{`
