@@ -3,6 +3,8 @@ import type { FC } from 'react';
 interface GoogleRegisterButtonProps {
   /** Callback que se ejecutará cuando el usuario haga clic en el botón. */
   onRegister?: () => void;
+  /** Texto del botón. Por defecto: "Regístrate con Google". */
+  label?: string;
 }
 
 const GOOGLE_BUTTON_STYLES = `
@@ -64,7 +66,7 @@ const GOOGLE_BUTTON_STYLES = `
  * - Conectar Firebase Authentication.
  * - Implementar onRegister con Google Provider.
  */
-const GoogleRegisterButton: FC<GoogleRegisterButtonProps> = ({ onRegister }) => {
+const GoogleRegisterButton: FC<GoogleRegisterButtonProps> = ({ onRegister, label = 'Regístrate con Google' }) => {
   const handleClick = () => {
     console.log('[GoogleRegisterButton] Clic en registro con Google.');
     onRegister?.();
@@ -77,6 +79,7 @@ const GoogleRegisterButton: FC<GoogleRegisterButtonProps> = ({ onRegister }) => 
         type="button"
         className="google-register-button"
         onClick={handleClick}
+        aria-label={label}
       >
         <svg
           width="20"
@@ -102,7 +105,7 @@ const GoogleRegisterButton: FC<GoogleRegisterButtonProps> = ({ onRegister }) => 
             fill="#EA4335"
           />
         </svg>
-        Regístrate con Google
+        {label}
       </button>
     </>
   );

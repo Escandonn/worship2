@@ -139,7 +139,7 @@ const MobileMenu: FC<MobileMenuProps> = ({ routes, activeId, isOpen, onClose, on
         </nav>
 
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: '1.5rem' }}>
-          <GoogleRegisterButton />
+          <GoogleRegisterButton label="Regístrate ahora" />
         </div>
       </aside>
 
