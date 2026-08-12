@@ -106,77 +106,6 @@ const MagneticButton: FC<MagneticButtonProps> = memo(({ href, variant, children,
 MagneticButton.displayName = 'MagneticButton';
 
 /* ------------------------------------------------------------------ */
-/*  Componente: Indicador de Scroll Elegante                            */
-/* ------------------------------------------------------------------ */
-interface ScrollIndicatorProps {
-  buttonRef: React.RefObject<HTMLButtonElement | null>;
-  onClick: () => void;
-}
-
-const ScrollIndicator: FC<ScrollIndicatorProps> = memo(({ buttonRef, onClick }) => {
-  return (
-    <button
-      ref={buttonRef}
-      onClick={onClick}
-      aria-label="Desplazarse hacia abajo"
-      style={{
-        position: 'absolute',
-        bottom: '2.5rem',
-        left: '50%',
-        transform: 'translateX(-50%) translateY(16px)',
-        opacity: 0,
-        transition: 'opacity 600ms ease, transform 600ms ease',
-        background: 'none',
-        border: 'none',
-        cursor: 'pointer',
-        zIndex: 10,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '0.4rem'
-      }}
-    >
-      <span
-        style={{
-          fontFamily: 'var(--ws-font)',
-          fontSize: '0.7rem',
-          fontWeight: 600,
-          letterSpacing: '0.14em',
-          textTransform: 'uppercase',
-          color: 'var(--ws-text)',
-          opacity: 0.75
-        }}
-      >
-        Scroll
-      </span>
-      <div
-        style={{
-          width: '20px',
-          height: '32px',
-          borderRadius: '999px',
-          border: '1.5px solid var(--ws-text)',
-          display: 'flex',
-          justifyContent: 'center',
-          paddingTop: '6px'
-        }}
-      >
-        <div
-          style={{
-            width: '3px',
-            height: '6px',
-            borderRadius: '999px',
-            background: 'var(--ws-accent)',
-            animation: 'wsMouseWheel 2s infinite cubic-bezier(0.4, 0, 0.6, 1)'
-          }}
-        />
-      </div>
-    </button>
-  );
-});
-
-ScrollIndicator.displayName = 'ScrollIndicator';
-
-/* ------------------------------------------------------------------ */
 /*  Componente Hero Principal (Optimizado para INP y Presentation Delay)*/
 /* ------------------------------------------------------------------ */
 const Hero: FC = () => {
@@ -224,7 +153,6 @@ const Hero: FC = () => {
   const subtitleRef = useRef<HTMLHeadingElement | null>(null);
   const paragraphRef = useRef<HTMLParagraphElement | null>(null);
   const buttonsRef = useRef<HTMLDivElement | null>(null);
-  const scrollIndicatorRef = useRef<HTMLButtonElement | null>(null);
 
   // 1. Animaciones de entrada escalonadas (Fuera del ciclo React)
   useEffect(() => {
@@ -256,15 +184,11 @@ const Hero: FC = () => {
     // hilo principal. Al terminar (onLoopDone) revelamos botones/scroll.
 
     // Fallback de seguridad: si el typewriter tarda más de lo esperado,
-    // forzamos la aparición de botones/scroll indicator.
+    // forzamos la aparición de botones.
     const fallbackTimer = setTimeout(() => {
       if (buttonsRef.current) {
         buttonsRef.current.style.opacity = '1';
         buttonsRef.current.style.transform = 'scale(1) translateY(0)';
-      }
-      if (scrollIndicatorRef.current) {
-        scrollIndicatorRef.current.style.opacity = '0.75';
-        scrollIndicatorRef.current.style.transform = 'translateX(-50%) translateY(0)';
       }
     }, 4200);
 
@@ -276,17 +200,13 @@ const Hero: FC = () => {
     };
   }, []);
 
-  // Revelar botones + scroll indicator al terminar el typewriter.
+  // Revelar botones al terminar el typewriter.
   // useCallback → referencia estable para que HeroTypewriter (memo) no se
   // re-renderice si el Hero re-renderiza por otros motivos.
   const handleTypewriterDone = useCallback(() => {
     if (buttonsRef.current) {
       buttonsRef.current.style.opacity = '1';
       buttonsRef.current.style.transform = 'scale(1) translateY(0)';
-    }
-    if (scrollIndicatorRef.current) {
-      scrollIndicatorRef.current.style.opacity = '0.75';
-      scrollIndicatorRef.current.style.transform = 'translateX(-50%) translateY(0)';
     }
   }, []);
 
@@ -316,13 +236,6 @@ const Hero: FC = () => {
 
   // 4. Partículas: delegadas al componente independiente BackgroundParticles (@tsparticles/react)
   //    — motor slim, IntersectionObserver + Page Visibility API gestionados internamente.
-
-  const handleScrollClick = useCallback(() => {
-    const nextSection = document.querySelector('main > section:nth-of-type(2)');
-    if (nextSection) {
-      nextSection.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, []);
 
   const handleNavigateToServices = useCallback(() => {
     const target = document.getElementById('servicios');
@@ -582,8 +495,6 @@ const Hero: FC = () => {
         </div>
       </div>
 
-      {/* ⑥ SCROLL INDICATOR */}
-      <ScrollIndicator buttonRef={scrollIndicatorRef} onClick={handleScrollClick} />
     </section>
   );
 };
