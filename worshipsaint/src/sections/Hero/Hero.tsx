@@ -559,7 +559,7 @@ const Hero: FC = () => {
             // willChange ELIMINADO: animación de entrada one-shot.
           }}
         >
-          {!isMobile && (
+          {isDesktop && (
             <MagneticButton variant="primary" onClick={handleNavigateToServices}>
               Explorar WorshipSaint
             </MagneticButton>
