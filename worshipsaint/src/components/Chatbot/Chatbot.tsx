@@ -258,8 +258,8 @@ const Chatbot: FC = () => {
             type="button"
             onClick={() => setIsOpen(true)}
             style={{
-              width: '88px',
-              height: '88px',
+              width: '52px',
+              height: '52px',
               borderRadius: '999px',
               border: '2px solid rgba(200,169,106,0.45)',
               background: 'linear-gradient(135deg, #c8a96a, #d6c3a5)',
