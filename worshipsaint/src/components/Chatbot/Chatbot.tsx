@@ -74,6 +74,29 @@ const Chatbot: FC = () => {
 
       const audio = new Audio(audioUrl);
       audioRef.current = audio;
+
+      const stopBeforeEnd = () => {
+        if (!Number.isFinite(audio.duration)) return;
+        if (audio.duration <= 2) return;
+        const playbackLimit = audio.duration - 2;
+        if (audio.currentTime >= playbackLimit) {
+          audio.pause();
+          audio.currentTime = 0;
+        }
+      };
+
+      const preventSeekingBeyondLimit = () => {
+        if (!Number.isFinite(audio.duration)) return;
+        if (audio.duration <= 2) return;
+        const playbackLimit = audio.duration - 2;
+        if (audio.currentTime > playbackLimit) {
+          audio.currentTime = playbackLimit;
+        }
+      };
+
+      audio.addEventListener('timeupdate', stopBeforeEnd);
+      audio.addEventListener('seeking', preventSeekingBeyondLimit);
+
       audio.onended = () => {
         console.log('[Chatbot] Reproducción finalizada.');
         stopSpeaking();

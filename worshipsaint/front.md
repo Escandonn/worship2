@@ -1,513 +1,551 @@
-# PROMPT — Eliminar IDs de secciones de la URL
+# README — Limitar reproducción de audio MP3 en React
 
 ## Objetivo
 
-Modificar el sistema de navegación del sitio **WorshipSaint** para que al navegar entre secciones mediante el navbar, botones o enlaces internos, **nunca aparezcan identificadores de sección (`#hash`) en la URL**.
+Modificar el reproductor de audio existente en **React** para que, cuando reciba un archivo o URL `.mp3`, el usuario pueda escuchar el audio normalmente **excepto los últimos 2 segundos**.
 
-### Comportamiento actual
+### Regla principal
 
-Actualmente las URLs quedan así:
-
-```text
-https://www.worshipsaint.com/#hero
-https://www.worshipsaint.com/#equipo-futbol
-https://www.worshipsaint.com/#tienda
-https://www.worshipsaint.com/#servicios
-https://www.worshipsaint.com/#sobre-nosotros
-```
-
-### Comportamiento esperado
-
-Las URLs deben permanecer siempre limpias:
+Si el audio dura:
 
 ```text
-https://www.worshipsaint.com/
+10 segundos
 ```
 
-Al hacer clic en cualquier sección:
+el usuario solamente debe poder escuchar:
 
 ```text
-Tienda
-Equipo de Fútbol
-Servicios
-Sobre Nosotros
+0s ───────────────── 8s | 9s | 10s
+        REPRODUCIR        ❌    ❌
 ```
 
-la página debe hacer scroll o ejecutar la animación correspondiente, pero **la URL no debe modificarse**.
+Los últimos **2 segundos no deben reproducirse**.
 
 ---
 
-# REQUISITOS
+# ⚠️ REQUISITO CRÍTICO
 
-## 1. No utilizar navegación mediante hash
+La modificación debe ser **aislada**.
 
-Eliminar o reemplazar cualquier navegación como:
+### NO modificar:
 
-```html
-<a href="#hero">
-<a href="#equipo-futbol">
-<a href="#tienda">
-<a href="#servicios">
-<a href="#sobre-nosotros">
-```
+* Backend.
+* API.
+* Endpoints.
+* Servicios existentes.
+* Sistema de generación de audio.
+* Formato de respuesta de la API.
+* Autenticación.
+* Base de datos.
+* Astro.
+* Rutas.
+* Componentes que no estén relacionados con el reproductor.
+* Estilos globales.
+* Tailwind global.
+* Configuración del proyecto.
+* Dependencias existentes innecesariamente.
+* Lógica de mensajes del chatbot.
+* Estado global de la aplicación.
+* Funcionalidad de texto.
+* Funcionalidad de voz existente.
+* Diseño actual de la interfaz.
 
-No utilizar:
+### SÍ modificar únicamente:
 
-```javascript
-window.location.hash
-```
-
-ni:
-
-```javascript
-location.hash
-```
-
-para controlar la navegación.
+El componente o servicio React responsable de **reproducir el MP3**.
 
 ---
 
-# 2. Mantener el scroll hacia las secciones
+# Comportamiento esperado
 
-El usuario debe seguir pudiendo hacer clic en las opciones del navbar y ser llevado visualmente a la sección correspondiente.
+El reproductor actualmente recibe un audio, por ejemplo:
 
-Ejemplo:
-
-```javascript
-document.querySelector('[data-section="tienda"]')
+```js
+audioUrl
 ```
 
-debe desplazarse hacia:
+El audio puede provenir de:
 
-```html
-<section id="tienda">
-```
+* URL.
+* Blob convertido a URL.
+* Archivo MP3.
+* Respuesta de una API.
 
-pero sin agregar:
+La implementación debe funcionar con el mecanismo que actualmente utiliza el proyecto.
+
+## Ejemplo
+
+Si:
 
 ```text
-#tienda
+audio.duration = 15 segundos
 ```
 
-a la URL.
+el límite de reproducción será:
 
-Utilizar una navegación basada en JavaScript, por ejemplo:
-
-```javascript
-document.getElementById('tienda')?.scrollIntoView({
-    behavior: 'smooth',
-    block: 'start'
-});
+```text
+13 segundos
 ```
 
-El `id` de las secciones puede mantenerse internamente para permitir el scroll.
+Cuando `currentTime` llegue a aproximadamente `13 segundos`:
 
-**IMPORTANTE:** eliminar el `#` de la URL NO significa eliminar los `id` de las secciones HTML.
+1. Detener reproducción.
+2. No permitir continuar hacia los últimos 2 segundos.
+3. Mantener el resto del funcionamiento actual.
+4. No modificar físicamente el archivo MP3.
 
 ---
 
-# 3. Mantener los IDs internos
+# Implementación recomendada
 
-Conservar:
+Utilizar las APIs nativas del navegador:
 
-```html
-<section id="hero">
-<section id="equipo-futbol">
-<section id="tienda">
-<section id="servicios">
-<section id="sobre-nosotros">
+```js
+HTMLAudioElement
 ```
 
-Estos IDs pueden seguir utilizándose internamente para localizar las secciones.
+y:
 
-Lo que debe desaparecer es únicamente su aparición en la URL.
+```js
+currentTime
+duration
+timeupdate
+loadedmetadata
+```
+
+No instalar una librería adicional para esta funcionalidad.
 
 ---
 
-# 4. Navbar
+# Componente de referencia
 
-Modificar los enlaces del navbar para que no utilicen:
+Si el proyecto ya tiene un componente de audio, adaptar la lógica existente en lugar de crear otro reproductor innecesariamente.
 
-```html
-href="#hero"
-href="#equipo-futbol"
-href="#tienda"
-href="#servicios"
-href="#sobre-nosotros"
-```
+La lógica base debe seguir este patrón:
 
-En su lugar, utilizar botones o enlaces controlados por JavaScript.
+```jsx
+import { useEffect, useRef } from "react";
 
-Ejemplo:
+export default function AudioPlayer({ audioUrl }) {
+  const audioRef = useRef(null);
 
-```html
-<button data-section="hero">
-    Inicio
-</button>
+  useEffect(() => {
+    const audio = audioRef.current;
 
-<button data-section="equipo-futbol">
-    Equipo de Fútbol
-</button>
+    if (!audio) return;
 
-<button data-section="tienda">
-    Tienda
-</button>
+    const stopBeforeEnd = () => {
+      if (!Number.isFinite(audio.duration)) return;
 
-<button data-section="servicios">
-    Servicios
-</button>
+      // No aplicar la lógica a audios de 2 segundos o menos
+      if (audio.duration <= 2) return;
 
-<button data-section="sobre-nosotros">
-    Sobre Nosotros
-</button>
-```
+      const playbackLimit = audio.duration - 2;
 
----
+      if (audio.currentTime >= playbackLimit) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    };
 
-# 5. Crear un sistema centralizado de navegación
+    audio.addEventListener("timeupdate", stopBeforeEnd);
 
-Implementar una única función responsable de navegar entre secciones.
+    return () => {
+      audio.removeEventListener("timeupdate", stopBeforeEnd);
+    };
+  }, [audioUrl]);
 
-Ejemplo:
-
-```javascript
-function navigateToSection(sectionId) {
-    const section = document.getElementById(sectionId);
-
-    if (!section) return;
-
-    section.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start'
-    });
-
-    // No modificar la URL
+  return (
+    <audio
+      ref={audioRef}
+      src={audioUrl}
+      controls
+      preload="metadata"
+    />
+  );
 }
 ```
 
-Después:
+---
 
-```javascript
-document.querySelectorAll('[data-section]').forEach(button => {
-    button.addEventListener('click', () => {
-        const sectionId = button.dataset.section;
+# Importante: no eliminar físicamente el MP3
 
-        navigateToSection(sectionId);
-    });
-});
-```
+NO utilizar:
+
+* FFmpeg.
+* pydub.
+* procesamiento del servidor.
+* conversión del archivo.
+* modificación del Blob original.
+
+El objetivo es únicamente **limitar la reproducción desde React**.
+
+El MP3 original debe permanecer intacto.
 
 ---
 
-# 6. Eliminar hashes existentes
+# Evitar errores con audios cortos
 
-Revisar todo el proyecto y localizar cualquier código que utilice:
-
-```javascript
-window.location.hash
-```
-
-```javascript
-location.hash
-```
-
-```javascript
-history.pushState(...)
-```
-
-```javascript
-history.replaceState(...)
-```
-
-si está siendo utilizado para generar o mantener hashes de secciones.
-
-También revisar:
-
-```html
-href="#..."
-```
-
-y cualquier router o sistema de navegación que genere automáticamente URLs con `#`.
-
----
-
-# 7. Carga inicial
-
-Si el usuario entra directamente a:
-
-```text
-https://www.worshipsaint.com/
-```
-
-debe comenzar normalmente en la sección Hero.
-
-No debe ser necesario:
-
-```text
-/#hero
-```
-
-para mostrar el Hero.
-
----
-
-# 8. Si el usuario entra con una URL antigua
-
-Si alguien entra utilizando una URL antigua como:
-
-```text
-https://www.worshipsaint.com/#equipo-futbol
-```
-
-el sistema debe:
-
-1. Detectar el hash existente.
-2. Desplazarse a la sección correspondiente.
-3. Eliminar el hash inmediatamente de la URL.
-
-Resultado:
-
-```text
-https://www.worshipsaint.com/
-```
-
-Ejemplo conceptual:
-
-```javascript
-const hash = window.location.hash;
-
-if (hash) {
-    const section = document.querySelector(hash);
-
-    if (section) {
-        section.scrollIntoView({
-            behavior: 'instant',
-            block: 'start'
-        });
-
-        history.replaceState(
-            null,
-            '',
-            window.location.pathname + window.location.search
-        );
-    }
-}
-```
-
-Adaptar esta lógica al framework/arquitectura existente.
-
----
-
-# 9. No romper las animaciones existentes
-
-El proyecto actualmente puede tener:
-
-* animaciones al hacer scroll
-* navegación mediante navbar
-* animaciones de entrada
-* efectos de transición
-* sección Hero
-* sección Equipo de Fútbol
-* sección Tienda
-* sección Servicios
-* sección Sobre Nosotros
-* menú responsive/mobile
-* navegación mediante botones
-* efectos cinematográficos
-
-No eliminar ni modificar estas funcionalidades.
-
-El cambio debe limitarse al sistema que genera los hashes en la URL.
-
----
-
-# 10. Navegación móvil
-
-Aplicar exactamente el mismo comportamiento al menú mobile.
+Debe existir protección para audios cuya duración sea menor o igual a 2 segundos.
 
 Ejemplo:
 
 ```text
-☰
-  Inicio
-  Equipo de Fútbol
-  Tienda
-  Servicios
-  Sobre Nosotros
+Audio: 1.5 segundos
 ```
 
-Al seleccionar una sección:
+No debe ejecutarse:
 
-```text
-https://www.worshipsaint.com/
+```js
+duration - 2
 ```
 
-debe mantenerse limpia.
+como límite de reproducción.
 
-Cerrar también el menú mobile después de realizar la navegación si esa funcionalidad ya existe.
+La lógica debe ignorar el recorte si:
+
+```js
+audio.duration <= 2
+```
 
 ---
 
-# 11. Compatibilidad con Astro / React / JavaScript
+# Evitar memory leaks
+
+El evento:
+
+```js
+timeupdate
+```
+
+debe eliminarse cuando el componente se desmonta o cuando cambia el audio.
+
+Correcto:
+
+```js
+useEffect(() => {
+  const audio = audioRef.current;
+
+  if (!audio) return;
+
+  const stopBeforeEnd = () => {
+    // lógica
+  };
+
+  audio.addEventListener("timeupdate", stopBeforeEnd);
+
+  return () => {
+    audio.removeEventListener("timeupdate", stopBeforeEnd);
+  };
+}, [audioUrl]);
+```
+
+No dejar listeners duplicados.
+
+---
+
+# Compatibilidad con cambio de audio
+
+El reproductor debe continuar funcionando si:
+
+```text
+Audio A
+↓
+Audio B
+↓
+Audio C
+```
+
+Cada nuevo audio debe recalcular automáticamente su duración y aplicar nuevamente:
+
+```text
+duración - 2 segundos
+```
+
+No utilizar una duración fija.
+
+Incorrecto:
+
+```js
+const limit = 10;
+```
+
+Correcto:
+
+```js
+const limit = audio.duration - 2;
+```
+
+---
+
+# No romper los controles existentes
+
+El usuario debe poder seguir utilizando:
+
+* Play.
+* Pause.
+* Volumen.
+* Mute.
+* Barra de reproducción.
+* Cambio de audio.
+* Controles actuales.
+* Estilos actuales.
+
+La única modificación funcional debe ser:
+
+> Impedir que el audio reproduzca los últimos 2 segundos.
+
+---
+
+# Caso especial: usuario arrastra la barra
+
+Es importante controlar también el caso donde el usuario intenta mover manualmente el reproductor hacia los últimos 2 segundos.
+
+Por ejemplo:
+
+```text
+Duración: 20s
+
+0 ───────────────────────────── 18s │ 19s │ 20s
+                                  ↑
+                              LÍMITE
+```
+
+Si el usuario intenta hacer:
+
+```js
+audio.currentTime = 19;
+```
+
+la implementación debe evitar que pueda escuchar esa sección.
+
+Se recomienda agregar control mediante el evento:
+
+```js
+seeking
+```
+
+Ejemplo:
+
+```js
+const preventSeekingBeyondLimit = () => {
+  if (!Number.isFinite(audio.duration)) return;
+
+  if (audio.duration <= 2) return;
+
+  const playbackLimit = audio.duration - 2;
+
+  if (audio.currentTime > playbackLimit) {
+    audio.currentTime = playbackLimit;
+  }
+};
+```
+
+Y registrar:
+
+```js
+audio.addEventListener(
+  "seeking",
+  preventSeekingBeyondLimit
+);
+```
+
+También eliminarlo correctamente:
+
+```js
+return () => {
+  audio.removeEventListener(
+    "timeupdate",
+    stopBeforeEnd
+  );
+
+  audio.removeEventListener(
+    "seeking",
+    preventSeekingBeyondLimit
+  );
+};
+```
+
+---
+
+# Comportamiento final esperado
+
+Para un audio de:
+
+```text
+30 segundos
+```
+
+debe ocurrir:
+
+```text
+0s ───────────────────────────────── 28s │ 29s │ 30s
+              REPRODUCIBLE                 ❌     ❌
+```
+
+Si llega a:
+
+```text
+28s
+```
+
+debe detenerse.
+
+Si el usuario intenta saltar a:
+
+```text
+29s
+```
+
+debe impedirse.
+
+---
+
+# Restricción arquitectónica
 
 Antes de modificar código:
 
-1. Identificar si la navegación está implementada en:
-
-   * HTML
-   * JavaScript
-   * React
-   * Astro
-   * componentes
-   * router
-2. Identificar todos los lugares donde se generan hashes.
-3. Determinar cuál es el sistema central de navegación actual.
-4. Modificar la implementación existente en lugar de crear sistemas duplicados.
-
-No introducir React Router, Vue Router ni otra librería innecesaria.
+1. Identificar dónde se crea actualmente el reproductor.
+2. Identificar cómo llega `audioUrl`, `Blob` o `File`.
+3. Identificar si ya existe un componente `AudioPlayer`.
+4. Reutilizar el componente existente.
+5. Implementar la lógica en el punto mínimo necesario.
+6. No duplicar lógica de reproducción.
+7. No crear una nueva arquitectura si no es necesaria.
 
 ---
 
-# 12. Requisito crítico
+# No instalar dependencias
 
-La URL nunca debe terminar así:
+No agregar:
 
-```text
-/#hero
-/#equipo-futbol
-/#tienda
-/#servicios
-/#sobre-nosotros
+```bash
+npm install ...
 ```
 
-Debe permanecer:
+No utilizar librerías externas.
+
+La solución debe utilizar exclusivamente:
 
 ```text
-https://www.worshipsaint.com/
+React
++
+HTMLAudioElement
++
+JavaScript
 ```
-
-durante toda la navegación interna.
-
-El scroll debe ocurrir **sin navegación de URL**.
 
 ---
 
-# 13. Verificación final
+# Validación
 
-Después de realizar los cambios probar:
+Después de implementar la modificación, comprobar:
 
-### Caso 1
-
-Entrar:
+## Test 1 — Audio normal
 
 ```text
-https://www.worshipsaint.com/
+Duración: 10 segundos
 ```
 
 Resultado:
 
 ```text
-https://www.worshipsaint.com/
+Se reproducen: 0s → 8s
+No se reproducen: 8s → 10s
 ```
+
+## Test 2 — Audio largo
+
+```text
+Duración: 60 segundos
+```
+
+Resultado:
+
+```text
+Límite: 58 segundos
+```
+
+## Test 3 — Audio corto
+
+```text
+Duración: 2 segundos
+```
+
+No debe romperse.
+
+## Test 4 — Audio menor a 2 segundos
+
+```text
+Duración: 1 segundo
+```
+
+No debe producir errores.
+
+## Test 5 — Cambiar de audio
+
+Comprobar:
+
+```text
+Audio A → Audio B
+```
+
+El nuevo audio debe calcular nuevamente:
+
+```js
+duration - 2
+```
+
+## Test 6 — Arrastrar la barra
+
+Intentar desplazarse manualmente a los últimos 2 segundos.
+
+Debe impedirse la reproducción de esa parte.
+
+## Test 7 — Reproducir nuevamente
+
+Después de llegar al límite:
+
+```text
+pause
+```
+
+El reproductor debe continuar funcionando normalmente cuando se vuelva a reproducir.
 
 ---
 
-### Caso 2
+# Criterio de aceptación
 
-Hacer clic en:
+La implementación será considerada correcta si:
 
-```text
-Equipo de Fútbol
-```
-
-Debe desplazarse a:
-
-```text
-#equipo-futbol
-```
-
-internamente, pero la barra del navegador debe continuar mostrando:
-
-```text
-https://www.worshipsaint.com/
-```
-
----
-
-### Caso 3
-
-Hacer clic en:
-
-```text
-Tienda
-```
-
-Debe hacer scroll a la tienda.
-
-URL:
-
-```text
-https://www.worshipsaint.com/
-```
+* El MP3 original no se modifica.
+* Los últimos 2 segundos no se escuchan.
+* El usuario no puede saltar manualmente a esos 2 segundos.
+* Los audios menores o iguales a 2 segundos no generan errores.
+* Los controles actuales continúan funcionando.
+* Cambiar de audio continúa funcionando.
+* No se agregan dependencias.
+* No se modifica el backend.
+* No se modifica la API.
+* No se modifica Astro salvo que sea estrictamente necesario para mantener el componente React existente.
+* No se modifica el diseño.
+* No se rompe ninguna funcionalidad existente.
+* No quedan listeners duplicados.
+* El cambio queda limitado al reproductor de audio.
 
 ---
 
-### Caso 4
+# Entrega
 
-Entrar manualmente a:
+Al finalizar:
 
-```text
-https://www.worshipsaint.com/#equipo-futbol
-```
+1. Mostrar qué archivo(s) fueron modificados.
+2. Explicar brevemente qué se cambió.
+3. No modificar archivos que no sean necesarios.
+4. No realizar refactorizaciones adicionales.
+5. No cambiar nombres de componentes, props o APIs existentes.
+6. Mantener completamente compatible la integración actual.
 
-Debe:
+## Regla final
 
-1. Ir al Equipo de Fútbol.
-2. Eliminar `#equipo-futbol`.
-3. Dejar:
-
-```text
-https://www.worshipsaint.com/
-```
-
----
-
-# REGLA PRINCIPAL
-
-**NO eliminar los IDs de las secciones HTML.**
-
-Solo eliminar el uso de esos IDs como hashes de navegación en la URL.
-
-La navegación debe funcionar mediante:
-
-```text
-Click
- ↓
-JavaScript
- ↓
-Buscar sección por ID
- ↓
-scrollIntoView()
- ↓
-URL permanece limpia
-```
-
-## Resultado final
-
-El sitio debe tener una navegación interna moderna y limpia:
-
-```text
-https://www.worshipsaint.com/
-```
-
-sin mostrar nunca:
-
-```text
-#hero
-#equipo-futbol
-#tienda
-#servicios
-#sobre-nosotros
-```
-
-Mantener intactos el diseño, las animaciones, el responsive, las secciones y toda la funcionalidad existente.
+**Modificar únicamente el comportamiento de reproducción del MP3 para ocultar/bloquear los últimos 2 segundos. Todo lo demás debe permanecer exactamente igual.**
