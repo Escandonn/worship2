@@ -120,6 +120,10 @@ const RegisterForm: FC = () => {
       >
         {loading ? 'Creando cuenta...' : 'Crear cuenta'}
       </button>
+
+      <div style={{ width: '100%', display: 'flex', justifyContent: 'center', marginTop: '0.25rem' }}>
+        <GoogleRegisterButton onRegister={() => console.log('[Registro] Google pendiente de Firebase.')} />
+      </div>
     </form>
   );
 };

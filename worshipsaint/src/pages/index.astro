@@ -8,6 +8,7 @@ import Servicios from '../sections/Servicios';
 import SobreNosotros from '../sections/SobreNosotros';
 import Agradecimientos from '../sections/Agradecimientos';
 import Chatbot from '../components/Chatbot';
+import AgendarDemoButton from '../components/AgendarDemoButton.astro';
 ---
 
 <Layout>
@@ -21,4 +22,5 @@ import Chatbot from '../components/Chatbot';
 		<Agradecimientos client:visible />
 	</main>
 	<Chatbot client:load />
+	<AgendarDemoButton />
 </Layout>
