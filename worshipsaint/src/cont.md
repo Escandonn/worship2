@@ -1,257 +1,614 @@
-# Prompt `.md` — Ajuste exclusivo del botón Google en móvil
-
-````md
-# AJUSTE RESPONSIVE — BOTÓN "REGÍSTRATE CON GOOGLE"
+# Efecto de Partículas Premium — WorshipSaint
 
 ## Objetivo
 
-Realizar **únicamente un ajuste visual en la versión móvil** de la interfaz mostrada.
+Crear **exclusivamente un nuevo sistema visual de partículas para el fondo de la página de registro**, tomando como referencia la interfaz actual.
 
-En dispositivos móviles:
+El objetivo es que el fondo pase de ser prácticamente vacío a tener una presencia visual **fuerte, hermosa, sofisticada y memorable**, pero sin competir con el formulario.
 
-1. Eliminar/ocultar visualmente el botón:
-   **"Explorar WorshipSaint"**
-2. Dar mayor protagonismo visual al botón:
-   **"Regístrate con Google"**
-3. Mantener exactamente igual el resto de la interfaz, diseño, colores, fondos, tipografías, animaciones y lógica existente.
+Debe sentirse como una extensión natural del universo visual de WorshipSaint.
 
 ---
 
-## RESTRICCIÓN PRINCIPAL
+# 1. Concepto visual
 
-⚠️ **NO modificar ningún otro aspecto del proyecto.**
+Crear un efecto inspirado en:
 
-La modificación debe limitarse exclusivamente al comportamiento visual responsive de estos botones.
+**conciencia + geometría + tecnología + energía + espiritualidad + movimiento**
 
-### NO modificar:
+No buscar un efecto de partículas típico de:
 
-- Colores globales.
-- Fondos.
-- Gradientes.
-- Tipografías.
-- Tamaños de títulos.
-- Textos existentes.
-- Animaciones.
-- Navbar.
-- Hero.
-- Footer.
-- Chat.
-- Iconos.
-- Espaciados generales.
-- Layout de escritorio.
-- Lógica de autenticación.
-- Firebase.
-- Google Authentication.
-- Eventos `onClick`.
-- Funciones JavaScript/React.
-- APIs.
-- Rutas.
-- Componentes no relacionados.
-- Dependencias.
-- Estructura del proyecto.
-- Configuración de build.
-- Variables de entorno.
-- Otros archivos que no sean estrictamente necesarios.
+* páginas gaming
+* blockchain
+* cyberpunk
+* dashboards
+* landing pages genéricas
 
-**No crear lógica adicional.**
+Debe parecer una **atmósfera tecnológica espiritual**, elegante y cinematográfica.
+
+La referencia conceptual debe ser:
+
+> partículas doradas y marfil conectándose lentamente alrededor del contenido, formando una geometría viva que respira.
 
 ---
 
-# COMPORTAMIENTO EN MÓVIL
+# 2. Intensidad
 
-Utilizar exclusivamente estilos responsive para conseguir el resultado.
+El efecto debe ser **mucho más visible que el actual**.
 
-En pantallas móviles:
+Actualmente el fondo se percibe demasiado vacío.
 
-### 1. Ocultar
+Aumentar:
 
-Ocultar:
+* cantidad de partículas
+* profundidad
+* variación de tamaño
+* movimiento
+* conexiones
+* halos
+* geometría
+
+Pero mantener el contenido perfectamente legible.
+
+La intensidad debe concentrarse principalmente en:
 
 ```text
-Explorar WorshipSaint
-````
-
-El botón no debe ocupar espacio visual en el layout móvil.
-
-### 2. Priorizar Google
-
-El botón:
-
-```text
-Regístrate con Google
+bordes
+esquinas
+zonas laterales
+parte superior
+parte inferior
 ```
 
-debe adquirir mayor protagonismo visual.
-
-Debe mantenerse integrado con el diseño actual de WorshipSaint.
-
-El objetivo visual es que sea claramente una de las acciones principales de la pantalla móvil.
+y disminuir alrededor del formulario para crear una **zona de descanso visual**.
 
 ---
 
-# ESTILO DEL BOTÓN GOOGLE
+# 3. Paleta
 
-Partir del botón existente.
+Utilizar exclusivamente tonos derivados de la identidad WorshipSaint.
 
-**No rediseñarlo desde cero.**
+### Marrón
 
-Modificar únicamente los estilos necesarios para darle mayor prioridad visual en móvil.
+```text
+#2D241D
+```
 
-Debe conservar:
+### Dorado
 
-* Icono de Google.
-* Texto "Regístrate con Google".
-* Funcionalidad actual.
-* Evento actual.
-* Integración actual.
-* Posición dentro de la estructura existente.
+```text
+#C9A45C
+```
 
-Puede ajustarse únicamente:
+### Beige
 
-* Ancho.
-* Altura.
-* Fondo.
-* Contraste.
-* Border.
-* Border-radius.
-* Sombra.
-* Peso visual.
+```text
+#D8C29A
+```
 
-El nuevo estilo debe ser coherente con la estética existente mostrada en la captura.
+### Marfil
 
-### Importante
+```text
+#F7F3EA
+```
 
-No introducir colores completamente nuevos que rompan la paleta existente.
+### Blanco cálido
 
-El botón debe destacar utilizando la **misma identidad visual actual**, pero con mayor contraste/prioridad.
+```text
+#FFFDF8
+```
+
+No utilizar:
+
+```text
+❌ azul
+❌ morado
+❌ verde
+❌ rojo
+❌ neón
+```
+
+La única excepción son colores propios del icono oficial de Google, que no deben modificarse.
 
 ---
 
-# RESPONSIVE
+# 4. Sistema de partículas
 
-Aplicar el cambio exclusivamente mediante breakpoint móvil.
+No crear simplemente puntos moviéndose aleatoriamente.
 
-Ejemplo conceptual:
+Crear un sistema compuesto por varias capas.
 
-```css
-@media (max-width: 768px) {
-    /* únicamente ajustes del botón Google */
-}
+### Capa 1 — Micro partículas
+
+Pequeños puntos:
+
+```text
+•   ·      ·
+      •
+  ·       •
 ```
 
-El breakpoint puede adaptarse al sistema responsive que ya utiliza el proyecto.
+Características:
 
-**No crear un nuevo sistema responsive.**
+* tamaño variable
+* opacidad variable
+* movimiento lento
+* aparición y desaparición gradual
 
 ---
 
-# ESCRITORIO
+### Capa 2 — Partículas principales
 
-En desktop:
+Agregar partículas ligeramente mayores.
 
-**NO CAMBIAR NADA.**
-
-El botón:
+Algunas deben tener un pequeño halo:
 
 ```text
-Explorar WorshipSaint
+       ✦
 ```
 
-debe permanecer visible exactamente como está actualmente.
-
-El botón:
+o:
 
 ```text
-Regístrate con Google
+      ·
+    · ✦ ·
+      ·
 ```
 
-debe conservar su apariencia actual en desktop.
+Usar `glow` extremadamente sutil.
 
 ---
 
-# MOBILE — RESULTADO ESPERADO
+# 5. Conexiones
 
-La jerarquía visual debe quedar aproximadamente así:
+Crear líneas dinámicas entre partículas cercanas.
 
-```text
-        [ contenido existente ]
-
-        [ Iniciar Proyecto Web ]
-
-              SCROLL
-
-   [  REGÍSTRATE CON GOOGLE  ]
-```
-
-El botón:
+Ejemplo:
 
 ```text
-Explorar WorshipSaint
+●────────●
+ \       /
+  \     /
+   ●───●
 ```
 
-NO debe aparecer en móvil.
+Las líneas deben:
 
-El botón Google debe tener suficiente presencia visual para que el usuario lo identifique fácilmente como acción principal.
+* aparecer y desaparecer suavemente.
+* cambiar ligeramente de opacidad.
+* conectarse solamente cuando las partículas estén cerca.
+* utilizar dorado/beige con muy baja opacidad.
+
+No crear una red excesivamente densa.
 
 ---
 
-# REGLA DE NO REGRESIÓN
+# 6. Geometría WorshipSaint
 
-Antes de modificar:
+Agregar geometría inspirada en el Hero original.
 
-1. Identificar exactamente dónde se renderizan ambos botones.
-2. Identificar sus clases actuales.
-3. Identificar qué estilos existentes los controlan.
-4. Modificar únicamente lo estrictamente necesario.
-5. No duplicar componentes.
-6. No crear nuevas funciones.
-7. No modificar la lógica existente.
+Crear grandes:
 
-Después de modificar:
+* círculos incompletos
+* arcos
+* triángulos
+* polígonos
+* líneas diagonales
 
-* Verificar desktop.
-* Verificar móvil.
-* Confirmar que Google sigue ejecutando exactamente la misma acción.
-* Confirmar que "Explorar WorshipSaint" sigue funcionando en desktop.
-* Confirmar que ningún otro elemento visual fue alterado.
+Todo debe ser extremadamente sutil.
+
+Ejemplo:
+
+```text
+             ╱────────╲
+          ╱              ╲
+        ╱        ●         ╲
+       │          ╲         │
+       │           ╲        │
+        ╲            ●     ╱
+          ╲──────────────╱
+```
+
+La geometría debe parecer **parte de un sistema simbólico**, no decoración aleatoria.
 
 ---
 
-# ARCHIVOS
+# 7. Gran geometría de fondo
 
-Modificar **únicamente el archivo o archivos estrictamente necesarios** para conseguir este cambio.
+Agregar uno o dos elementos geométricos grandes detrás del formulario.
 
-No realizar refactorizaciones.
+Por ejemplo:
 
-No limpiar código no relacionado.
+```text
+          ╲
+           ╲
+      ┌───────────┐
+      │           │
+      │  FORM     │
+      │           │
+      └───────────┘
+             ╲
+              ╲
+```
 
-No cambiar nombres de clases existentes si no es necesario.
+La opacidad debe ser muy baja.
 
-No crear archivos adicionales.
+Esto debe recordar al lenguaje geométrico del Hero principal de WorshipSaint.
 
 ---
 
-# CRITERIO FINAL
+# 8. Movimiento
 
-La implementación será considerada correcta únicamente si:
+Las partículas deben moverse lentamente.
 
-### Desktop
+Evitar movimiento lineal obvio.
+
+Utilizar movimiento:
+
+* orbital
+* sinusoidal
+* flotante
+* diagonal lento
+* deriva orgánica
+
+Cada partícula debe tener una trayectoria ligeramente diferente.
+
+El resultado debe sentirse **vivo**, no como un screensaver.
+
+---
+
+# 9. Profundidad
+
+Crear sensación de profundidad.
+
+### Fondo
+
+Partículas:
 
 ```text
-Explorar WorshipSaint     → visible
-Regístrate con Google      → sin cambios funcionales ni visuales relevantes
+pequeñas
+muy transparentes
+movimiento lento
 ```
 
-### Mobile
+### Medio
+
+Partículas:
 
 ```text
-Explorar WorshipSaint     → oculto
-Regístrate con Google      → visualmente priorizado
+medianas
+mayor visibilidad
 ```
 
-Todo lo demás debe permanecer exactamente igual.
+### Frente
 
-**IMPORTANTE: esto es un cambio exclusivamente visual/responsive. NO agregar lógica, autenticación, Firebase, eventos ni funcionalidades nuevas.**
+Pocas partículas:
 
+```text
+más grandes
+más luminosas
+movimiento lento
 ```
+
+Esto debe crear un efecto de:
+
+**parallax / profundidad espacial**.
+
+---
+
+# 10. Partículas flotantes especiales
+
+Agregar algunas partículas protagonistas.
+
+No demasiadas.
+
+Aproximadamente:
+
+```text
+5–10
 ```
+
+en desktop.
+
+Estas pueden:
+
+* brillar ligeramente.
+* expandirse.
+* disminuir.
+* cambiar de posición.
+* dejar una pequeña estela.
+
+Ejemplo:
+
+```text
+       ·
+      ·✦
+       ·
+```
+
+La animación debe durar varios segundos.
+
+---
+
+# 11. Efecto de respiración
+
+Crear un efecto ambiental muy sutil.
+
+Algunos halos deben aumentar y disminuir lentamente:
+
+```text
+glow
+  ↓
+pequeño
+  ↓
+grande
+  ↓
+pequeño
+```
+
+Duración aproximada:
+
+```text
+5s – 10s
+```
+
+Nunca sincronizar todas las partículas.
+
+---
+
+# 12. Movimiento alrededor del formulario
+
+Crear una especie de **campo energético visual** alrededor del contenido central.
+
+No encerrar el formulario dentro de un círculo.
+
+La idea es:
+
+```text
+             ✦
+
+       ·             ·
+
+   ✦       FORM       ✦
+
+       ·             ·
+
+             ✦
+```
+
+El centro debe quedar relativamente limpio.
+
+Los elementos visuales deben rodearlo.
+
+---
+
+# 13. Zona de protección del contenido
+
+Implementar una reducción automática de partículas alrededor del formulario.
+
+El área central debe tener menor densidad.
+
+Conceptualmente:
+
+```text
+██████████████████████
+██████  ·       ·  ███
+████   ·         ·  ██
+███       FORM       ██
+████   ·         ·  ██
+██████  ·       ·  ███
+██████████████████████
+```
+
+Esto permite que el fondo sea fuerte sin perjudicar la lectura.
+
+---
+
+# 14. Bordes y esquinas
+
+Las esquinas pueden tener mayor actividad.
+
+Especialmente:
+
+```text
+top-left
+top-right
+bottom-left
+bottom-right
+```
+
+Crear pequeños clusters de partículas.
+
+Ejemplo:
+
+```text
+✦  ·
+  ·    ·
+     ✦
+```
+
+Esto dará sensación de amplitud.
+
+---
+
+# 15. Animación al movimiento del mouse
+
+En desktop agregar interacción muy sutil.
+
+Cuando el usuario mueve el mouse:
+
+* algunas partículas reaccionan ligeramente.
+* las partículas cercanas pueden desplazarse unos pocos píxeles.
+* la geometría puede tener un pequeño parallax.
+* el glow puede cambiar mínimamente.
+
+No hacer que todo siga al cursor.
+
+Debe ser casi imperceptible.
+
+---
+
+# 16. Mobile
+
+Crear una versión optimizada.
+
+No simplemente reducir el canvas.
+
+En mobile:
+
+* menos partículas.
+* menos conexiones.
+* menos geometría.
+* menos cálculos.
+* movimiento más lento.
+
+Mantener suficientes elementos para conservar la identidad visual.
+
+El resultado debe seguir siendo atractivo:
+
+```text
+✦       ·
+
+   ·         ✦
+
+       FORM
+
+   ✦         ·
+
+       ·
+```
+
+---
+
+# 17. Performance
+
+Prioridad absoluta:
+
+```text
+visual impact
++
+performance
+```
+
+Utilizar Canvas si es necesario.
+
+Optimizar con:
+
+* `requestAnimationFrame`
+* reducción de partículas según viewport
+* `devicePixelRatio` controlado
+* limpieza correcta
+* evitar múltiples loops
+* evitar listeners duplicados
+* pausar animación cuando la pestaña no esté visible
+
+No instalar una librería pesada únicamente para conseguir este efecto si puede implementarse eficientemente con Canvas/CSS.
+
+---
+
+# 18. Reduced Motion
+
+Respetar:
+
+```text
+prefers-reduced-motion
+```
+
+Si está activo:
+
+* reducir movimiento.
+* eliminar parallax.
+* mantener únicamente partículas estáticas o animaciones mínimas.
+
+---
+
+# 19. Integración visual
+
+El fondo debe integrarse con:
+
+```text
+Navbar
+     ↓
+Partículas
+     ↓
+Hero
+     ↓
+Formulario
+```
+
+No debe parecer un componente externo.
+
+Debe utilizar exactamente el mismo lenguaje visual de WorshipSaint.
+
+---
+
+# 20. Sensación final
+
+El usuario debería percibir al entrar:
+
+> **"Estoy entrando a un ecosistema, no simplemente a un formulario de registro."**
+
+La pantalla debe sentirse:
+
+**profunda + elegante + espiritual + tecnológica + viva + premium.**
+
+---
+
+# 21. Restricción principal
+
+Modificar **únicamente el sistema visual de partículas/background**.
+
+NO modificar:
+
+* Navbar.
+* Logo.
+* Tipografía.
+* Título.
+* Subtítulo.
+* Inputs.
+* Botón Crear cuenta.
+* Google.
+* Firebase.
+* Authentication.
+* Formularios.
+* Rutas.
+* Lógica.
+* Validaciones.
+
+No cambiar el layout existente.
+
+---
+
+# 22. Resultado esperado
+
+Transformar visualmente:
+
+```text
+ANTES
+
+────────────────────────
+
+        FORMULARIO
+
+────────────────────────
+```
+
+en:
+
+```text
+DESPUÉS
+
+✦       ·────────·       ✦
+   ╲   ·          ·   ╱
+     ●              ●
+  ·      ╲      ╱      ·
+          FORM
+  ·      ╱      ╲      ·
+     ●              ●
+   ╱   ·          ·   ╲
+✦       ·────────·       ✦
+```
+
+Pero de manera **sutil, elegante, orgánica y realista**, utilizando la paleta cálida de WorshipSaint.
+
+> **El objetivo no es llenar la pantalla de partículas. El objetivo es crear una atmósfera visual memorable que haga que el registro se sienta parte del universo WorshipSaint.**
