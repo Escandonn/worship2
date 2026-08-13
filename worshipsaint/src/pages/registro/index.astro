@@ -11,10 +11,11 @@ import ParticleBackground from '../../components/registro/ParticleBackground.tsx
     style={{
       position: 'relative',
       minHeight: '100vh',
+      width: '100%',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '6rem 1.25rem 3rem',
+      padding: '7rem 1.25rem 3rem',
       overflow: 'hidden'
     }}
   >
@@ -29,7 +30,8 @@ import ParticleBackground from '../../components/registro/ParticleBackground.tsx
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '1.5rem'
+        gap: '1.5rem',
+        animation: 'fadeInUp 0.8s ease-out'
       }}
     >
       <div
@@ -37,7 +39,8 @@ import ParticleBackground from '../../components/registro/ParticleBackground.tsx
           textAlign: 'center',
           display: 'flex',
           flexDirection: 'column',
-          gap: '0.6rem'
+          gap: '0.6rem',
+          animation: 'fadeInUp 0.8s ease-out 0.15s both'
         }}
       >
         <span
@@ -59,7 +62,10 @@ import ParticleBackground from '../../components/registro/ParticleBackground.tsx
             fontWeight: 800,
             color: 'var(--ws-text)',
             margin: 0,
-            lineHeight: 1.15
+            lineHeight: 1.15,
+            textAlign: 'center',
+            textDecoration: 'none',
+            textDecorationLine: 'none'
           }}
         >
           Mantente al tanto del ecosistema WorshipSaint.
@@ -77,12 +83,36 @@ import ParticleBackground from '../../components/registro/ParticleBackground.tsx
         </p>
       </div>
 
-      <RegisterForm />
+      <div
+        style={{
+          width: '100%',
+          animation: 'fadeInUp 0.8s ease-out 0.3s both'
+        }}
+      >
+        <RegisterForm />
+      </div>
     </div>
   </main>
 
   <style>
-    /* Ocultar botón flotante de demo en la página de registro */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
     .agendar-demo-wrapper {
       display: none !important;
     }

@@ -68,20 +68,6 @@ const RegisterForm: FC = () => {
     setTimeout(() => setLoading(false), 1200);
   };
 
-  const inputStyle: CSSProperties = {
-    width: '100%',
-    padding: '0.95rem 1.1rem',
-    borderRadius: 'var(--ws-radius-input)',
-    border: '1px solid rgba(44,33,24,0.12)',
-    background: 'rgba(255,255,255,0.6)',
-    color: 'var(--ws-text)',
-    fontFamily: 'var(--ws-font)',
-    fontSize: '0.95rem',
-    outline: 'none',
-    boxShadow: '0 2px 8px rgba(44,33,24,0.04)',
-    transition: 'border-color 250ms ease, box-shadow 250ms ease'
-  };
-
   return (
     <form
       onSubmit={handleSubmit}

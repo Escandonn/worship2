@@ -9,26 +9,55 @@ import logo from '../../assets/logo.png';
     top: 0,
     left: 0,
     right: 0,
-    zIndex: 50,
+    zIndex: 999,
     display: 'flex',
-    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: '0.6rem',
-    padding: '1.25rem 1.5rem 0.9rem',
-    background: 'rgba(248,246,242,0.92)',
-    backdropFilter: 'blur(12px)',
-    WebkitBackdropFilter: 'blur(12px)',
-    borderBottom: '1px solid rgba(200,169,106,0.15)'
+    height: '76px',
+    padding: '0 32px',
+    background: '#F7F3EA',
+    borderBottom: '1px solid rgba(45,36,29,0.08)',
+    boxShadow: '0 4px 20px rgba(45,36,29,0.04)',
+    animation: 'fadeInDown 0.6s ease-out',
+    textDecoration: 'none'
   }}
 >
-  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem' }}>
+  <button
+    onclick="window.location.href='/'"
+    aria-label="Volver al inicio"
+    style={{
+      fontFamily: 'var(--ws-font)',
+      fontWeight: 700,
+      fontSize: '1.2rem',
+      color: '#2D241D',
+      background: '#FFFDF8',
+      border: '1px solid rgba(201,164,92,0.35)',
+      width: '48px',
+      height: '48px',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: '999px',
+      boxShadow: '0 2px 8px rgba(44,33,24,0.06)',
+      cursor: 'pointer',
+      transition: 'transform 250ms ease, box-shadow 250ms ease',
+      position: 'absolute',
+      left: '32px',
+      textDecoration: 'none'
+    }}
+    onmouseover="this.style.transform='translateY(-1px) translateX(-3px)'; this.style.boxShadow='0 12px 24px rgba(201,164,92,0.18)'; this.style.borderColor='#C9A45C'"
+    onmouseout="this.style.transform='translateY(0) translateX(0)'; this.style.boxShadow='0 2px 8px rgba(44,33,24,0.06)'; this.style.borderColor='rgba(201,164,92,0.35)'"
+  >
+    ←
+  </button>
+
+  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
     <img
       src={logo.src}
       alt="WorshipSaint"
       style={{
-        width: '32px',
-        height: '32px',
+        width: '40px',
+        height: '40px',
         objectFit: 'cover',
         borderRadius: '999px'
       }}
@@ -36,46 +65,52 @@ import logo from '../../assets/logo.png';
     <span
       style={{
         fontFamily: 'var(--ws-font)',
-        fontWeight: 800,
-        fontSize: '1.05rem',
-        color: 'var(--ws-text)',
+        fontWeight: 700,
+        fontSize: '24px',
+        color: '#2D241D',
         letterSpacing: '0.02em',
-        transition: 'color 300ms ease'
+        textDecoration: 'none'
       }}
-      onmouseover="this.style.color='var(--ws-accent)'"
-      onmouseout="this.style.color='var(--ws-text)'"
     >
       WorshipSaint
     </span>
   </div>
-
-  <a
-    href="/"
-    style={{
-      fontFamily: 'var(--ws-font)',
-      fontWeight: 600,
-      fontSize: '0.85rem',
-      color: 'var(--ws-text)',
-      textDecoration: 'none',
-      position: 'relative',
-      padding: '0.2rem 0'
-    }}
-    onmouseover="this.style.color='var(--ws-accent)'"
-    onmouseout="this.style.color='var(--ws-text)'"
-  >
-    Inicio
-    <span
-      style={{
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        width: '0%',
-        height: '2px',
-        background: 'var(--ws-accent)',
-        transition: 'width 300ms ease'
-      }}
-      onmouseover="this.style.width='100%'"
-      onmouseout="this.style.width='0%'"
-    ></span>
-  </a>
 </a>
+
+<style>
+  @keyframes fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  a, a span, a div, a img, a button {
+    text-decoration: none !important;
+  }
+
+  @media (max-width: 768px) {
+    button[aria-label="Volver al inicio"] {
+      width: 44px !important;
+      height: 44px !important;
+      font-size: 1.1rem !important;
+    }
+
+    div[style*="gap: 10px"] {
+      gap: 8px !important;
+    }
+
+    img[alt="WorshipSaint"] {
+      width: 36px !important;
+      height: 36px !important;
+    }
+
+    span[style*="fontSize: '24px'"] {
+      font-size: 20px !important;
+    }
+  }
+</style>
