@@ -14,6 +14,9 @@ export default defineConfig({
   ],
 
   vite: {
+    optimizeDeps: {
+      include: ['firebase/app', 'firebase/auth']
+    },
     plugins: [
       tailwindcss()
     ]

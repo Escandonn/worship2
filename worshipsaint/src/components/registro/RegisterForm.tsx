@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { FC, FormEvent, CSSProperties } from 'react';
+import { getFirebaseApp } from '../../services/firebase';
 import GoogleRegisterButton from '../GoogleRegisterButton';
 
 interface FieldProps {
@@ -60,6 +61,15 @@ const RegisterForm: FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    try {
+      const app = getFirebaseApp();
+      console.log('[RegisterForm] Firebase conectado:', app.options.projectId);
+    } catch (error) {
+      console.error('[RegisterForm] Firebase no conectado:', error);
+    }
+  }, []);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
