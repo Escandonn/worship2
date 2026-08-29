@@ -59,7 +59,7 @@ const YOUTUBE_BUTTON_STYLES = `
 const YouTubeRegisterButton: FC<YouTubeRegisterButtonProps> = ({
   onRegister,
   label = 'Visítanos en YouTube',
-  href = 'https://www.youtube.com/@worshipsaint22'
+  href = 'https://www.youtube.com/@worship22'
 }) => {
   const sharedProps = {
     className: 'youtube-register-button',
