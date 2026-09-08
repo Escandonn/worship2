@@ -21,7 +21,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   const messages = [
     { role: 'system', content: systemPrompt },
-    ...(body.history || []).map((entry) => ({ role: entry.role === 'assistant' ? 'assistant' : 'user', content: entry.content })),
+    ...(body.history || []).map((entry: { role: string; content: any; }) => ({ role: entry.role === 'assistant' ? 'assistant' : 'user', content: entry.content })),
     { role: 'user', content: body.message }
   ];
 
