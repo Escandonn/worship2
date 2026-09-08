@@ -2,73 +2,34 @@ interface ChatbotService {
   sendMessage(message: string, history?: Array<{ role: 'user' | 'assistant'; content: string }>): Promise<string>;
 }
 
-interface ChatMessagePayload {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
-
-class NgrokChatbotService implements ChatbotService {
-  private readonly apiKey: string;
-  private readonly baseUrl: string;
-  private readonly model: string;
-  private readonly systemPrompt: string;
-
-  constructor(
-    apiKey = import.meta.env.PUBLIC_CHATBOT_API_KEY || import.meta.env.PUBLIC_CHATBOT_URL || '',
-    baseUrl = import.meta.env.PUBLIC_CHATBOT_BASE_URL || 'https://api.groq.com/openai/v1/chat/completions',
-    model = import.meta.env.PUBLIC_CHATBOT_MODEL || 'llama-3.3-70b-versatile',
-    systemPrompt = import.meta.env.PUBLIC_CHATBOT_SYSTEM_PROMPT || 'Eres asistente de WorshipSaint. Responde en español. Máximo 2 frases cortas. Completa siempre la última frase. Sin listas, sin explicaciones largas.'
-  ) {
-    this.apiKey = apiKey;
-    this.baseUrl = baseUrl;
-    this.model = model;
-    this.systemPrompt = systemPrompt;
-  }
-
-  async sendMessage(message: string, history: Array<{ role: 'user' | 'assistant'; content: string }> = []): Promise<string> {
-    if (!this.apiKey) {
-      return 'La API key aún no está configurada. Agrega PUBLIC_CHATBOT_API_KEY en el archivo .env.';
-    }
+export const chatbotService: ChatbotService = {
+  async sendMessage(message, history = []) {
+    console.log('[ChatbotService] Enviando mensaje:', message);
+    console.log('[ChatbotService] History length:', history.length);
 
     try {
-      const messages: ChatMessagePayload[] = [
-        { role: 'system', content: this.systemPrompt },
-        ...history.map((entry): ChatMessagePayload => ({
-          role: entry.role === 'assistant' ? 'assistant' : 'user',
-          content: entry.content
-        })),
-        { role: 'user', content: message }
-      ];
-
-      const response = await fetch(this.baseUrl, {
+      const response = await fetch('/api/chatbot', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          model: this.model,
-          messages,
-          temperature: 0.8,
-          max_completion_tokens: 220,
-          top_p: 1,
-          stream: false
-        })
+        body: JSON.stringify({ message, history })
       });
 
+      console.log('[ChatbotService] Response status:', response.status);
+
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        const data = await response.json().catch(() => ({}));
+        console.error('[ChatbotService] Error response:', data);
+        throw new Error(data.reply || `HTTP ${response.status}`);
       }
 
       const data = await response.json();
-      const raw = data.choices?.[0]?.message?.content ?? data.reply ?? data.message ?? data.output ?? '';
-      const cleaned = raw.replace(/\s+/g, ' ').trim();
-      return cleaned || 'Gracias por tu mensaje.';
+      console.log('[ChatbotService] Success reply:', data.reply);
+      return data.reply || 'Gracias por tu mensaje.';
     } catch (error) {
       console.error('Chatbot service error:', error);
       return 'Lo siento, no pude conectar con el servicio en este momento.';
     }
   }
-}
-
-export const chatbotService: ChatbotService = new NgrokChatbotService();
+};
